@@ -5,5 +5,12 @@ RUN apt-get update && \
 	build-essential \
 	git \
 	curl \
-	vim && \
+	vim \
+	sqlite3 && \
 	rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /app
+COPY entrypoint.sh /tmp/entrypoint.sh
+RUN chmod +x /tmp/entrypoint.sh
+
+ENTRYPOINT ["/tmp/entrypoint.sh"]

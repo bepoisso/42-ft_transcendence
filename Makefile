@@ -1,3 +1,5 @@
+all: build up
+
 build:
 	docker compose build
 
@@ -12,9 +14,12 @@ clean: down
 
 fclean: clean
 	docker system prune -a -f --volumes
+	rm -rf ./backend/app/*
 
 logs:
 	docker compose logs -f
+
+restart: down build up
 
 re: down fclean build up
 

@@ -7,3 +7,5 @@ RUN apt-get update && \
 	curl \
 	vim && \
 	rm -rf /var/lib/apt/lists/*
+
+CMD ["tail", "-f", "/dev/null"]
