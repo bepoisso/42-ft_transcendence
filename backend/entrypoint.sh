@@ -10,5 +10,9 @@ else
 	echo "ℹ️ Database '$DB_FILE' already exists in /app."
 fi
 
+# Démarrage du serveur Nginx
+nginx -g 'daemon off;'
+
+
 # Garde le conteneur actif
 tail -f /dev/null
