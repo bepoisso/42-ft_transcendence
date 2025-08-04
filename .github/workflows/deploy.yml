@@ -13,32 +13,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup SSH access
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        touch ~/.ssh/known_hosts
+        ssh-keyscan -H 148.230.118.19 >> ~/.ssh/known_hosts
+
     - name: Deploy code to server
       run: |
-        rsync -avz --exclude '.git' ./ root@148.230.118.19:/root/transcendence
+        rsync -az --exclude '.git' ./ root@148.230.118.19:/root/transcendence
 
     - name: Run Makefile on server
-      run: |
-        ssh root@148.230.118.19 << 'EOF'
-          cd /root/transcendence
-          make re
-        EOF
-
-    - name: Restart Docker containers
-      run: |
-        ssh root@148.230.118.19 << 'EOF'
-          cd /root/transcendence
-          make restart
-        EOF
-
-    - name: FClean all containers
-      run: |
-        ssh root@148.230.118.19 << 'EOF'
-          cd /root/transcendence
-          make fclean
-        EOF
-
-    - name: Re build and start containers
       run: |
         ssh root@148.230.118.19 << 'EOF'
           cd /root/transcendence
