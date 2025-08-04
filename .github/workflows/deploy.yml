@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
@@ -19,36 +19,36 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         ssh-keyscan -H 148.230.118.19 >> ~/.ssh/known_hosts
+        mkdir -p /root/transcendence
 
     - name: Deploy code to server
       run: |
-        rsync -avz --exclude '.git' ./ root@148.230.118.19:/home/user/transcendence
+        rsync -avz --exclude '.git' ./ root@148.230.118.19:/root/transcendence
 
     - name: Run Makefile on server
       run: |
         ssh root@148.230.118.19 << 'EOF'
-          mkdir -p /home/user/transcendence
-          cd /home/user/transcendence
+          cd /root/transcendence
           make re
         EOF
 
     - name: Restart Docker containers
       run: |
         ssh root@148.230.118.19 << 'EOF'
-          cd /home/user/transcendence
+          cd /root/transcendence
           make restart
         EOF
 
     - name: FClean all containers
       run: |
         ssh root@148.230.118.19 << 'EOF'
-          cd /home/user/transcendence
+          cd /root/transcendence
           make fclean
         EOF
 
     - name: Re build and start containers
       run: |
         ssh root@148.230.118.19 << 'EOF'
-          cd /home/user/transcendence
+          cd /root/transcendence
           make re
         EOF
