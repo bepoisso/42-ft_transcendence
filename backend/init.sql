@@ -9,5 +9,3 @@ CREATE TABLE IF NOT EXISTS users (
   is_two_factor_enabled BOOLEAN DEFAULT 0,
   is_verified BOOLEAN DEFAULT 0
 );
-
-INSERT INTO users (username, email, password) VALUES ('benjii', 'benjii@42.fr', 'password_hash');
