@@ -18,16 +18,15 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-        touch ~/.ssh/known_hosts
         ssh-keyscan -H 148.230.118.19 >> ~/.ssh/known_hosts
 
     - name: Deploy code to server
       run: |
-        rsync -az --exclude '.git' ./ root@148.230.118.19:/root/transcendence
+        rsync -az --exclude '.git' ./ deploy@148.230.118.19:/home/deploy/transcendence
 
     - name: Run Makefile on server
       run: |
-        ssh root@148.230.118.19 << 'EOF'
-          cd /root/transcendence
+        ssh deploy@148.230.118.19 << 'EOF'
+          cd /home/deploy/transcendence
           make re
         EOF
