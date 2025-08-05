@@ -8,8 +8,8 @@ RUN apt-get update && \
 	vim && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /app
+RUN mkdir -p /bdd
 
-COPY ./index.html /app/index.html
+COPY ./index.html /bdd/index.html
 
 CMD ["tail", "-f", "/dev/null"]
