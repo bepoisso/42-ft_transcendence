@@ -30,9 +30,9 @@ export class App
 				registerSubmit(self.router)
 			},
 			"/dashboard": renderDashboard,
-			"/game": () => {
-				renderGame();
-				gameLoop()
+			"/game/:id": (params: any) => {
+				renderGame(params.id);
+				gameLoop(params.id)
 			}
 		};
 		this.router = new Router(routes, this.isAuthentified.bind(this));

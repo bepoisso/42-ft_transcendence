@@ -84,12 +84,10 @@ export function LoginSubmit(router: Router)
 			if (result.is2FA) {
 				if (result.userID)
 					sessionStorage.setItem("userIdFor2FA", result.userID);
-				history.pushState(null, "", "/2fa");
-				router.checkRoute();
+				router.navigate("/2fa");
 			} else {
 				// Attention il faut que je localStorage l'userID et le pseudo
-				history.pushState(null, "", "/dashboard");
-				router.checkRoute();
+				router.navigate("/dashboard");
 			}
 
 		} catch (err) {

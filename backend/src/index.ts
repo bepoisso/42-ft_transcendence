@@ -4,6 +4,8 @@ import fastifyWebsocket from "fastify-websocket";
 import { servRoutes } from "./servRoutes";
 
 
+// Normalement rien ne doit etre touché ici avant un moment. C'est juste le lancement du serveur
+
 const PORT = 3000;
 
 // =============================================================================

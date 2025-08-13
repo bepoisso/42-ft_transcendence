@@ -1,3 +1,5 @@
+import { Router } from "../router";
+
 export function renderDashboard() {
   document.getElementById("app")!.innerHTML = `
 	<div class="z-10 flex flex-col items-center space-y-10 relative h-screen justify-center">
@@ -49,12 +51,7 @@ export function handleClicks(router: Router)
 			console.log("Room créée :", data.roomId);
 
 			// Rediriger la route
-			history.pushState(null, "", `/game${data.roomId}`);
-			router.checkRoute();
-
-			// Lance le jeu
-			initGame(data.roomId, ws);
-			gameLoop(ws, data.roomId);
+			router.navigate(`/game/${data.roomId}`);
 		}
 	});
 

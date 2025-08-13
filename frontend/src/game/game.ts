@@ -1,7 +1,7 @@
 import type { GameState, Player, Paddle, Ball } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
 
-export function renderGame() {
+export function renderGame(roomId: string) {
   document.getElementById("app")!.innerHTML = `
     <div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
 
@@ -97,7 +97,7 @@ export function drawGame(gameState: GameState)
 	ctx.fill();
 }
 
-export function gameLoop() {
+export function gameLoop(roomId: string) {
 	let gameState = initGame();
 	drawGame(gameState);
 }
