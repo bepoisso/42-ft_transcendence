@@ -1,11 +1,9 @@
+import { Router } from "../router";
+
 export function renderRegister() {
   document.getElementById("app")!.innerHTML = `
 
 <body class="m-0 p-0 h-screen overflow-hidden relative flex items-center justify-center">
-  <!-- Vidéo en arrière-plan -->
-  <video autoplay muted loop playsinline class="absolute top-0 left-0 w-full h-full object-cover z-[-1]">
-    <source src="../assets/background.mp4" type="video/mp4" />
-  </video>
 
   <!-- Section centrée -->
 <div class="z-10 flex flex-col items-center space-y-10">
@@ -51,4 +49,107 @@ export function renderRegister() {
 </div>
 
 `;
+}
+
+
+//Fonction pour appeler user-service pour check si email ou pseudo n'existent pas déjà
+async function checkUserExist(email: string, pseudo: string,): Promise<{ emailExists: boolean; pseudoExists: boolean }> {
+	const response = await fetch("/api/users/check", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ email: email, pseudo: pseudo }),
+	});
+	if (!response.ok) {
+		throw new Error("Erreur lors de la vérification du pseudo/email");
+	}
+
+	const data = await response.json();
+
+	return {
+		emailExists: data.emailExists,
+		pseudoExists: data.pseudoExists,
+	};
+}
+
+
+
+// Fonction pour appeler user-service pour sauvegarder le user en tant que non vérifié
+async function saveUnverifiedUser(name: string, firstName: string, pseudo: string, email: string, password: string): Promise<boolean> {
+  const response = await fetch("/api/users/saveUser", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({name, firstName, pseudo, email, password}),
+  });
+  const data = await response.json();
+  if (data.success) {
+    return true;
+  }
+  else {
+    console.error("Erreur database :", data.error);
+    return false;
+  }
+}
+
+
+
+export function registerSubmit(router: Router)
+{
+	const form = document.getElementById("new-player-form") as HTMLFormElement;
+
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const name = (document.getElementById("name") as HTMLInputElement).value;
+		const firstName = (document.getElementById("firstName") as HTMLInputElement).value;
+		const pseudo = (document.getElementById("pseudo") as HTMLInputElement).value;
+		const email = (document.getElementById("email") as HTMLInputElement).value;
+		const password = (document.getElementById("password") as HTMLInputElement).value;
+
+		// On vérifie que les champs sont bien remplis
+		if ( !name.trim() || !firstName.trim() || !email.trim() || !password.trim() || !pseudo.trim()) {
+		const errorMessage = document.getElementById("error-message");
+		if (errorMessage)
+			errorMessage.textContent = "All fields are required !";
+		return;
+		}
+
+		// On fait un appel API pour vérifier que les pseudos et email sont nouveaux
+		try {
+			const { emailExists, pseudoExists } = await checkUserExist(email, pseudo);
+			const errorMessage = document.getElementById("error-message");
+			if (!errorMessage) return;
+			if (emailExists) {
+				errorMessage.textContent = "Email already used !";
+				return;
+			} else if (pseudoExists) {
+			errorMessage.textContent = "Pseudo already used !";
+			return;
+			}
+		} catch (error) {
+			console.error("Erreur lors de la vérification :", error);
+			return ;
+		}
+
+
+		// Si on arrive ici c'est que les pseudo + emails sont nouveaux
+		// On va envoyer un mail de confirmation. Si le mail est bon on sauvegarde dans la base de donnée
+
+
+		// 2 - Sauvegarder comme non verifier le user dans la DB
+		try {
+			const success = await saveUnverifiedUser(name, firstName, pseudo, email, password);
+			if (!success) {
+				console.error("Erreur user database");
+				return;
+			}
+		} catch (error) {
+			console.error("Erreur lors du save-user : ", error);
+			return;
+		}
+
+	});
 }

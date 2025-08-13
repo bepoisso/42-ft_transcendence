@@ -7,7 +7,9 @@ Router appelle les methodes de app en fonction du path*/
 import { Router } from "./router";
 import { renderHome } from "./view/home";
 import { LoginSubmit, renderLogin } from "./view/login";
-import { renderRegister } from "./view/register";
+import { registerSubmit, renderRegister } from "./view/register";
+import { renderDashboard} from "./view/dashboard";
+import { renderGame, gameLoop } from "./game/game";
 
 
 export class App
@@ -23,8 +25,15 @@ export class App
 				renderLogin();
 				LoginSubmit(self.router)
 			},
-			"/register": renderRegister,
-			//"/dashboard": renderDashboard
+			"/register": () => {
+				renderRegister();
+				registerSubmit(self.router)
+			},
+			"/dashboard": renderDashboard,
+			"/game": () => {
+				renderGame();
+				gameLoop()
+			}
 		};
 		this.router = new Router(routes, this.isAuthentified.bind(this));
 	}
@@ -47,8 +56,4 @@ export class App
 		this.router.checkRoute();
 	}
 
-	// Methode d'injection HTML
-	renderLogin() {}
-	renderRegister() {}
-	renderDashboard() {}
 }
