@@ -31,7 +31,7 @@ export class App
 			},
 			"/dashboard": renderDashboard,
 			"/game/:id": (params: any) => {
-				renderGame(params.id);
+				renderGame();
 				gameLoop(params.id)
 			}
 		};
@@ -49,8 +49,7 @@ export class App
 			if (target.matches("a[data-link]")) {
 				ev.preventDefault(); // permet de pas recharger la page
 				const href = target.getAttribute("href");
-				history.pushState(null, "", href);
-				this.router.checkRoute();
+				this.router.navigate(href);
 			}
 		});
 		this.router.checkRoute();

@@ -1,7 +1,8 @@
-import type { GameState, Player, Paddle, Ball } from "./interface";
+import type { GameState } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
+import { getWebSocket } from "./singleton";
 
-export function renderGame(roomId: string) {
+export function renderGame() {
   document.getElementById("app")!.innerHTML = `
     <div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
 
@@ -19,50 +20,11 @@ export function renderGame(roomId: string) {
 }
 
 
-export function initGame() : GameState
-{
-	const gameState: GameState =
-	{
-		player1:
-		{
-			name: "Player1",
-			score: 0,
-			paddle: {
-				width: 20,
-				height: 100,
-				x: 10,
-				y: 0,
-				speed: 50
-			}
-		},
-		player2:
-		{
-			name: "Player2",
-			score: 0,
-			paddle: {
-				width: 20,
-				height: 100,
-				x: WIDTH - 30,
-				y: HEIGHT - 100,
-				speed: 50
-			}
-		},
-		ball:
-		{
-			x : WIDTH / 2,
-			y : HEIGHT / 2,
-			radius: 11,
-			xDirect : 0,
-			yDirect : 0,
-			speed: 1
-		}
-	}
-	return gameState;
-}
 
 
 export function drawGame(gameState: GameState)
 {
+	// => gérer les infos de l'injection HTML (score / player)
 	const canvas = document.getElementById("pong") as HTMLCanvasElement;
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
@@ -86,7 +48,7 @@ export function drawGame(gameState: GameState)
 	);
 
 	// Dessine la balle
-	//ctx.beginPath();
+	ctx.beginPath();
 	ctx.arc(
 		gameState.ball.x,
 		gameState.ball.y,
@@ -97,7 +59,27 @@ export function drawGame(gameState: GameState)
 	ctx.fill();
 }
 
-export function gameLoop(roomId: string) {
-	let gameState = initGame();
-	drawGame(gameState);
+export function gameLoop(roomId: string)
+{
+	const ws = getWebSocket();
+	let gameState: any;
+	if (!ws) {
+		console.error("No websocket open"); // ne devrait jamais arriver
+		return;
+	}
+	ws.addEventListener("message", (event) => {
+		const data = JSON.parse(event.data);
+		if (data.type === "infoRoom") {
+			gameState = data.state;
+			drawGame(gameState);
+		}
+	});
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "ArrowUp") ws.send(JSON.stringify({type: "move", direction: "up", roomId: roomId}));
+		if (event.key === "ArrowDown") ws.send(JSON.stringify({type: "move", direction: "down", roomId: roomId}));
+
+		if (event.key === "w") ws.send(JSON.stringify({type: "move", direction: "up", roomId: roomId}));
+		if (event.key === "s") ws.send(JSON.stringify({type: "move", direction: "down", roomId: roomId}));
+	});
 }

@@ -1,4 +1,5 @@
 import { Router } from "../router";
+import { initWebSocket, getWebSocket } from "../game/singleton";
 
 export function renderDashboard() {
   document.getElementById("app")!.innerHTML = `
@@ -33,7 +34,7 @@ export function handleClicks(router: Router)
 	const token = localStorage.getItem("authToken");
 	const pseudo = localStorage.getItem("pseudo");
 
-	const ws = new WebSocket(`ws://localhost:3000/ws?token=${token}`); // a changer avec le proxy jpense
+	const ws = initWebSocket(token);
 
 	ws.addEventListener("open", () => {
 		ws.send(JSON.stringify({

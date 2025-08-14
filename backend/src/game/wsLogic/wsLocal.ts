@@ -1,7 +1,7 @@
 //import type { GameState, Player, Paddle, Ball } from "../interface"
 import { GameState, GameRoom, getNextRoomId, initGame, setRoom } from "../interface"
 
-export function wsLocal(websocket: WebSocket, player: string, tokken: string) {
+export function wsLocal(websocket: WebSocket, player: string, tokken: string | null) {
 
 	const idRoom = getNextRoomId();
 	const namePlayer1 = player;
@@ -24,6 +24,5 @@ export function wsLocal(websocket: WebSocket, player: string, tokken: string) {
 	}
 
 	setRoom(idRoom, room);
-
-
+	return room;
 }

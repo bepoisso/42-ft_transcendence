@@ -17,7 +17,7 @@ export class Router {
 	}
 
 	// pour naviguer vers une page
-	navigate(path: string) {
+	navigate(path: string | null) {
 		history.pushState(null, "", path);
 		this.checkRoute();
 	}

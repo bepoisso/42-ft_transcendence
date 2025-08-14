@@ -41,7 +41,7 @@ export interface GameState {
 
 interface PlayerConnection {
 	socket: WebSocket | null; // null si déconnecté
-	token: string;
+	token: string | null;
 	username: string;
 }
 
