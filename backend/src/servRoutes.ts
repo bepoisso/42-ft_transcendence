@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { WSRoutes } from "./game/wsRoutes";
+import { ping, register, login } from "./auth/auth";
 
 // CE fichier sert simplement a prendre toutes les API
 export async function servRoutes(fastify: FastifyInstance)
@@ -18,8 +19,22 @@ export async function servRoutes(fastify: FastifyInstance)
 	// 	reply.send(result); // c'est le return de ma fonction en gros
 	// })
 
+	fastify.get("/ping", async (request, reply) => {
+		const result = await ping();
+		reply.send(result);
+	});
 
+	fastify.post("/register", async (request, reply) => {
+		const { username, email, password } = request.body as any;
+		const result = await register(username, email, password);
+		reply.send(result);
+	});
 
+	fastify.post("/login", async (request, reply) => {
+		const { email, password } = request.body as any;
+		const result = await login(email, password);
+		reply.send(result);
+	});
 
 	// Gere WS
 	WSRoutes(fastify);
