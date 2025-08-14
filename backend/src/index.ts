@@ -1,6 +1,6 @@
 import Fastify from 'fastify'
 import cors from "@fastify/cors";
-import fastifyWebsocket from "fastify-websocket";
+import websocket from "@fastify/websocket";
 import { servRoutes } from "./servRoutes";
 
 
@@ -22,7 +22,7 @@ async function buildServer() {
 	});
 
 	// On instaure Websocket ici
-	await server.register(fastifyWebsocket);
+	await server.register(websocket);
 
 	// Ici on ajoute le fichier de route qui contient toute les API + WS
 	await server.register(servRoutes);

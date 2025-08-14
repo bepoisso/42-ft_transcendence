@@ -12,16 +12,6 @@ export function renderRegister() {
 
     <form id="new-player-form" class="flex flex-col">
       <div class="flex flex-col mb-6">
-        <label class="mb-1 font-semibold text-white" for="name">Name:</label>
-        <input id="name" class="px-2 py-1 rounded bg-gray-800 text-white" type="text" placeholder="Name" />
-      </div>
-
-      <div class="flex flex-col mb-6">
-        <label class="mb-1 font-semibold text-white" for="firstName">First name:</label>
-        <input id="firstName" class="px-2 py-1 rounded bg-gray-800 text-white" type="text" placeholder="First name" />
-      </div>
-
-      <div class="flex flex-col mb-6">
         <label class="mb-1 font-semibold text-white" for="pseudo">Pseudo:</label>
         <input id="pseudo" class="px-2 py-1 rounded bg-gray-800 text-white" type="text" placeholder="Spike" />
       </div>
@@ -76,13 +66,13 @@ async function checkUserExist(email: string, pseudo: string,): Promise<{ emailEx
 
 
 // Fonction pour appeler user-service pour sauvegarder le user en tant que non vérifié
-async function saveUnverifiedUser(name: string, firstName: string, pseudo: string, email: string, password: string): Promise<boolean> {
+async function saveUnverifiedUser(pseudo: string, email: string, password: string): Promise<boolean> {
   const response = await fetch("/api/users/saveUser", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({name, firstName, pseudo, email, password}),
+    body: JSON.stringify({pseudo, email, password}),
   });
   const data = await response.json();
   if (data.success) {
@@ -103,14 +93,12 @@ export function registerSubmit(router: Router)
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		const name = (document.getElementById("name") as HTMLInputElement).value;
-		const firstName = (document.getElementById("firstName") as HTMLInputElement).value;
 		const pseudo = (document.getElementById("pseudo") as HTMLInputElement).value;
 		const email = (document.getElementById("email") as HTMLInputElement).value;
 		const password = (document.getElementById("password") as HTMLInputElement).value;
 
 		// On vérifie que les champs sont bien remplis
-		if ( !name.trim() || !firstName.trim() || !email.trim() || !password.trim() || !pseudo.trim()) {
+		if ( !email.trim() || !password.trim() || !pseudo.trim()) {
 		const errorMessage = document.getElementById("error-message");
 		if (errorMessage)
 			errorMessage.textContent = "All fields are required !";
@@ -141,7 +129,7 @@ export function registerSubmit(router: Router)
 
 		// 2 - Sauvegarder comme non verifier le user dans la DB
 		try {
-			const success = await saveUnverifiedUser(name, firstName, pseudo, email, password);
+			const success = await saveUnverifiedUser(pseudo, email, password);
 			if (!success) {
 				console.error("Erreur user database");
 				return;

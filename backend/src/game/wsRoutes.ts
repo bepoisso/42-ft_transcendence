@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import fastifyWebsocket from "fastify-websocket";
+import websocket from "@fastify/websocket";
 import { wsLocal } from "./wsLogic/wsLocal";
 
 
