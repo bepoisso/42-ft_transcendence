@@ -8,8 +8,11 @@ import { Router } from "./router";
 import { renderHome } from "./view/home";
 import { LoginSubmit, renderLogin } from "./view/login";
 import { registerSubmit, renderRegister } from "./view/register";
-import { renderDashboard} from "./view/dashboard";
+import { dashboardHandler, renderDashboard, setDashboard} from "./view/dashboard";
 import { renderGame, gameLoop } from "./game/game";
+import { render2fa } from "./view/2fa";
+import { renderTest } from "./view/test";
+import { renderMyProfile, setMyProfile } from "./view/myProfile";
 
 
 export class App
@@ -29,7 +32,17 @@ export class App
 				renderRegister();
 				registerSubmit(self.router)
 			},
-			"/dashboard": renderDashboard,
+			"/2fa": render2fa,
+			"/test": renderTest,
+			"/dashboard": () => {
+				renderDashboard();
+				setDashboard();
+				dashboardHandler(self.router);
+			},
+			"/myProfile": () => {
+				renderMyProfile();
+				setMyProfile();
+			},
 			"/game/:id": (params: any) => {
 				renderGame();
 				gameLoop(params.id)
@@ -52,7 +65,7 @@ export class App
 				this.router.navigate(href);
 			}
 		});
-		this.router.checkRoute();
+		this.router.checkRoute(); // ?
 	}
 
 }
