@@ -31,11 +31,9 @@ export function ping() {
 };
 
 export async function register(username:string, email:string, password:string) {
-	console.log("Test ici here");
 	if (!username || !email || !password) {
 		return { statusCode: 400, message: "Missing required fields" };
 	}
-	console.log("Test ici here");
 
 	// Password email username policy
 	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -50,11 +48,9 @@ export async function register(username:string, email:string, password:string) {
 
 	try {
 		db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
-		console.log("we pass here");
 		return { statusCode: 200, message: "User Succefully register"};
 	} catch (err) {
 		console.error(err);
-		console.log("Error? here");
 		return { statusCode: 400, message: "Bad request" };
 	}
 };
