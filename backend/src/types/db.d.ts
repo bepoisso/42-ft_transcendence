@@ -4,5 +4,5 @@ export interface User{
 	username: string;
 	email?: string;
 	password_hash?: string;
-	github_id?: string;
+	google_id?: string;
 }
