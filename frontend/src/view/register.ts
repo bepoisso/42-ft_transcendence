@@ -85,7 +85,6 @@ export function registerSubmit(router: Router)
 		// Vérifie que le username a au moins 3 char
 		const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
-
 		if (!passwordRegex.test(password)) {
 			const errorMessage = document.getElementById("error-message");
 			if (errorMessage)
