@@ -31,9 +31,11 @@ export function ping() {
 };
 
 export async function register(username:string, email:string, password:string) {
+	console.log("Test ici here");
 	if (!username || !email || !password) {
 		return { statusCode: 400, message: "Missing required fields" };
 	}
+	console.log("Test ici here");
 
 	// Password email username policy
 	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -48,9 +50,11 @@ export async function register(username:string, email:string, password:string) {
 
 	try {
 		db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
-		return { statusCode: 200, message: "User Succefully register"}
+		console.log("we pass here");
+		return { statusCode: 200, message: "User Succefully register"};
 	} catch (err) {
-		console.error(err)
+		console.error(err);
+		console.log("Error? here");
 		return { statusCode: 400, message: "Bad request" };
 	}
 };
@@ -87,10 +91,10 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 
 	try {
 		let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
-		
+
 		// If user doesn't exist create it
 		if (!user) {
-			// Generate a random pasword 
+			// Generate a random pasword
 			const randomPassword = Math.random().toString(36).slice(-10);
 			const passwordHash = await bcrypt.hash(randomPassword, 10);
 
@@ -103,7 +107,7 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 			if (!user) {
 				return { statusCode: 500, message: "Failed to create user" };
 			}
-		} 
+		}
 		// If user exists but dosen't have a google_id in db, update it
 		else if (!user.google_id) {
 			db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
@@ -111,8 +115,8 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 
 		const token = signToken({ id: user.id, username: user.username });
 
-		return { 
-			statusCode: 200, 
+		return {
+			statusCode: 200,
 			message: "Successfully authenticated with Google",
 			token
 		};
