@@ -42,48 +42,23 @@ export function renderRegister() {
 }
 
 
-//Fonction pour appeler user-service pour check si email ou pseudo n'existent pas déjà
-async function checkUserExist(email: string, pseudo: string,): Promise<{ emailExists: boolean; pseudoExists: boolean }> {
-	const response = await fetch("/api/users/check", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({ email: email, pseudo: pseudo }),
-	});
-	if (!response.ok) {
-		throw new Error("Erreur lors de la vérification du pseudo/email");
-	}
-
-	const data = await response.json();
-
-	return {
-		emailExists: data.emailExists,
-		pseudoExists: data.pseudoExists,
-	};
-}
 
 
 
 // Fonction pour appeler user-service pour sauvegarder le user en tant que non vérifié
-async function saveUnverifiedUser(pseudo: string, email: string, password: string): Promise<boolean> {
-  const response = await fetch("/api/users/saveUser", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({pseudo, email, password}),
-  });
-  const data = await response.json();
-  if (data.success) {
-    return true;
-  }
-  else {
-    console.error("Erreur database :", data.error);
-    return false;
-  }
-}
+async function preRegister(username: string, email: string, password: string): Promise<{statusCode: number, message: string, token: string}> {
+	const response = await fetch("/api/register", {
+		method: "POST",
+		headers: {
+		"Content-Type": "application/json",
+		},
+		body: JSON.stringify({username, email, password}),
+	});
 
+	const data = await response.json();
+
+	return data;
+}
 
 
 export function registerSubmit(router: Router)
@@ -93,51 +68,74 @@ export function registerSubmit(router: Router)
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		const pseudo = (document.getElementById("pseudo") as HTMLInputElement).value;
+		const username = (document.getElementById("pseudo") as HTMLInputElement).value;
 		const email = (document.getElementById("email") as HTMLInputElement).value;
 		const password = (document.getElementById("password") as HTMLInputElement).value;
 
 		// On vérifie que les champs sont bien remplis
-		if ( !email.trim() || !password.trim() || !pseudo.trim()) {
+		if ( !email.trim() || !password.trim() || !username.trim()) {
 		const errorMessage = document.getElementById("error-message");
 		if (errorMessage)
 			errorMessage.textContent = "All fields are required !";
 		return;
 		}
 
-		// On fait un appel API pour vérifier que les pseudos et email sont nouveaux
-		try {
-			const { emailExists, pseudoExists } = await checkUserExist(email, pseudo);
+		// Vérifier que le mot de passe est valide
+		// Vérifie que le mail est valide
+		// Vérifie que le username a au moins 3 char
+		const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+
+
+		if (!passwordRegex.test(password)) {
 			const errorMessage = document.getElementById("error-message");
-			if (!errorMessage) return;
-			if (emailExists) {
-				errorMessage.textContent = "Email already used !";
+			if (errorMessage)
+				errorMessage.textContent = "Password must be at least 8 characters long and contain at least one number and one special character.";
 				return;
-			} else if (pseudoExists) {
-			errorMessage.textContent = "Pseudo already used !";
+		}
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+		if (!emailRegex.test(email)) {
+			const errorMessage = document.getElementById("error-message");
+			if (errorMessage)
+				errorMessage.textContent = "Please enter a valid email address.";
+				return;
+		}
+
+		const usernameRegex = /^[a-zA-Z0-9]{3,}$/;
+
+		if (!usernameRegex.test(username)) {
+			const errorMessage = document.getElementById("error-message");
+			if (errorMessage)
+				errorMessage.textContent = "Username must be at least 3 characters long.";
 			return;
-			}
-		} catch (error) {
-			console.error("Erreur lors de la vérification :", error);
-			return ;
 		}
 
 
-		// Si on arrive ici c'est que les pseudo + emails sont nouveaux
-		// On va envoyer un mail de confirmation. Si le mail est bon on sauvegarde dans la base de donnée
-
-
-		// 2 - Sauvegarder comme non verifier le user dans la DB
+		// Envoyer le pré-register au back
 		try {
-			const success = await saveUnverifiedUser(pseudo, email, password);
-			if (!success) {
-				console.error("Erreur user database");
+			const data = await preRegister(username, email, password);
+			if (data.statusCode === 200) {
+				console.log("successfully pre-register")
+				localStorage.setItem("token", data.token);
+				// rediriger vers 2FA
+				router.navigate("/2fa");
+			}
+			else {
+				console.error("Erreur lors du préRegister : " + data.message);
+				const errorMessage = document.getElementById("error-message");
+				if (errorMessage)
+					errorMessage.textContent = data.message;
 				return;
 			}
 		} catch (error) {
-			console.error("Erreur lors du save-user : ", error);
+			console.error("Erreur lors du préRegister : ", error);
+			const errorMessage = document.getElementById("error-message");
+				if (errorMessage)
+					errorMessage.textContent = "Error preRegister";
 			return;
 		}
 
 	});
 }
+

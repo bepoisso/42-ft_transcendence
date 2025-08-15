@@ -23,36 +23,25 @@ export function renderLogin() {
           Login
         </button>
       </form>
-
     </div>
   </div>
   `;
 }
 
 
-// Fonction pour savoir si on a une 2FA
-async function tryLogin(email: string, password: string): Promise < {is2FA: boolean; userID?: string; error?: string}> {
-	try {
-		const response = await fetch("/api/users/tryLogin", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-		body: JSON.stringify({email, password}),
-		});
-		if (!response.ok) {
-			throw new Error("Login failed");
-		}
-		const result = await response.json();
-		return result;
 
-	} catch (err) {
-		console.error("Error on tryLogin function: ", err);
-		return {
-			is2FA: false,
-			error: "Erreur réseau ou serveur",
-		};
-	}
+// Fonction pour savoir si on a une 2FA
+async function Login(email: string, password: string): Promise < {statusCode: number, message?: string, token: string}>
+{
+	const response = await fetch("/api/users/tryLogin", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({email, password}),
+	});
+	const data = response.json();
+	return data;
 }
 
 export function LoginSubmit(router: Router)
@@ -72,22 +61,14 @@ export function LoginSubmit(router: Router)
 		return;
 		}
 
+
 		try {
-
-			const result = await tryLogin(email, password);
-
-			if (result.error) {
-				alert(result.error);
-				return ;
-			}
-			// Si on me demande une 2fa j'envoie la page 2fa sinon j'envoie dashboard
-			if (result.is2FA) {
-				if (result.userID)
-					sessionStorage.setItem("userIdFor2FA", result.userID);
+			const data = await Login(email, password);
+			if (data.statusCode === 200) {
+				console.log("successfully logged in")
+				localStorage.setItem("token", data.token);
+				// rediriger vers 2FA
 				router.navigate("/2fa");
-			} else {
-				// Attention il faut que je localStorage l'userID et le pseudo
-				router.navigate("/dashboard");
 			}
 
 		} catch (err) {
