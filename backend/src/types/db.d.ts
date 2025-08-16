@@ -5,4 +5,6 @@ export interface User{
 	email?: string;
 	password_hash?: string;
 	google_id?: string;
+	twoFaEnable?: boolean;
+	twoFaSecret: string;
 }

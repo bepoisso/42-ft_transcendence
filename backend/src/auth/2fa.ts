@@ -4,6 +4,12 @@ import twofactor from "node-2fa";
 import bd from "../db/db";
 import { STATUS_CODES } from "http";
 import { REPL_MODE_SLOPPY } from "repl";
+import jwt, { TokenExpiredError } from "jsonwebtoken";
+import type { User } from "../types/db";
+import type { Generate2FAResponse } from "../types/auth"
+import db from "../db/db"
+import { signToken, verifyToken} from "../auth/auth_token"
+
 
 
 export async function generate2FA(username: string) {
@@ -24,19 +30,21 @@ export async function generate2FA(username: string) {
 };
 
 export async function verify2FA(username: string, input: string) {
-	const row = bd.prepare('SELECT 2fa_secret FROM users WHERE username = ?').get(username) as { '2fa_secret': string } | undefined;
-	const secret = row ? row['2fa_secret'] : null;
+	let user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User;
 
-	if (!secret) {
+	if (!user.twoFaSecret) {
 		return { statusCode: 404, message: "2fa not set for this user" };
 	}
 
-	const result = twofactor.verifyToken(secret, input);
+	const result = twofactor.verifyToken(user.twoFaSecret, input);
 	if (!result) {
 		return { statusCode: 401, message: "Code invalid" };
 	}
 
-	return { success: true };
+	const token = signToken({ id: user.id, username: user.username, twoFaEnable: true });
+	db.prepare('UPDATE users SET 2fa_enable = ? WHERE username = ?').run(true, username);
+
+	return { success: true, token };
 }
 
 export async function is2faEnable(username: string) {

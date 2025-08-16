@@ -3,17 +3,22 @@ import fastify from "fastify";
 
 import { FastifyRequest, FastifyReply } from 'fastify';
 
-export function signToken(user: { id: number; username: string }): string {
+export function signToken(user: { id: number; username: string; twoFaEnable: boolean }): string {
 	const jwtsecret = process.env.JWT_SECRET;
 	if (!jwtsecret) {
 		throw new Error('JWT_SECRET evironement variable is not set');
 	}
-	const payload = { id: user.id, username: user.username };
+	const payload = { id: user.id, username: user.username, twoFaEnable: user.twoFaEnable };
 
-	return jwt.sign(payload, jwtsecret, { expiresIn: '1h' });
+	if (user.twoFaEnable) {
+		return jwt.sign(payload, jwtsecret, { expiresIn: '4h' });
+	} else {
+		return jwt.sign(payload, jwtsecret, { expiresIn: '15m' });
+
+	}
 };
 
-export function verifyAuth(request:FastifyRequest, reply: FastifyReply, done: Function) {
+export function verifyToken(request:FastifyRequest, reply: FastifyReply, done: Function) {
 
 
 	try {

@@ -5,6 +5,10 @@ import { googleOauth } from "./auth/auth_provider";
 import { generate2FA, verify2FA, is2faEnable } from "./auth/2fa";
 import { request } from "http";
 import { Script } from "vm";
+import type { User } from "./types/db";
+import db from "./db/db"
+import { TokenExpiredError } from "jsonwebtoken";
+
 
 // CE fichier sert simplement a prendre toutes les API
 export async function servRoutes(fastify: FastifyInstance)
@@ -31,6 +35,7 @@ export async function servRoutes(fastify: FastifyInstance)
 	fastify.post("/register", async (request, reply) => {
 		const { username, email, password } = request.body as any;
 		const result = await register(username, email, password);
+		// reply.cookie("token", result.token, { httpOnly: true, secure: true });
 		reply.send(result);
 	});
 
@@ -71,6 +76,14 @@ export async function servRoutes(fastify: FastifyInstance)
 		const {username, input} = request.body as any;
 		const result = verify2FA(username, input);
 		reply.send(result);
+	});
+
+	fastify.get("/api/auth/2fa/check", async (request, reply) => {
+		const user = db.prepare('SELECT * FROM users WHERE username = ?').get(request.body as any) as User;
+		if (!user) {
+			return reply.status(404).send({error: "User not found"});
+		}
+		return {status: user.twoFaEnable};
 	});
 
 	// Gere WS

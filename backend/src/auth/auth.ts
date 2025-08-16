@@ -8,7 +8,7 @@ import { METHODS } from "http";
 import { REPL_MODE_SLOPPY } from "repl";
 import { FastifyInstance } from "fastify";
 import { signToken } from './auth_token';
-import { verifyAuth } from './auth_token';
+import { verifyToken } from './auth_token';
 import { error } from "console";
 import { brotliCompressSync } from "zlib";
 import { User } from '../types/db';
@@ -47,7 +47,7 @@ export async function register(username:string, email:string, password:string) {
 	const passwordHash = await bcrypt.hash(password, 10);
 
 	try {
-		db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
+		db.prepare('INSERT INTO users (username, email, password_hash, 2fa_enable) VALUES (?, ?, ?, ?)').run(username, email, passwordHash, false);
 		return { statusCode: 200, message: "User Succefully register"};
 	} catch (err) {
 		console.error(err);
@@ -75,8 +75,7 @@ export async function login(email:string, password:string) {
 		throw new Error('JWT_SECRET environment variable is not set');
 	}
 
-	const token = signToken({ id: user.id, username: user.username });
-	console.log("Success login");
+	const token = signToken({ id: user.id, username: user.username, twoFaEnable: user.twoFaEnable ?? false });
 	return {token};
 };
 
@@ -94,9 +93,8 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 			const randomPassword = Math.random().toString(36).slice(-10);
 			const passwordHash = await bcrypt.hash(randomPassword, 10);
 
-			db.prepare('INSERT INTO users (username, email, password_hash, google_id) VALUES (?, ?, ?, ?)').run(
-				username, email, passwordHash, googleId
-			);
+			db.prepare('INSERT INTO users (username, email, password_hash, google_id, 2fa_enable) VALUES (?, ?, ?, ?, ?)').run(
+				username, email, passwordHash, googleId, false);
 
 			user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
 
@@ -109,7 +107,7 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 			db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
 		}
 
-		const token = signToken({ id: user.id, username: user.username });
+		const token = signToken({ id: user.id, username: user.username, twoFaEnable: user.twoFaEnable ?? false});
 
 		return {
 			statusCode: 200,
