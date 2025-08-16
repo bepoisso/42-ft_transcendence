@@ -36,17 +36,20 @@ export async function servRoutes(fastify: FastifyInstance)
 	fastify.post("/login", async (request, reply) => {
 		const { email, password } = request.body as any;
 		const result = await login(email, password);
+		if (typeof result.token === "string") {
+			reply.cookie("token", result.token, { httpOnly: true, secure: true });
+		}
 		reply.send(result);
 	});
 
 	fastify.get("/auth/google/callback", async (request, reply) => {
-		const result = await googleOauth(request, reply, fastify);
-		reply.type("test/html").send(`
-			<script>
-				localStorage.setItem("jwt", ${result.token});
-				window.location.href = "/";
-			</script>
-		`);
+		const token = (await googleOauth(request, reply, fastify)).token;
+		if (typeof token === "string") {
+			reply.cookie("token", token, { httpOnly: true, secure: true });
+			reply.redirect("http://127.0.0.1:5173/auth/2fa")
+		} else {
+			reply.status(400).send({ error: "Token is missing or invalid." });
+		}
 	});
 
 	// Gere WS

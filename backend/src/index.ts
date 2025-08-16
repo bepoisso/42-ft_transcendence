@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import { servRoutes } from "./servRoutes";
 import { registerGoogleOAuth2Provider } from "./auth/auth_provider";
+import cookie from '@fastify/cookie';
 
 
 // Normalement rien ne doit etre touché ici avant un moment. C'est juste le lancement du serveur
@@ -23,11 +24,14 @@ async function buildServer() {
 	});
 
 	// On instaure Websocket ici
+	// On instaure Websocket ici
 	await server.register(websocket);
+
+	// Register cookie support
+	await server.register(cookie);
 
 	// Enregistre le fournisseur Google OAuth2
 	registerGoogleOAuth2Provider(server);
-
 	// Ici on ajoute le fichier de route qui contient toute les API + WS
 	await server.register(servRoutes);
 
