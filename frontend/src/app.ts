@@ -6,8 +6,8 @@ Router appelle les methodes de app en fonction du path*/
 
 import { Router } from "./router";
 import { renderHome } from "./view/home";
-import { LoginSubmit, renderLogin } from "./view/login";
-import { registerSubmit, renderRegister } from "./view/register";
+import { loginHandler, renderLogin } from "./view/login";
+import { registerHandler, renderRegister } from "./view/register";
 import { dashboardHandler, renderDashboard, setDashboard} from "./view/dashboard";
 import { renderGame, gameLoop } from "./game/game";
 import { render2fa } from "./view/2fa";
@@ -26,11 +26,11 @@ export class App
 			"/" : renderHome,
 			"/login": () => {
 				renderLogin();
-				LoginSubmit(self.router)
+				loginHandler(self.router)
 			},
 			"/register": () => {
 				renderRegister();
-				registerSubmit(self.router)
+				registerHandler(self.router)
 			},
 			"/2fa": render2fa,
 			"/test": renderTest,
