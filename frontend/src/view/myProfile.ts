@@ -220,7 +220,7 @@ Promise <{statusCode: number, message?: string}>
 }
 
 
-function saveHandler(router: Router)
+function saveHandler()
 {
 	const btn = document.getElementById("save-profile");
 	btn?.addEventListener("click", async (e) => {
@@ -304,7 +304,7 @@ Promise <{statusCode: number, message?: string}>
 	return data;
 }
 
-function passwordHandler(router: Router)
+function passwordHandler()
 {
 	const btn = document.getElementById("change-password");
 	btn?.addEventListener("click", async (e) => {
@@ -367,8 +367,8 @@ function passwordHandler(router: Router)
 	});
 }
 
-export function myProfileHandler(router: Router)
+export function myProfileHandler()
 {
-	saveHandler(router);
-	passwordHandler(router);
+	saveHandler();
+	passwordHandler();
 }

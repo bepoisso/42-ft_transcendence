@@ -126,9 +126,7 @@ function formHandler(router: Router)
 		try {
 			const data = await preRegister(username, email, password);
 			if (data.statusCode === 200) {
-				console.log("successfully pre-register")
-				//localStorage.setItem("token", data.token);
-				// rediriger vers 2FA
+				localStorage.setItem("username", username);
 				router.navigate("/2fa");
 			}
 			else {
@@ -152,18 +150,18 @@ function formHandler(router: Router)
 
 
 function googleHandler(router: Router) {
-  const btnGoogle = document.getElementById("google");
-  btnGoogle?.addEventListener("click", async (e) => {
-    e.preventDefault();
+	const btnGoogle = document.getElementById("google");
+	btnGoogle?.addEventListener("click", async (e) => {
+		e.preventDefault();
 
-    try {
-		window.location.href = "/auth/google";
-		// demander a recupérer les infos
-    } catch (err) {
-      console.error("Erreur lors de la connexion Google :", err);
-    }
-  });
-}
+		try {
+			window.location.href = "/auth/google";
+			// demander a recupérer les infos
+		} catch (err) {
+		console.error("Erreur lors de la connexion Google :", err);
+		}
+	});
+	}
 
 export function registerHandler(router: Router) {
   formHandler(router); // ton handler du submit

@@ -10,11 +10,18 @@ export function renderDashboard() {
       <!-- HEADER (full-width) -->
       <div class="w-full flex justify-between items-center px-4 py-3 border-b border-gray-700">
         <!-- Recherche -->
-        <input
-          type="text"
-          placeholder="Rechercher..."
-          class="px-3 py-2 w-full max-w-xl rounded bg-gray-800 border border-gray-600 text-white focus:outline-none"
-        />
+        <div class="relative w-full max-w-xl">
+		  <input
+			type="text"
+			id="search"
+			placeholder="Search friends..."
+			class="px-3 py-2 w-full rounded bg-gray-800 border border-gray-600 text-white focus:outline-none"
+		  />
+			<div id="search-results"
+				class="absolute top-full left-0 mt-1 w-full bg-gray-800 rounded shadow-lg z-50 hidden">
+			</div>
+		</div>
+
 
         <!-- Avatar + Nom -->
         <div class="flex items-center gap-3 ml-4">
@@ -84,8 +91,7 @@ async function fetchUserData(token: string) : Promise <{
 	name: string,
 	avatarURL?: string
 	// Il faudra aussi ajouter les amis et meme tous les gens disponibles non ?
-}>
-{
+}>{
 	const response = await fetch("/api/dashboard", {
 		method: "POST",
 		headers: {
@@ -167,7 +173,7 @@ export function modeClick(router: Router, btnId: string, modes: string)
 				// Log test
 				console.log("Room créée :", data.roomId);
 
-				// Rediriger la route
+				// Rediriger la route (faudrait encore une fois verifier le token)
 				router.navigate(`/game/${data.roomId}`);
 			}
 		});
@@ -213,11 +219,148 @@ export function myProfileClick(router: Router)
 	});
 }
 
+
+
+// ==================================================================================================
+// 								Gestion de la barre de recherche									||
+// ===================================================================================================
+
+interface user {
+	id: number;
+	name: string;
+	avatarURL?: string;
+};
+
+async function fetchUserSuggestions(query: string) {
+	return {
+		statusCode: 200,
+		message: "all good",
+		users: [
+			{
+				id: 3,
+				name: "Thierry",
+				avatarURL: undefined,
+			},
+			{
+				id: 3,
+				name: "Stephanie",
+				avatarURL: undefined,
+			},
+			{
+				id: 3,
+				name: "Fab",
+				avatarURL: undefined,
+			},
+		]
+	}
+}
+// async function fetchUserSuggestions(query: string) : Promise <{
+// 	statusCode: number,
+// 	message?: string,
+// 	users: user[],
+// 	// Il faudra aussi ajouter les amis et meme tous les gens disponibles non ?
+// }> {
+// 	const response = await fetch(`/api/users?search=${encodeURIComponent(query)}`, {
+// 		method: "GET",
+// 		headers: {
+// 		"Content-Type": "application/json",
+// 		},
+// 	});
+// 	const data = await response.json();
+// 	return data;
+// }
+
+
+async function visitProfile(token: string, id: number) : Promise <{
+	statusCode: number,
+	message?: string,
+}> {
+	const response = await fetch(`/api/visitProfile?search=${id}`, {
+		method: "GET",
+		headers: {
+			"Authorization": `Bearer ${token}`,
+			"Content-Type": "application/json",
+		},
+	});
+	const data = await response.json();
+	return data;
+}
+
+
+function renderSearch(router: Router, users: user[]) {
+
+	const results = document.getElementById("search-results")!;
+	results.innerHTML = ""; //clear
+
+	// si la taille est a 0
+	 if (users.length === 0) {
+		results.classList.add("hidden");
+		return;
+	}
+
+	users.forEach(user => {
+		const insertHTML = document.createElement("div");
+
+
+		insertHTML.className = "flex items-center gap-3 px-4 py-2 hover:bg-gray-700 cursor-pointer";
+
+		insertHTML.innerHTML = `
+			<img src="${user.avatarURL ?? "../assets/basic_avatar.png"}"
+				class="w-8 h-8 rounded-full object-cover">
+			<span>${user.name}</span>
+		`;
+
+		insertHTML.addEventListener("click", async () => {
+			// ici on va pouvoir aller sur leur profile
+			const token = localStorage.getItem("token");
+			if (!token) return;
+			try {
+
+				const data = await visitProfile(token, user.id);
+				if (data.statusCode === 200) {
+
+					router.navigate("/visitProfile/:id");
+				}
+			} catch (err) {
+				console.error("Error when consult page : ", err);
+				return;
+			}
+		});
+
+		// On ajoute le bloc à la liste des résultats
+		results.appendChild(insertHTML);
+	});
+	results.classList.remove("hidden");
+}
+
+function searchBar(router: Router)
+{
+	const searchInput = document.getElementById("search");
+
+	searchInput?.addEventListener('input', async (e) => {
+	const query = (e.target as HTMLInputElement).value.trim();
+
+		try {
+			const users = await fetchUserSuggestions(query);
+			if (users.statusCode !== 200) return ; // Cela veut dire qu'on a rien trouvé
+			console.log("on passe dans search bar"); // ============================================= DEL
+			renderSearch(router, users.users);
+		} catch (err) {
+			console.error("Error searching people : ", err);
+			return;
+		}
+	});
+}
+
+
+
 export function dashboardHandler(router: Router)
 {
 	modeClick(router, "btnLocal", "local");
 	modeClick(router, "btnAI", "AI");
 	modeClick(router, "btnOnline", "online");
+
+	searchBar(router);
 	myProfileClick(router);
 	// Penser a la logique de tournois
 }
