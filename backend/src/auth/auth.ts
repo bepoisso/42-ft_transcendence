@@ -47,7 +47,7 @@ export async function register(username:string, email:string, password:string) {
 	const passwordHash = await bcrypt.hash(password, 10);
 
 	try {
-		db.prepare('INSERT INTO users (username, email, password_hash, 2fa_enable) VALUES (?, ?, ?, ?)').run(username, email, passwordHash, false);
+		db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
 		return { statusCode: 200, message: "User Succefully register"};
 	} catch (err) {
 		console.error(err);
@@ -93,8 +93,8 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 			const randomPassword = Math.random().toString(36).slice(-10);
 			const passwordHash = await bcrypt.hash(randomPassword, 10);
 
-			db.prepare('INSERT INTO users (username, email, password_hash, google_id, 2fa_enable) VALUES (?, ?, ?, ?, ?)').run(
-				username, email, passwordHash, googleId, false);
+			db.prepare('INSERT INTO users (username, email, password_hash, google_id) VALUES (?, ?, ?, ?)').run(
+				username, email, passwordHash, googleId);
 
 			user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
 
