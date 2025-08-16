@@ -110,7 +110,7 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 		}
 
 		const token = signToken({ id: user.id, username: user.username });
-
+		console.log("We pass here");
 		return {
 			statusCode: 200,
 			message: "Successfully authenticated with Google",

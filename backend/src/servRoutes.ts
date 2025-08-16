@@ -3,6 +3,7 @@ import { WSRoutes } from "./game/wsRoutes";
 import { ping, register, login } from "./auth/auth";
 import { googleOauth } from "./auth/auth_provider";
 import { request } from "http";
+import { Script } from "vm";
 
 // CE fichier sert simplement a prendre toutes les API
 export async function servRoutes(fastify: FastifyInstance)
@@ -40,7 +41,12 @@ export async function servRoutes(fastify: FastifyInstance)
 
 	fastify.get("/auth/google/callback", async (request, reply) => {
 		const result = await googleOauth(request, reply, fastify);
-		reply.send(result);
+		reply.type("test/html").send(`
+			<script>
+				localStorage.setItem("jwt", ${result.token});
+				window.location.href = "/";
+			</script>
+		`);
 	});
 
 	// Gere WS
