@@ -10,7 +10,7 @@ import { loginHandler, renderLogin } from "./view/login";
 import { registerHandler, renderRegister } from "./view/register";
 import { dashboardHandler, renderDashboard, setDashboard} from "./view/dashboard";
 import { renderGame, gameLoop } from "./game/game";
-import { render2fa } from "./view/2fa";
+import { logic2fa, render2fa } from "./view/2fa";
 import { renderTest } from "./view/test";
 import { renderMyProfile, setMyProfile } from "./view/myProfile";
 
@@ -32,7 +32,10 @@ export class App
 				renderRegister();
 				registerHandler(self.router)
 			},
-			"/2fa": render2fa,
+			"/2fa": () => {
+			render2fa();
+			logic2fa(self.router);
+			},
 			"/test": renderTest,
 			"/dashboard": () => {
 				renderDashboard();

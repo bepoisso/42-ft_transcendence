@@ -61,6 +61,7 @@ export function renderMyProfile() {
               class="px-6 py-2 bg-green-600 rounded hover:bg-green-700 font-semibold">
               Save
             </button>
+			<p id="error-save" class="text-red-500 mt-2"></p>
           </div>
 
           <!-- Changer mot de passe -->
@@ -93,6 +94,7 @@ export function renderMyProfile() {
                 Update password
               </button>
             </div>
+			<p id="error-password" class="text-red-500 mt-2"></p>
           </div>
 
         </div>
@@ -107,40 +109,42 @@ export function renderMyProfile() {
 // 					Appelle du back pour dynamiquement modifier les éléments						||
 // ===================================================================================================
 
-// test sans back
-async function fetchUserData(token: string) {
-	return {statusCode: 200, message: "all good", name: "Hadri", tournamentName: "Spike", email:"Mon email", avatarURL: null, gamesPlayed: "10", gamesWon: "8"};
-}
-// async function fetchUserData(token: string) : Promise <{
-// 	statusCode: number,
-// 	message?: string,
-// 	name: string,
-// 	tournamentName: string,
-// 	email: string,
-// 	avatarURL?: string,
-// 	gamesPlayed: string,
-// 	gamesWon: string
-// }>
-// {
-// 	const response = await fetch("/api/myProfile", {
-// 		method: "POST",
-// 		headers: {
-// 			"Authorization": `Bearer ${token}`,
-// 			"Content-Type": "application/json",
-// 		},
-// 	});
-// 	const data = await response.json();
-// 	return data;
+// // test sans back
+// async function fetchUserData(token: string) {
+// 	return {statusCode: 200, message: "all good", name: "Hadri", tournamentName: "Spike", email:"Mon email", avatarURL: null, gamesPlayed: "10", gamesWon: "8"};
 // }
+
+async function fetchUserData(token: string) : Promise <{
+	statusCode: number,
+	message?: string,
+	name: string,
+	tournamentName: string,
+	email: string,
+	avatarURL?: string,
+	gamesPlayed: string,
+	gamesWon: string
+// Il faudra ajouter les parties + peut etre les amis
+}>
+{
+	const response = await fetch("/api/myProfile", {
+		method: "POST",
+		headers: {
+			"Authorization": `Bearer ${token}`,
+			"Content-Type": "application/json",
+		},
+	});
+	const data = await response.json();
+	return data;
+}
 
 
 export async function setMyProfile()
 {
-	// const token = localStorage.getItem("token");
-	// if (!token) return;
+	const token = localStorage.getItem("token");
+	if (!token) return;
 
 	try {
-			const data = await fetchUserData("token");
+			const data = await fetchUserData(token);
 
 			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
@@ -192,4 +196,179 @@ export async function setMyProfile()
 }
 
 
+// ==================================================================================================
+// 					Handler des modifications sur le profil											||
+// ===================================================================================================
 
+async function saveUserData(token: string, userName: string, userTournament: string, userEmail: string):
+Promise <{statusCode: number, message?: string}>
+{
+	const response = await fetch("/api/myProfile", {
+		method: "PUT",
+		headers: {
+			"Authorization": `Bearer ${token}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			name: userName,
+			tournamentName: userTournament,
+			email: userEmail
+		}),
+	});
+	const data = await response.json();
+	return data;
+}
+
+
+function saveHandler()
+{
+	const btn = document.getElementById("save-profile");
+	btn?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		const token = localStorage.getItem("token");
+		if (!token) return;
+
+		const userNameInput = document.getElementById("user-name") as HTMLInputElement | null;
+		const userTournamentInput = document.getElementById("tournament-username") as HTMLInputElement | null;
+		const userEmailInput = document.getElementById("myEmail") as HTMLInputElement | null;
+
+		if (!userNameInput || !userTournamentInput || !userEmailInput) {
+			const errorMessage = document.getElementById("error-save");
+			if (errorMessage)
+				errorMessage.textContent = "Need to fill all informations";
+			return;
+		}
+
+		const userName = userNameInput.value;
+		const userTournament = userTournamentInput.value;
+		const userEmail = userEmailInput.value;
+
+
+
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+		if (!emailRegex.test(userEmail)) {
+			const errorMessage = document.getElementById("error-save");
+			if (errorMessage)
+				errorMessage.textContent = "Please enter a valid email address.";
+				return;
+		}
+
+		const usernameRegex = /^[a-zA-Z0-9]{3,}$/;
+
+		if (!usernameRegex.test(userName) || !usernameRegex.test(userTournament)) {
+			const errorMessage = document.getElementById("error-save");
+			if (errorMessage)
+				errorMessage.textContent = "Username must be at least 3 characters long.";
+			return;
+		}
+
+		try {
+				const data = await saveUserData(token, userName, userTournament, userEmail);
+
+			// Soit on ne parvient pas à récup les infos
+			if (data.statusCode !== 200) {
+				console.error("Error with myProfile : " + data.message);
+				throw new Error("Failed to fetch user profile information");
+			}
+
+		} catch (err) {
+			console.error("Error saving user information: ", err);
+		}
+
+
+	});
+}
+
+
+
+
+
+async function updatePassword(token: string, oldPass: string, newPass: string, confirmPass: string):
+Promise <{statusCode: number, message?: string}>
+{
+	const response = await fetch("/api/myProfile/password", {
+		method: "PUT",
+		headers: {
+			"Authorization": `Bearer ${token}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			password: oldPass,
+			newPassword: newPass,
+			confirmPassword: confirmPass
+		}),
+	});
+	const data = await response.json();
+	return data;
+}
+
+function passwordHandler()
+{
+	const btn = document.getElementById("change-password");
+	btn?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		const token = localStorage.getItem("token");
+		if (!token) return;
+
+		const oldPassInput = document.getElementById("current-password") as HTMLInputElement | null;
+		const newPassInput = document.getElementById("new-password") as HTMLInputElement | null;
+		const confirmPassInput = document.getElementById("confirm-password") as HTMLInputElement | null;
+
+		if (!oldPassInput || !newPassInput || !confirmPassInput) {
+			console.error("One or more input elements not found");
+			// ecrire un message d'erreur
+			return;
+		}
+
+		const oldPass = oldPassInput.value;
+		const newPass = newPassInput.value;
+		const confirmPass = confirmPassInput.value;
+
+		if (newPass === oldPass) {
+			const errorMessage = document.getElementById("error-password");
+			if (errorMessage)
+				errorMessage.textContent = "Password didn't change !";
+			return;
+		}
+
+		if (newPass !== confirmPass) {
+			const errorMessage = document.getElementById("error-password");
+			if (errorMessage)
+				errorMessage.textContent = "new passwords must be identical !";
+			return;
+		}
+
+		const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+
+		if (!passwordRegex.test(newPass)) {
+			const errorMessage = document.getElementById("error-password");
+			if (errorMessage)
+				errorMessage.textContent = "Password must be at least 8 characters long and contain at least one number and one special character.";
+				return;
+		}
+
+
+		try {
+				const data = await updatePassword(token, oldPass, newPass, confirmPass);
+
+			// Soit on ne parvient pas à récup les infos
+			if (data.statusCode !== 200) {
+				console.error("Error with myProfile : " + data.message);
+				throw new Error("Failed to fetch user profile information");
+			}
+
+		} catch (err) {
+			console.error("Error saving user information: ", err);
+		}
+
+	});
+}
+
+export function myProfileHandler()
+{
+	saveHandler();
+	passwordHandler();
+}
