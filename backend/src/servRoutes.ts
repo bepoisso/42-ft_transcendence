@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { WSRoutes } from "./game/wsRoutes";
 import { ping, register, login } from "./auth/auth";
 import { googleOauth } from "./auth/auth_provider";
+import { generate2FA, verify2FA, is2faEnable } from "./auth/2fa";
 import { request } from "http";
 import { Script } from "vm";
 
@@ -44,12 +45,32 @@ export async function servRoutes(fastify: FastifyInstance)
 
 	fastify.get("/auth/google/callback", async (request, reply) => {
 		const token = (await googleOauth(request, reply, fastify)).token;
+		var username = (await googleOauth(request, reply, fastify)).username || "";
+		if (!username) {
+			return reply.status(404).send({error: "Username is missing"});
+		}
 		if (typeof token === "string") {
 			reply.cookie("token", token, { httpOnly: true, secure: true });
-			reply.redirect("http://127.0.0.1:5173/auth/2fa")
+			if (await is2faEnable(username)) {
+				reply.redirect("http://127.0.0.1:5173/auth/2fa/verify");
+			} else {
+				reply.redirect("http://127.0.0.1:5173/auth/2fa/generate");
+			}
 		} else {
 			reply.status(400).send({ error: "Token is missing or invalid." });
 		}
+	});
+
+	fastify.post("/auth/2fa/generate", async (request, reply) => {
+		const username = request.body as any;
+		const result = generate2FA(username);
+		reply.send(result);
+	});
+
+	fastify.post("/auth/2fa/verify", async (request, reply) => {
+		const {username, input} = request.body as any;
+		const result = verify2FA(username, input);
+		reply.send(result);
 	});
 
 	// Gere WS

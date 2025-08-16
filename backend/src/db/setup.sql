@@ -5,5 +5,7 @@ CREATE TABLE users (
 	username TEXT NOT NULL UNIQUE,
 	email TEXT UNIQUE,
 	password_hash TEXT,
-	google_id TEXT UNIQUE
+	google_id TEXT UNIQUE,
+	2fa_enable BOOLEAN,
+	2fa_secret TEXT UNIQUE
 );
