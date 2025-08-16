@@ -104,6 +104,5 @@ export async function logic2fa(router: Router)
 				console.error("Error 2fa : ", err);
 				return;
 		}
-	});
-}
+	});}
 

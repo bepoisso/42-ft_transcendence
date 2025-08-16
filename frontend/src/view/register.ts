@@ -124,6 +124,7 @@ function formHandler(router: Router)
 
 		// Envoyer le pré-register au back
 		try {
+			console.log(username+" "+email+" "+password)
 			const data = await preRegister(username, email, password);
 			if (data.statusCode === 200) {
 				localStorage.setItem("username", username);
