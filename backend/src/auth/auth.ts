@@ -75,7 +75,7 @@ export async function login(email:string, password:string) {
 		throw new Error('JWT_SECRET environment variable is not set');
 	}
 
-	const token = signToken({ id: user.id, username: user.username, twoFaEnable: user.twoFaEnable ?? false });
+	const token = signToken({ id: user.id, username: user.username, twofa_enable: user.twofa_enable ?? false });
 	return {token};
 };
 
@@ -107,7 +107,7 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 			db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
 		}
 
-		const token = signToken({ id: user.id, username: user.username, twoFaEnable: user.twoFaEnable ?? false});
+		const token = signToken({ id: user.id, username: user.username, twofa_enable: user.twofa_enable ?? false});
 
 		return {
 			statusCode: 200,

@@ -67,14 +67,14 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 	fastify.post("/auth/2fa/generate", async (request, reply) => {
-		const username = request.body as any;
-		const result = generate2FA(username);
+		const { username } = request.body as any;
+		const result = await generate2FA(username);
 		reply.send(result);
 	});
 
 	fastify.post("/auth/2fa/verify", async (request, reply) => {
 		const {username, input} = request.body as any;
-		const result = verify2FA(username, input);
+		const result = await verify2FA(username, input);
 		reply.send(result);
 	});
 
@@ -83,7 +83,7 @@ export async function servRoutes(fastify: FastifyInstance)
 		if (!user) {
 			return reply.status(404).send({error: "User not found"});
 		}
-		return {status: user.twoFaEnable};
+		return {status: user.twofa_enable};
 	});
 
 	// Gere WS
