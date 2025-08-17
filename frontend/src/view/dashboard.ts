@@ -1,5 +1,5 @@
 import { Router } from "../router";
-import { initWebSocket, getWebSocket } from "../game/singleton";
+import { initWebSocket, getWebSocket } from "../sockets/socket";
 
 
 
@@ -318,20 +318,10 @@ function renderSearch(router: Router, users: user[]) {
 			<span>${user.name}</span>
 		`;
 
-		insertHTML.addEventListener("click", async () => {
-			// ici on va pouvoir aller sur leur profile
-			try {
-
-				const data = await visitProfile(user.id);
-				if (data.statusCode === 200) {
-
-					router.navigate("/visitProfile/:id");
-				}
-			} catch (err) {
-				console.error("Error when consult page : ", err);
-				return;
-			}
+		insertHTML.addEventListener("click", () => {
+			router.navigate(`/visitProfile/${user.id}`);
 		});
+
 
 		// On ajoute le bloc à la liste des résultats
 		results.appendChild(insertHTML);
