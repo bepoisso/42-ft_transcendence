@@ -127,6 +127,7 @@ function formHandler(router: Router)
 			console.log(username+" "+email+" "+password)
 			const data = await preRegister(username, email, password);
 			if (data.statusCode === 200) {
+				console.log("here ?");
 				localStorage.setItem("username", username);
 				router.navigate("/2fa");
 			}
