@@ -1,6 +1,6 @@
 import type { GameState } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
-import { getWebSocket } from "./singleton";
+import { getWebSocket } from "../sockets/socket";
 
 export function renderGame() {
   document.getElementById("app")!.innerHTML = `

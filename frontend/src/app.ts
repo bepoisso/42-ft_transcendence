@@ -13,7 +13,7 @@ import { renderGame, gameLoop } from "./game/game";
 import { logic2fa, render2fa } from "./view/2fa";
 import { renderTest } from "./view/test";
 import { renderMyProfile, setMyProfile } from "./view/myProfile";
-import { renderVisitProfile } from "./view/visitProfile";
+import { renderVisitProfile, visitProfileHandler } from "./view/visitProfile";
 
 
 export class App
@@ -49,6 +49,7 @@ export class App
 			},
 			"/visitProfile/:id": (params: any) => {
 				renderVisitProfile();
+				visitProfileHandler(params.id);
 			},
 			"/game/:id": (params: any) => {
 				renderGame();

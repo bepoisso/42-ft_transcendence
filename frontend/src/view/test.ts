@@ -1,5 +1,5 @@
 import { Router } from "../router";
-import { initWebSocket, getWebSocket } from "../game/singleton";
+import { initWebSocket, getWebSocket } from "../sockets/socket";
 
 export function renderTest() {
   document.getElementById("app")!.innerHTML = `

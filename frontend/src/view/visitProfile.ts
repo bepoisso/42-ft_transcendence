@@ -1,9 +1,153 @@
+import { handleClicks } from "./test";
+
 export function renderVisitProfile() {
   document.getElementById("app")!.innerHTML = `
-	<div class="z-10 flex flex-col items-center space-y-10 relative h-screen justify-center">
-	  <h1 class="md:text-[6rem] text-[4rem] font-[400] pointer-events-none drop-shadow-md text-white">
-		LOGIQUE FRIEND PROFILE
-	  </h1>
-	</div>
+    <div class="min-h-screen w-full overflow-x-hidden text-white flex flex-col">
+
+      <!-- HEADER -->
+      <div class="w-full flex justify-between items-center px-4 py-3 border-b border-gray-700">
+        <h1 class="text-xl font-bold">User Profile</h1>
+      </div>
+
+      <!-- CONTENU -->
+      <div class="flex flex-1 w-full p-6 justify-center items-center bg-gray-900">
+        <div class="flex flex-col items-center space-y-8">
+
+          <!-- Avatar + Nom -->
+          <div class="flex flex-col items-center space-y-3">
+            <img id="user-avatar"
+                 src="../assets/basic_avatar.png"
+                 class="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg">
+            <h2 id="user-name" class="text-2xl font-semibold">Loading...</h2>
+          </div>
+
+          <!-- Stats cercles -->
+          <div class="flex space-x-10">
+            <div class="w-28 h-28 rounded-full bg-gray-800 flex flex-col justify-center items-center shadow-md">
+              <p id="wins" class="text-2xl font-bold">0</p>
+              <p class="text-gray-400 text-sm">Wins</p>
+            </div>
+            <div class="w-28 h-28 rounded-full bg-gray-800 flex flex-col justify-center items-center shadow-md">
+              <p id="played" class="text-2xl font-bold">0</p>
+              <p class="text-gray-400 text-sm">Played</p>
+            </div>
+          </div>
+
+          <!-- Boutons -->
+          <div class="flex space-x-6">
+            <button id="add-friend"
+              class="px-6 py-2 bg-blue-600 rounded-xl hover:bg-blue-700 font-semibold shadow hidden">
+              Add Friend
+            </button>
+            <button id="invite-play"
+              class="px-6 py-2 bg-green-600 rounded-xl hover:bg-green-700 font-semibold shadow">
+              Invite to Play
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
   `;
+}
+
+
+// // Test
+// function fetchUserData() {
+// 	return {
+// 		statusCode: 200,
+// 		message: "all good",
+// 		username: "Fab",
+// 		avatarURL: undefined,
+// 		gamesPlayed: "10",
+// 		gamesWon: "5",
+// 		friend: false
+// 	}
+// }
+
+async function fetchUserData(id: number, username: string): Promise<{
+	statusCode: number,
+	message?: string,
+	username: string,
+	avatarURL?: string,
+	gamesPlayed: string,
+	gamesWon: string,
+	friend: boolean
+	}> {
+	const response = await fetch("/api/visitProfile", {
+		method: "POST",
+		headers: {
+		"Content-Type": "application/json",
+		},
+	});
+	return await response.json();
+}
+
+
+async function setVisitProfile(id: number)
+{
+	try {
+		const username = localStorage.getItem("username")!;
+		const data = await fetchUserData(id, username);
+
+		if (data.statusCode !== 200) {
+			console.error("Error with visitProfile : " + data.message);
+			throw new Error("Failed to fetch user profile information");
+		}
+
+		// username
+		const userName = document.getElementById("user-name");
+		if (userName) {
+			userName.textContent = data.username;
+		}
+
+		// avatar
+		if (data.avatarURL) {
+			const userAvatar = document.getElementById("user-avatar") as HTMLImageElement;
+			if (userAvatar) userAvatar.src = data.avatarURL;
+		}
+
+		// stats
+		const userGames = document.getElementById("played");
+		if (userGames) {
+			userGames.textContent = data.gamesPlayed;
+		}
+
+		const userWins = document.getElementById("wins");
+		if (userWins) {
+			userWins.textContent = data.gamesWon;
+		}
+
+		// bouton "Add Friend" seulement si pas encore amis
+		const addFriendBtn = document.getElementById("add-friend");
+		if (addFriendBtn) {
+			if (!data.friend) {
+				addFriendBtn.classList.remove("hidden");
+		} else {
+			addFriendBtn.classList.add("hidden");
+		}
+		}
+
+	} catch (err) {
+		console.error("Error fetching user information: ", err);
+	}
+}
+
+
+
+function inviteGame() {
+	const btn = document.getElementById("invite-play");
+	btn?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+
+	});
+}
+
+
+export function visitProfileHandler(id: number)
+{
+	setVisitProfile(id);
+	inviteGame();
+
 }
