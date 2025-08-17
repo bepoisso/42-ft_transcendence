@@ -61,14 +61,14 @@ Promise <{
 }
 
 
-async function verify2fa(username: string, pass: string): Promise <{statusCode: number, message: string}>
+async function verify2fa(username: string, input: string): Promise <{statusCode: number, message: string}>
 {
 	const response = await fetch("/api//auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({username, pass}),
+		body: JSON.stringify({username, input}),
 	});
 
 	const data = await response.json();
@@ -115,5 +115,6 @@ export async function logic2fa(router: Router)
 				console.error("Error 2fa : ", err);
 				return;
 		}
-	});}
+	});
+}
 
