@@ -67,7 +67,7 @@ export function renderDashboard() {
         <!-- Colonne droite : 20% largeur -->
         <div class="w-1/5 p-6 overflow-y-auto min-w-0">
           <h2 class="text-xl font-bold mb-4"> Friends </h2>
-          <div id="game-list" class="space-y-3">
+          <div id="friends-list" class="space-y-3">
             <p class="text-gray-400">No friends yet...</p>
           </div>
         </div>
@@ -85,12 +85,21 @@ export function renderDashboard() {
 // async function fecthUserData(token: string) {
 // 	return {statusCode: 200, message: "all good", name: "Test"};
 // }
+
+
+interface friend {
+	id: number,
+	name: string,
+	avatarURL?: string,
+	online?: boolean
+}
+
 async function fetchUserData(token: string) : Promise <{
 	statusCode: number,
 	message?: string,
 	name: string,
 	avatarURL?: string
-	// Il faudra aussi ajouter les amis et meme tous les gens disponibles non ?
+	friends?: friend[]
 }>{
 	const response = await fetch("/api/dashboard", {
 		method: "POST",
@@ -271,14 +280,13 @@ async function fetchUserSuggestions(query: string) {
 // }
 
 
-async function visitProfile(token: string, id: number) : Promise <{
+async function visitProfile(id: number) : Promise <{
 	statusCode: number,
 	message?: string,
 }> {
 	const response = await fetch(`/api/visitProfile?search=${id}`, {
 		method: "GET",
 		headers: {
-			"Authorization": `Bearer ${token}`,
 			"Content-Type": "application/json",
 		},
 	});
@@ -312,11 +320,9 @@ function renderSearch(router: Router, users: user[]) {
 
 		insertHTML.addEventListener("click", async () => {
 			// ici on va pouvoir aller sur leur profile
-			const token = localStorage.getItem("token");
-			if (!token) return;
 			try {
 
-				const data = await visitProfile(token, user.id);
+				const data = await visitProfile(user.id);
 				if (data.statusCode === 200) {
 
 					router.navigate("/visitProfile/:id");
@@ -354,16 +360,123 @@ function searchBar(router: Router)
 
 
 
+
+// ==================================================================================================
+// 								Logique barre d'amis												||
+// ===================================================================================================
+
+
+interface Friend {
+  id: number;
+  username: string;
+  avatarURL?: string;
+  online: boolean;
+}
+
+
+function test(query: string) {
+	return {
+		friends: [
+			{
+				id: 3,
+				username: "Thierry",
+				avatarURL: undefined,
+				online: true,
+			},
+			{
+				id: 2,
+				username: "Stephanie",
+				avatarURL: undefined,
+				online: true,
+			},
+			{
+				id: 1,
+				username: "Fab",
+				avatarURL: undefined,
+				online: false,
+			},
+		]
+	}
+}
+
+// renderFriendsSidebar(test("str").friends);
+
+async function fetchFriendsStatus(router: Router)
+{
+	// try {
+	// 	const res = await fetch("api/friends/status");
+	// 	if (!res.ok) throw new Error("Erreur serveur");
+
+	// 	const friends = await res.json();
+	// 	renderFriendsSidebar(friends);
+	// } catch (err) {
+	// 	console.error("Impossible de récupérer les amis :", err);
+	// }
+
+	renderFriendsSidebar(router, test("str").friends);
+}
+
+
+
+function renderFriendsSidebar(router: Router, friends: Friend[])
+{
+	const sidebar = document.getElementById("friends-list");
+	if (!sidebar) return;
+
+	sidebar.innerHTML = "";
+	if (friends.length === 0) {
+		sidebar.innerHTML = `<p class="text-gray-400">No friends yet...</p>`;
+		return;
+	}
+
+	// Logique friends
+	friends.forEach(friend => {
+		const friendEl = document.createElement("div");
+		friendEl.className = "flex items-center space-x-2 p-2 hover:bg-blue-700 rounded cursor-pointer";
+
+
+		// avatar
+		const avatar = document.createElement("img");
+		if (friend.avatarURL)
+			avatar.src = friend.avatarURL;
+		else
+			avatar.src = "../assets/basic_avatar.png";
+		avatar.className = "w-8 h-8 rounded-full";
+		friendEl.appendChild(avatar);
+
+		// status
+		const statusDot = document.createElement("span");
+		statusDot.className = `w-3 h-3 rounded-full ${friend.online ? "bg-green-500" : "bg-red-500"}`;
+		friendEl.appendChild(statusDot);
+
+		// username
+		const username = document.createElement("span");
+		username.textContent = friend.username;
+		friendEl.appendChild(username);
+
+		friendEl.addEventListener("click", () => {
+			router.navigate(`/visitProfile/${friend.id}`);
+		});
+
+
+		sidebar.appendChild(friendEl);
+	});
+}
+
+
+
+
+
+
 export function dashboardHandler(router: Router)
 {
 	modeClick(router, "btnLocal", "local");
 	modeClick(router, "btnAI", "AI");
 	modeClick(router, "btnOnline", "online");
+	fetchFriendsStatus(router);
 
 	searchBar(router);
 	myProfileClick(router);
 	// Penser a la logique de tournois
 }
-
-
 
