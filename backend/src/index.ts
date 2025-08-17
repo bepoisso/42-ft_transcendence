@@ -10,7 +10,7 @@ dotenv.config();
 
 // Normalement rien ne doit etre touché ici avant un moment. C'est juste le lancement du serveur
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // =============================================================================
 //						buildServer() : configure le serveur				  ||

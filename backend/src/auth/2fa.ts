@@ -1,9 +1,6 @@
 import {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import dotenv from "dotenv";
 import twofactor from "node-2fa";
-import bd from "../db/db";
-import { STATUS_CODES } from "http";
-import { REPL_MODE_SLOPPY } from "repl";
 import jwt, { TokenExpiredError } from "jsonwebtoken";
 import type { User } from "../types/db";
 import type { Generate2FAResponse } from "../types/auth"
@@ -22,7 +19,7 @@ export async function generate2FA(username: string) {
 	};
 
 	try {
-		bd.prepare('UPDATE users SET twofa_secret = ?, twofa_enable = ? WHERE username = ?').run(result.secret, true, username);
+		db.prepare('UPDATE users SET twofa_secret = ?, twofa_enable = ? WHERE username = ?').run(result.secret, true, username);
 		return result;
 	} catch (err) {
 		return {statusCode: 500, message: "Internal server error"};
@@ -48,5 +45,5 @@ export async function verify2FA(username: string, input: string) {
 }
 
 export async function is2faEnable(username: string) {
-	return bd.prepare('SELECT twofa_enableFROM users WHERE username = ?').get(username);
+	return db.prepare('SELECT twofa_enable FROM users WHERE username = ?').get(username);
 }
