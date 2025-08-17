@@ -22,7 +22,7 @@ export async function generate2FA(username: string) {
 	};
 
 	try {
-		bd.prepare('UPDATE users SET 2fa_secret = ?, 2fa_enable = ? WHERE username = ?').run(result.secret, true, username);
+		bd.prepare('UPDATE users SET twofa_secret = ?, twofa_enable = ? WHERE username = ?').run(result.secret, true, username);
 		return result;
 	} catch (err) {
 		return {statusCode: 500, message: "Internal server error"};
@@ -42,11 +42,11 @@ export async function verify2FA(username: string, input: string) {
 	}
 
 	const token = signToken({ id: user.id, username: user.username, twoFaEnable: true });
-	db.prepare('UPDATE users SET 2fa_enable = ? WHERE username = ?').run(true, username);
+	db.prepare('UPDATE users SET twofa_enable = ? WHERE username = ?').run(true, username);
 
 	return { success: true, token };
 }
 
 export async function is2faEnable(username: string) {
-	return bd.prepare('SELECT 2fa_enable FROM users WHERE username = ?').get(username);
+	return bd.prepare('SELECT twofa_enableFROM users WHERE username = ?').get(username);
 }

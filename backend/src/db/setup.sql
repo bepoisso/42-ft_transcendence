@@ -6,6 +6,6 @@ CREATE TABLE users (
 	email TEXT UNIQUE,
 	password_hash TEXT,
 	google_id TEXT UNIQUE,
-	2fa_enable BOOLEAN DEFAULT 0,
-	2fa_secret TEXT UNIQUE
+	twofa_enable BOOLEAN DEFAULT 0,
+	twofa_secret TEXT UNIQUE
 );

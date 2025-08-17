@@ -11,6 +11,21 @@ declare module 'fastify' {
 	}
 }
 
+// Validation des variables d'environnement
+const requiredEnvVars = {
+	GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+	GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI
+};
+
+// Vérifier que toutes les variables d'environnement sont définies
+for (const [key, value] of Object.entries(requiredEnvVars)) {
+	if (!value) {
+		console.error(`❌ Variable d'environnement manquante: ${key}`);
+		console.log(`Veuillez définir ${key} dans votre fichier .env`);
+	}
+}
+
 // Google OAuth2 Options
 const googleOAuth2Options = {
 	name: 'GoogleOAuth2',

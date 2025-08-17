@@ -4,11 +4,13 @@ import websocket from "@fastify/websocket";
 import { servRoutes } from "./servRoutes";
 import { registerGoogleOAuth2Provider } from "./auth/auth_provider";
 import cookie from '@fastify/cookie';
+import dotenv from 'dotenv';
 
+dotenv.config();
 
 // Normalement rien ne doit etre touché ici avant un moment. C'est juste le lancement du serveur
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3001;
 
 // =============================================================================
 //						buildServer() : configure le serveur				  ||
@@ -20,7 +22,7 @@ async function buildServer() {
 
 
 	await server.register(cors, {
-		origin: "http://localhost:3000", // en prod il faudra mettre le nom du serv
+		origin: `http://localhost:${PORT}`, // en prod il faudra mettre le nom du serv
 	});
 
 	// On instaure Websocket ici
