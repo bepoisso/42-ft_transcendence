@@ -10,7 +10,7 @@ export function render2fa() {
       </h1>
 
       <!-- QR Code -->
-      <div id="qrcode" class="bg-white p-4 rounded-lg shadow-md"></div>
+      <canvas id="qrcode" class="bg-white p-4 rounded-lg shadow-md"></canvas>
 
       <!-- Champ pour entrer le code -->
       <form id="verify-2fa-form" class="flex flex-col items-center space-y-4 w-full max-w-sm">
@@ -37,7 +37,15 @@ export function render2fa() {
 }
 
 
-async function fetchURI(username: string) : Promise <{uri: string}>
+async function fetchURI(username: string):
+Promise <{
+	statusCode: number,
+	data: {
+		qr: string,
+		secret: string,
+		uri: string,
+	}
+}>
 {
 	const response = await fetch("/api/auth/2fa/generate", {
 		method: "POST",
@@ -53,14 +61,14 @@ async function fetchURI(username: string) : Promise <{uri: string}>
 }
 
 
-async function verify2fa(username: string, pass: string): Promise <{success: boolean}>
+async function verify2fa(username: string, password: string): Promise <{statusCode: number, message: string}>
 {
 	const response = await fetch("/api//auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({username, pass}),
+		body: JSON.stringify({username, password}),
 	});
 
 	const data = await response.json();
@@ -73,9 +81,11 @@ export async function logic2fa(router: Router)
 	const username = localStorage.getItem("username");
 	if (!username) return;
 	const data = await fetchURI(username);
-	const qrCode = document.getElementById("qrcode");
-	if (qrCode) {
-		QRCode.toCanvas(qrCode, data.uri, { width: 200 });
+	console.log(data);
+
+	const qrCodeContainer = document.getElementById("qrcode");
+	if (qrCodeContainer) {
+		await QRCode.toCanvas(qrCodeContainer, data.data.qr, { width: 200 });
 	}
 
 	const submit = document.getElementById("submit");
@@ -91,7 +101,8 @@ export async function logic2fa(router: Router)
 		}
 		try {
 			const verify = await verify2fa(username, code);
-			if (verify.success) {
+			console.log(verify);
+			if (verify.statusCode === 200) {
 				router.navigate("/dashboard");
 			}
 			else {
