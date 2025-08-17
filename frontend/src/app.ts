@@ -13,6 +13,7 @@ import { renderGame, gameLoop } from "./game/game";
 import { logic2fa, render2fa } from "./view/2fa";
 import { renderTest } from "./view/test";
 import { renderMyProfile, setMyProfile } from "./view/myProfile";
+import { renderVisitProfile } from "./view/visitProfile";
 
 
 export class App
@@ -45,6 +46,9 @@ export class App
 			"/myProfile": () => {
 				renderMyProfile();
 				setMyProfile();
+			},
+			"/visitProfile/:id": (params: any) => {
+				renderVisitProfile();
 			},
 			"/game/:id": (params: any) => {
 				renderGame();
