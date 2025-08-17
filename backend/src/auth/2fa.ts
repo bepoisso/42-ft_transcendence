@@ -1,6 +1,6 @@
 import {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import dotenv from "dotenv";
-import twofactor from "node-2fa";
+import * as twofactor from "node-2fa";
 import jwt, { TokenExpiredError } from "jsonwebtoken";
 import type { User } from "../types/db";
 import type { Generate2FAResponse } from "../types/auth"
@@ -22,7 +22,7 @@ export async function generate2FA(username: string) {
 		db.prepare('UPDATE users SET twofa_secret = ?, twofa_enable = ? WHERE username = ?').run(result.secret, true, username);
 		return result;
 	} catch (err) {
-		return {statusCode: 500, message: "Internal server error"};
+		return {statusCode: 500, message: "Internal server error", err};
 	}
 };
 
