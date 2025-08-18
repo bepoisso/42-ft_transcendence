@@ -63,7 +63,7 @@ export async function googleOauth(request: FastifyRequest, reply: FastifyReply, 
 
 		const { email, name, picture, id } = userInfo;
 
-		const result = await loginOrCreateGoogleUser(email, name, id);
+		const result = await loginOrCreateGoogleUser(email, id);
 
 		return result;
 	} catch (err) {

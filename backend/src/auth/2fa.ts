@@ -51,7 +51,7 @@ export async function verify2FA(username: string, input: string) {
 	try {
 
 		db.prepare('UPDATE users SET twofa_enable = ? WHERE id = ?').run(1, user.id);
-		const token = signToken({ id: user.id, username: user.username, twofa_enable: true });
+		const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: true });
 		return { statusCode: 200, message: "Success", token };
 	} catch (err) {
 		return { statusCode: 500, message: "SQL errror" };
