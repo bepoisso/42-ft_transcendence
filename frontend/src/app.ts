@@ -8,10 +8,9 @@ import { Router } from "./router";
 import { renderHome } from "./view/home";
 import { loginHandler, renderLogin } from "./view/login";
 import { registerHandler, renderRegister } from "./view/register";
-import { dashboardHandler, renderDashboard, setDashboard} from "./view/dashboard";
-import { renderGame, gameLoop } from "./game/game";
+import { dashboardHandler, renderDashboard, setDashboard} from "./view/dashboard/dashboard";
+import { renderGame, gameLoop } from "./view/game/game";
 import { logic2fa, render2fa } from "./view/2fa";
-import { renderTest } from "./view/test";
 import { renderMyProfile, setMyProfile } from "./view/myProfile";
 import { renderVisitProfile, visitProfileHandler } from "./view/visitProfile";
 
@@ -37,7 +36,6 @@ export class App
 			render2fa();
 			logic2fa(self.router);
 			},
-			"/test": renderTest,
 			"/dashboard": () => {
 				renderDashboard();
 				setDashboard();
@@ -53,7 +51,7 @@ export class App
 			},
 			"/game/:id": (params: any) => {
 				renderGame();
-				gameLoop(params.id)
+				gameLoop(self.router, params.id)
 			}
 		};
 		this.router = new Router(routes, this.isAuthentified.bind(this));

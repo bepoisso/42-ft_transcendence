@@ -7,11 +7,11 @@
 */
 import { io, Socket } from "socket.io-client";
 import { sendInvite } from "./invite";
-import { sendGame } from "./game";
+import { Router } from "../router";
 
 export let socket: Socket | null = null;
 
-export function getSocket(): Socket {
+export function getSocket(router: Router): Socket {
 	if (!socket) {
 		socket = io("http://localhost:3000", { withCredentials: true });
 
@@ -20,15 +20,14 @@ export function getSocket(): Socket {
 		});
 
 		socket.on("receive_invite", (data) => {
-			console.log("Invitation reçue :", data);
+			console.log("Invitation reçue : ", data);
 			sendInvite(socket!, data);
 		});
 
 		socket.on("game_ready", (data) => {
-			console.log("game is ready with info: ", data);
-			sendGame(socket!, data);
+			console.log("Game is ready : ", data);
+			router.navigate(`/game/${data.roomId}`);
 		})
-
 	}
 	return socket;
 }

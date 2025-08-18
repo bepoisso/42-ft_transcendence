@@ -1,4 +1,3 @@
-import { handleClicks } from "./test";
 
 export function renderVisitProfile() {
   document.getElementById("app")!.innerHTML = `

@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { WSRoutes } from "./game/wsRoutes";
+import { socketHandler } from "./game/socket";
 import { ping, register, login } from "./auth/auth";
 import { googleOauth } from "./auth/auth_provider";
 import { generate2FA, verify2FA, is2faEnable } from "./auth/2fa";
@@ -61,23 +61,23 @@ export async function servRoutes(fastify: FastifyInstance)
 	fastify.get("/auth/google/callback", async (request, reply) => {
 		try {
 			const result = await googleOauth(request, reply, fastify);
-			
+
 			if (result.statusCode !== 200) {
 				return reply.status(result.statusCode).send({ error: result.message });
 			}
 
 			const { token, username } = result as { token: string; username: string; statusCode: number; message: string };
-			
+
 			if (!username) {
 				return reply.status(404).send({error: "Username is missing"});
 			}
-			
+
 			if (!token) {
 				return reply.status(400).send({ error: "Token is missing or invalid." });
 			}
 
 			reply.cookie("token", token, { httpOnly: true, secure: true });
-			
+
 			if (await is2faEnable(username)) {
 				reply.redirect(`${gAdress}:${gPortFront}/2fa`);
 			} else {
@@ -109,6 +109,6 @@ export async function servRoutes(fastify: FastifyInstance)
 		return {status: user.twofa_enable};
 	});
 
-	// Gere WS
-	WSRoutes(fastify);
+	// Gere Socket
+	socketHandler(fastify);
 }
