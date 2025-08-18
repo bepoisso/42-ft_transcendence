@@ -79,9 +79,9 @@ export async function login(email:string, password:string) {
 	return {token};
 };
 
-export async function loginOrCreateGoogleUser(email: string, username: string, googleId: string) {
-	if (!email || !username || !googleId) {
-		console.error('Missing required fields:', { email, username, googleId });
+export async function loginOrCreateGoogleUser(email: string, googleId: string) {
+	if (!email || !googleId) {
+		console.error('Missing required fields:', { email,  googleId });
 		return { statusCode: 400, message: "Missing required fields from Google" };
 	}
 
@@ -90,11 +90,10 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 
 		// If user doesn't exist create it
 		if (!user) {
-			console.log('Creating new user for Google OAuth:', { email, username });
+			console.log('Creating new user for Google OAuth:', { email });
 			// Generate a random password
 			const randomPassword = Math.random().toString(36).slice(-10);
 			const passwordHash = await bcrypt.hash(randomPassword, 10);
-			const lastLetters = username.slice(-3);
 			const finalUsername = `user_${Math.random().toString().slice(-5)}${Date.now().toString().slice(-5)}`;
 
 
@@ -113,6 +112,8 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 			console.log('Updating existing user with Google ID:', { email, googleId });
 			db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
 		}
+
+		user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
 
 		const token = signToken({ id: user.id, username: user.username, twofa_enable: user.twofa_enable ?? false});
 
