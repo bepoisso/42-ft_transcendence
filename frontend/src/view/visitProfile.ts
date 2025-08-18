@@ -1,3 +1,6 @@
+import { getSocket } from "../sockets/socket";
+import { Socket } from "socket.io-client";
+import { Router } from "../router";
 
 export function renderVisitProfile() {
   document.getElementById("app")!.innerHTML = `
@@ -67,6 +70,7 @@ export function renderVisitProfile() {
 async function fetchUserData(id: number, username: string): Promise<{
 	statusCode: number,
 	message?: string,
+	userId: string,
 	username: string,
 	avatarURL?: string,
 	gamesPlayed: string,
@@ -93,6 +97,9 @@ async function setVisitProfile(id: number)
 			console.error("Error with visitProfile : " + data.message);
 			throw new Error("Failed to fetch user profile information");
 		}
+
+		//donne egalement le userID que je vais stocker pour la requete
+		localStorage.setItem("userId", data.userId);
 
 		// username
 		const userName = document.getElementById("user-name");
@@ -134,19 +141,21 @@ async function setVisitProfile(id: number)
 
 
 
-function inviteGame() {
+function inviteGame(socket: Socket) {
 	const btn = document.getElementById("invite-play");
 	btn?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
-
+		const userId = localStorage.getItem("userId"); // id de l'ami que j'invite
+		socket.emit("send_invite", {to: userId });
 	});
 }
 
 
-export function visitProfileHandler(id: number)
+export function visitProfileHandler(router: Router, id: number)
 {
+	const socket = getSocket(router);
 	setVisitProfile(id);
-	inviteGame();
+	inviteGame(socket);
 
 }
