@@ -18,7 +18,7 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export function verifyToken(request:FastifyRequest, reply: FastifyReply, done: Function) {
+export function verifyAuthToken(request:FastifyRequest, reply: FastifyReply, done: Function) {
 
 
 	try {
@@ -30,9 +30,16 @@ export function verifyToken(request:FastifyRequest, reply: FastifyReply, done: F
 		if (!jwtsecret) {
 			throw new Error('JWT_SECRET evironement variable is not set');
 		}
-		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string};
+		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
 
 		(request as any).user = decoded;
+
+		if (!decoded.twofa_enable) {
+			const allowedFor2FA = ['/auth/2fa/generate', '/auth/2fa/verify', '/auth/2fa/check'];
+			if (!allowedFor2FA.includes(request.url)) {
+				return reply.status(403).send({ error: 'Two-Factor Authentication required' });
+			}
+		}
 
 		done();
 	} catch (err) {

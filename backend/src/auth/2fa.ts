@@ -5,7 +5,7 @@ import jwt, { TokenExpiredError } from "jsonwebtoken";
 import type { User } from "../types/db";
 import type { Generate2FAResponse } from "../types/auth"
 import db from "../db/db"
-import { signToken, verifyToken} from "../auth/auth_token"
+import { signToken, verifyAuthToken} from "../auth/auth_token"
 
 
 

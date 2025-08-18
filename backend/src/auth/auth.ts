@@ -8,7 +8,7 @@ import { METHODS } from "http";
 import { REPL_MODE_SLOPPY } from "repl";
 import { FastifyInstance } from "fastify";
 import { signToken } from './auth_token';
-import { verifyToken } from './auth_token';
+import { verifyAuthToken } from './auth_token';
 import { error } from "console";
 import { brotliCompressSync } from "zlib";
 import { User } from '../types/db';
@@ -45,10 +45,12 @@ export async function register(username:string, email:string, password:string) {
 
 	// Hash password
 	const passwordHash = await bcrypt.hash(password, 10);
-
+	
 	try {
 		db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
-		return { statusCode: 200, message: "User Succefully register"};
+		let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
+		const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: user.twofa_enable ?? false });
+		return { statusCode: 200, message: "User Succefully register", token};
 	} catch (err) {
 		console.error(err);
 		return { statusCode: 400, message: "Bad request" };
@@ -76,7 +78,7 @@ export async function login(email:string, password:string) {
 	}
 
 	const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: user.twofa_enable ?? false });
-	return {token};
+	return {statusCode: 200, message: "User successfully login", token};
 };
 
 export async function loginOrCreateGoogleUser(email: string, googleId: string) {

@@ -8,6 +8,7 @@ import { Script } from "vm";
 import type { User } from "./types/db";
 import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
+import { verifyAuthToken } from "./auth/auth_token";
 
 
 // CE fichier sert simplement a prendre toutes les API
@@ -35,7 +36,9 @@ export async function servRoutes(fastify: FastifyInstance)
 	fastify.post("/register", async (request, reply) => {
 		const { username, email, password } = request.body as any;
 		const result = await register(username, email, password);
-		// reply.cookie("token", result.token, { httpOnly: true, secure: true });
+		if (typeof result.token === "string") {
+			reply.cookie("token", result.token, { httpOnly: true, secure: true });
+		}
 		reply.send(result);
 	});
 
@@ -79,19 +82,19 @@ export async function servRoutes(fastify: FastifyInstance)
 		}
 	});
 
-	fastify.post("/auth/2fa/generate", async (request, reply) => {
+	fastify.post("/auth/2fa/generate", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const { username } = request.body as any;
 		const result = await generate2FA(username);
 		reply.send(result);
 	});
 
-	fastify.post("/auth/2fa/verify", async (request, reply) => {
+	fastify.post("/auth/2fa/verify", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const {username, input} = request.body as any;
 		const result = await verify2FA(username, input);
 		reply.send(result);
 	});
 
-	fastify.get("/api/auth/2fa/check", async (request, reply) => {
+	fastify.get("/api/auth/2fa/check", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const user = db.prepare('SELECT * FROM users WHERE username = ?').get(request.body as any) as User;
 		if (!user) {
 			return reply.status(404).send({error: "User not found"});
