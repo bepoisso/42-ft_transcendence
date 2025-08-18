@@ -81,6 +81,7 @@ export async function login(email:string, password:string) {
 
 export async function loginOrCreateGoogleUser(email: string, username: string, googleId: string) {
 	if (!email || !username || !googleId) {
+		console.error('Missing required fields:', { email, username, googleId });
 		return { statusCode: 400, message: "Missing required fields from Google" };
 	}
 
@@ -89,34 +90,41 @@ export async function loginOrCreateGoogleUser(email: string, username: string, g
 
 		// If user doesn't exist create it
 		if (!user) {
-			// Generate a random pasword
+			console.log('Creating new user for Google OAuth:', { email, username });
+			// Generate a random password
 			const randomPassword = Math.random().toString(36).slice(-10);
 			const passwordHash = await bcrypt.hash(randomPassword, 10);
+			const lastLetters = username.slice(-3);
+			const finalUsername = `user_${Math.random().toString().slice(-5)}${Date.now().toString().slice(-5)}`;
+
 
 			db.prepare('INSERT INTO users (username, email, password_hash, google_id) VALUES (?, ?, ?, ?)').run(
-				username, email, passwordHash, googleId);
+				finalUsername, email, passwordHash, googleId);
 
 			user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
 
 			if (!user) {
+				console.error('Failed to create user');
 				return { statusCode: 500, message: "Failed to create user" };
 			}
 		}
-		// If user exists but dosen't have a google_id in db, update it
+		// If user exists but doesn't have a google_id in db, update it
 		else if (!user.google_id) {
+			console.log('Updating existing user with Google ID:', { email, googleId });
 			db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
 		}
 
 		const token = signToken({ id: user.id, username: user.username, twofa_enable: user.twofa_enable ?? false});
 
+		console.log('Google OAuth success:', { username: user.username, statusCode: 200 });
 		return {
 			statusCode: 200,
 			message: "Successfully authenticated with Google",
 			token,
-			username
+			username: user.username
 		};
 	} catch (err) {
-		console.error(err);
+		console.error('Database error in loginOrCreateGoogleUser:', err);
 		return { statusCode: 500, message: "Internal server error" };
 	}
 };

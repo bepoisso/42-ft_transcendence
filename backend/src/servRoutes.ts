@@ -49,20 +49,33 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 	fastify.get("/auth/google/callback", async (request, reply) => {
-		const token = (await googleOauth(request, reply, fastify)).token;
-		var username = (await googleOauth(request, reply, fastify)).username || "";
-		if (!username) {
-			return reply.status(404).send({error: "Username is missing"});
-		}
-		if (typeof token === "string") {
-			reply.cookie("token", token, { httpOnly: true, secure: true });
-			if (await is2faEnable(username)) {
-				reply.redirect("http://127.0.0.1:5173/auth/2fa/verify");
-			} else {
-				reply.redirect("http://127.0.0.1:5173/auth/2fa/generate");
+		try {
+			const result = await googleOauth(request, reply, fastify);
+			
+			if (result.statusCode !== 200) {
+				return reply.status(result.statusCode).send({ error: result.message });
 			}
-		} else {
-			reply.status(400).send({ error: "Token is missing or invalid." });
+
+			const { token, username } = result as { token: string; username: string; statusCode: number; message: string };
+			
+			if (!username) {
+				return reply.status(404).send({error: "Username is missing"});
+			}
+			
+			if (!token) {
+				return reply.status(400).send({ error: "Token is missing or invalid." });
+			}
+
+			reply.cookie("token", token, { httpOnly: true, secure: true });
+			
+			if (await is2faEnable(username)) {
+				reply.redirect("http://127.0.0.1:5173/2fa");
+			} else {
+				reply.redirect("http://127.0.0.1:5173/2fa");
+			}
+		} catch (error) {
+			console.error("Google OAuth callback error:", error);
+			return reply.status(500).send({ error: "Authentication failed" });
 		}
 	});
 
