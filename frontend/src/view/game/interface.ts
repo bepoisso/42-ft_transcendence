@@ -27,5 +27,6 @@ export interface Player {
 export interface GameState {
 	player1: Player;
 	player2: Player;
-	ball: Ball
+	ball: Ball;
+	mode: string;
 }

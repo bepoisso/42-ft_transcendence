@@ -1,3 +1,5 @@
+import { Socket } from "socket.io";
+
 // ===============================================
 // 			INTERFACE GAME LOGIC				||
 // ===============================================
@@ -40,8 +42,8 @@ export interface GameState {
 // ===========================================
 
 interface PlayerConnection {
-	socket: WebSocket | null; // null si déconnecté
-	token: string | null;
+	socket: Socket;
+	token: string | null; // faut delete ça nan ?
 	username: string;
 }
 

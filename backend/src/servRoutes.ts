@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { WSRoutes } from "./game/wsRoutes";
+import { socketHandler } from "./game/socket";
 import { ping, register, login } from "./auth/auth";
 import { googleOauth } from "./auth/auth_provider";
 import { request } from "http";
@@ -43,6 +43,6 @@ export async function servRoutes(fastify: FastifyInstance)
 		reply.send(result);
 	});
 
-	// Gere WS
-	WSRoutes(fastify);
+	// Gere Socket
+	socketHandler(fastify);
 }

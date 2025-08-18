@@ -61,14 +61,14 @@ Promise <{
 }
 
 
-async function verify2fa(username: string, password: string): Promise <{statusCode: number, message: string}>
+async function verify2fa(username: string, input: string): Promise <{statusCode: number, message: string}>
 {
 	const response = await fetch("/api//auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({username, password}),
+		body: JSON.stringify({username, input}),
 	});
 
 	const data = await response.json();
