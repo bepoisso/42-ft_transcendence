@@ -63,7 +63,7 @@ Promise <{
 
 async function verify2fa(username: string, input: string): Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api//auth/2fa/verify", {
+	const response = await fetch("/api/auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
