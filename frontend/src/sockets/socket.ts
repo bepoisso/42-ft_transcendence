@@ -6,7 +6,7 @@
 	Par exemple ici je la crée dans dashboard.ts et la recupere plus tard dans game.ts
 */
 import { io, Socket } from "socket.io-client";
-import { sendInvite } from "./invite";
+import { friendsInvit, receiveInvit } from "./invite";
 import { Router } from "../router";
 
 export let socket: Socket | null = null;
@@ -21,8 +21,17 @@ export function getSocket(router: Router): Socket {
 
 		socket.on("receive_invite", (data) => {
 			console.log("Invitation reçue : ", data);
-			sendInvite(socket!, data);
+			receiveInvit(socket!, data);
 		});
+
+		socket.on("friend_request", (data) => {
+			console.log("Invitation reçue : ", data);
+			friendsInvit(socket!, data);
+		});
+
+		socket.on("friend_request_accepted", (data) => {
+
+		})
 
 		socket.on("game_ready", (data) => {
 			console.log("Game is ready : ", data);

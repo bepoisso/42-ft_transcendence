@@ -47,7 +47,7 @@ export class App
 			},
 			"/visitProfile/:id": (params: any) => {
 				renderVisitProfile();
-				visitProfileHandler(params.id);
+				visitProfileHandler(self.router, params.id);
 			},
 			"/game/:id": (params: any) => {
 				renderGame();
