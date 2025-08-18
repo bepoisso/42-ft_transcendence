@@ -35,6 +35,10 @@ export async function generate2FA(username: string) {
 export async function verify2FA(username: string, input: string) {
 	let user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User;
 
+	if (!user) {
+		return { statusCode: 404, message: "User not found" };
+	}
+
 	if (!user.twofa_secret) {
 		return { statusCode: 404, message: "2fa not set for this user" };
 	}
@@ -44,10 +48,14 @@ export async function verify2FA(username: string, input: string) {
 		return { statusCode: 401, message: "Code invalid" };
 	}
 
-	const token = signToken({ id: user.id, username: user.username, twofa_enable: true });
-	db.prepare('UPDATE users SET twofa_enable = ? WHERE username = ?').run(true, username);
+	try {
 
-	return { success: true, token };
+		db.prepare('UPDATE users SET twofa_enable = ? WHERE id = ?').run(1, user.id);
+		const token = signToken({ id: user.id, username: user.username, twofa_enable: true });
+		return { success: true, token };
+	} catch (err) {
+		return { statusCode: 500, message: "SQL errror" };
+	}
 }
 
 export async function is2faEnable(username: string) {
