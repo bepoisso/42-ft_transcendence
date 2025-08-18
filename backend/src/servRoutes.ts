@@ -9,6 +9,13 @@ import type { User } from "./types/db";
 import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
 import { verifyAuthToken } from "./auth/auth_token";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const gAdress = process.env.ADRESS
+const gPortBack = process.env.PORT_BACK;
+const gPortFront = process.env.PORT_FRONT;
 
 
 // CE fichier sert simplement a prendre toutes les API
@@ -72,9 +79,9 @@ export async function servRoutes(fastify: FastifyInstance)
 			reply.cookie("token", token, { httpOnly: true, secure: true });
 			
 			if (await is2faEnable(username)) {
-				reply.redirect("http://127.0.0.1:5173/2fa");
+				reply.redirect(`${gAdress}:${gPortFront}/2fa`);
 			} else {
-				reply.redirect("http://127.0.0.1:5173/2fa");
+				reply.redirect(`${gAdress}:${gPortFront}/2fa`);
 			}
 		} catch (error) {
 			console.error("Google OAuth callback error:", error);

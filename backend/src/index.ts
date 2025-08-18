@@ -10,7 +10,7 @@ dotenv.config();
 
 // Normalement rien ne doit etre touché ici avant un moment. C'est juste le lancement du serveur
 
-const PORT = process.env.PORT || 3000;
+const gPortBack = process.env.PORT_BACK;
 
 // =============================================================================
 //						buildServer() : configure le serveur				  ||
@@ -22,7 +22,7 @@ async function buildServer() {
 
 
 	await server.register(cors, {
-		origin: `http://localhost:${PORT}`, // en prod il faudra mettre le nom du serv
+		origin: `http://localhost:${gPortBack}`, // en prod il faudra mettre le nom du serv
 	});
 
 	// On instaure Websocket ici
@@ -46,7 +46,7 @@ async function buildServer() {
 // =============================================================================
 
 buildServer().then((server) => {
-  server.listen({ port: Number(PORT) }, (err, address) => {
+  server.listen({ port: Number(gPortBack) }, (err, address) => {
     if (err) {
       server.log.error(err);
       process.exit(1);

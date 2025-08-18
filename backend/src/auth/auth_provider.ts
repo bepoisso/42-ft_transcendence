@@ -21,8 +21,8 @@ const requiredEnvVars = {
 // Vérifier que toutes les variables d'environnement sont définies
 for (const [key, value] of Object.entries(requiredEnvVars)) {
 	if (!value) {
-		console.error(`❌ Variable d'environnement manquante: ${key}`);
-		console.log(`Veuillez définir ${key} dans votre fichier .env`);
+		console.error(`❌ Missing environment variable: ${key}`);
+		console.log(`Please define ${key} in your .env file`);
 	}
 }
 

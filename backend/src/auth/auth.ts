@@ -19,13 +19,6 @@ const app = fastify({
 	logger: true
 });
 
-/* app.register(cors, {
-	origin: true,
-	methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-	credential: true,
-	allowedHeaders: ['Content-Type', 'Authorization']
-}); */
-
 export function ping() {
 	return {message: 'pong'};
 };
