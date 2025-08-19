@@ -7,3 +7,6 @@ CREATE TABLE users (
 	password_hash TEXT,
 	google_id TEXT UNIQUE
 );
+
+
+-- IL faut ajouter : avatarURL (string), games played (string), games won (string), friends (list), isConnected (boolean)

@@ -45,4 +45,5 @@ export async function servRoutes(fastify: FastifyInstance)
 
 	// Gere Socket
 	socketHandler(fastify);
+
 }
