@@ -14,7 +14,7 @@ export function renderMyProfile() {
         <div class="w-1/4 flex flex-col items-center space-y-4 border-r border-gray-700 pr-6">
           <img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar"
                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
-          <button class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm">
+          <button id="change-avatar" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm">
             Change avatar
           </button>
         </div>
@@ -196,13 +196,12 @@ export async function setMyProfile()
 // 					Handler des modifications sur le profil											||
 // ===================================================================================================
 
-async function saveUserData(token: string, userName: string, userTournament: string, userEmail: string):
+async function saveUserData(userName: string, userTournament: string, userEmail: string):
 Promise <{statusCode: number, message?: string}>
 {
 	const response = await fetch("/api/myProfile", {
 		method: "PUT",
 		headers: {
-			"Authorization": `Bearer ${token}`,
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
@@ -221,9 +220,6 @@ function saveHandler()
 	const btn = document.getElementById("save-profile");
 	btn?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
-
-		const token = localStorage.getItem("token");
-		if (!token) return;
 
 		const userNameInput = document.getElementById("user-name") as HTMLInputElement | null;
 		const userTournamentInput = document.getElementById("tournament-username") as HTMLInputElement | null;
@@ -261,7 +257,7 @@ function saveHandler()
 		}
 
 		try {
-				const data = await saveUserData(token, userName, userTournament, userEmail);
+				const data = await saveUserData(userName, userTournament, userEmail);
 
 			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
@@ -363,9 +359,19 @@ function passwordHandler()
 	});
 }
 
+async function avatar() {
+	const btn = document.getElementById("change-avatar");
+		btn?.addEventListener("click", async (e) => {
+			e.preventDefault(); // Empêche le rechargement
+
+
+		});
+}
+
 export function myProfileHandler()
 {
 	setMyProfile();
+	avatar();
 	saveHandler();
 	passwordHandler();
 }

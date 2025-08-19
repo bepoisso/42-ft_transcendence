@@ -3,12 +3,10 @@ import { App } from "./app"
 export class Router {
 
 	private _routes : Map<string, (params?: any) => void>;
-	private _isAuthentified : () => boolean; // pointeur de fonction dans app pour savoir si une personne est authentifiée ou non
 
-	constructor ( routes: { [path: string]: (params?: any) => void}, isAuthentified: () => boolean )
+	constructor (routes: { [path: string]: (params?: any) => void})
 	{
 		this._routes = new Map(Object.entries(routes));
-		this._isAuthentified = isAuthentified;
 
 		// Pour gerer les retours en arriere
 		window.addEventListener("popstate", () => {
@@ -31,14 +29,6 @@ export class Router {
 		{
 			const match = this.matchRoute(key, path);
 			if (match) {
-				// Vérifier auth si nécessaire
-				if (!this._isAuthentified())
-				{
-					console.error("Utilisateur non authentifié");
-					window.location.href = "/login";
-					return;
-				}
-
 				values(match.params);
 				return;
 			}
