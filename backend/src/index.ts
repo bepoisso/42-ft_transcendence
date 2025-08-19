@@ -10,7 +10,7 @@ dotenv.config();
 
 // Normalement rien ne doit etre touché ici avant un moment. C'est juste le lancement du serveur
 
-const gPortBack = process.env.PORT_BACK;
+const gPortBack = process.env.PORT_BACK || 3000;
 
 // =============================================================================
 //						buildServer() : configure le serveur				  ||
@@ -22,7 +22,11 @@ async function buildServer() {
 
 
 	await server.register(cors, {
-		origin: `http://localhost:${gPortBack}`, // en prod il faudra mettre le nom du serv
+		origin: [
+			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_FRONT || '5173'}`,
+			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_BACK || '3000'}`
+		],
+		credentials: true // Important pour les cookies
 	});
 
 	// On instaure Websocket ici

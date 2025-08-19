@@ -36,7 +36,6 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
 		(request as any).user = decoded;
 
-		// Vérifier si 2FA est requis
 		if (!decoded.twofa_enable) {
 			const allowedFor2FA = ['/auth/2fa/generate', '/auth/2fa/verify', '/auth/2fa/check'];
 			if (!allowedFor2FA.includes(request.url)) {
@@ -65,6 +64,7 @@ export async function getUserByToken(token: string) {
 		const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(decoded.id) as User;
 		return user.email;
 	} catch (err) {
+		console.log("ERROR: ", err);
 		return { statusCode: 404, message: "User not found or token invalid"};
 	}
 };

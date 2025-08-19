@@ -48,7 +48,8 @@ Promise <{
 }>
 {
 	const response = await fetch("/api/auth/2fa/generate", {
-		method: "POST"
+		method: "POST",
+		credentials: 'include'
 	});
 
 	const data = await response.json();
@@ -65,6 +66,7 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 		"Content-Type": "application/json",
 		},
 		body: JSON.stringify({input}),
+		credentials: 'include'
 	});
 
 	const data = await response.json();
@@ -75,7 +77,8 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 
 async function checkNewUser(): Promise <{statusCode: number, message: string, value:{ twofa_enable: number}}> {
 	const response = await fetch("/api/auth/2fa/check", {
-		method: "GET"
+		method: "GET",
+		credentials: 'include'
 	});
 
 	const data = await response.json();
@@ -85,13 +88,10 @@ async function checkNewUser(): Promise <{statusCode: number, message: string, va
 export async function logic2fa(router: Router)
 {
 	const isNew = await checkNewUser();
-	console.log("ldhrgld");
 	if (isNew.statusCode === 200) {
 		if (isNew.value.twofa_enable === 0)
 		{
-			console.log("value est bon");
 			const data = await generateURI();
-			console.log(data);
 
 			const qrCodeContainer = document.getElementById("qrcode");
 			if (qrCodeContainer) {
@@ -120,7 +120,6 @@ export async function logic2fa(router: Router)
 		}
 		try {
 			const verify = await verify2fa(code);
-			console.log(verify);
 			if (verify.statusCode === 200) {
 				router.navigate("/dashboard");
 			}

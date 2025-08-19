@@ -8,7 +8,7 @@ import { Script } from "vm";
 import type { User } from "./types/db";
 import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
-import { verifyAuthToken, getUserByToken } from "./auth/auth_token";
+import { verifyAuthToken, getUserByToken, signToken } from "./auth/auth_token";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -44,7 +44,15 @@ export async function servRoutes(fastify: FastifyInstance)
 		const { username, email, password } = request.body as any;
 		const result = await register(username, email, password);
 		if (typeof result.token === "string") {
-			reply.cookie("token", result.token, { httpOnly: true, secure: true });
+			reply.clearCookie("token", { path: '/' });
+			
+			reply.cookie("token", result.token, { 
+				httpOnly: true, 
+				secure: false,
+				sameSite: 'lax',
+				path: '/',
+				maxAge: 24 * 60 * 60 * 1000
+			});
 		}
 		reply.send(result);
 	});
@@ -53,7 +61,15 @@ export async function servRoutes(fastify: FastifyInstance)
 		const { email, password } = request.body as any;
 		const result = await login(email, password);
 		if (typeof result.token === "string") {
-			reply.cookie("token", result.token, { httpOnly: true, secure: true });
+			reply.clearCookie("token", { path: '/' });
+			
+			reply.cookie("token", result.token, { 
+				httpOnly: true, 
+				secure: false,
+				sameSite: 'lax',
+				path: '/',
+				maxAge: 24 * 60 * 60 * 1000
+			});
 		}
 		reply.send(result);
 	});
@@ -66,17 +82,29 @@ export async function servRoutes(fastify: FastifyInstance)
 				return reply.status(result.statusCode).send({ error: result.message });
 			}
 
-			const { token, email } = result as { token: string; email: string; statusCode: number; message: string };
+			const { email } = result as { email: string; statusCode: number; message: string };
 
 			if (!email) {
 				return reply.status(404).send({error: "Email is missing"});
 			}
 
+			const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
+
+			const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: user.twofa_enable ?? false});
 			if (!token) {
-				return reply.status(400).send({ error: "Token is missing or invalid." });
+				return reply.status(500).send({ error: "Can not create token" });
 			}
-			reply.cookie("token", token, { httpOnly: true, secure: true });
-			reply.redirect(`${gAdress}:${gPortFront}/2fa`);
+			
+			reply.clearCookie("token", { path: '/' });
+
+			reply.cookie("token", token, { 
+				httpOnly: true, 
+				secure: false, // Changez à true en production avec HTTPS
+				sameSite: 'lax',
+				path: '/',
+				maxAge: 15 * 60 * 1000
+			});
+			reply.redirect(`http://localhost:5173/2fa`);
 		} catch (error) {
 			console.error("Google OAuth callback error:", error);
 			return reply.status(500).send({ error: "Authentication failed" });
@@ -125,8 +153,6 @@ export async function servRoutes(fastify: FastifyInstance)
 		}
 		
 		const userResult = await getUserByToken(token);
-		
-		// Vérifier si getUserByToken a retourné une erreur
 		if (typeof userResult !== "string") {
 			return reply.status(404).send({error: "User not found"});
 		}
@@ -136,8 +162,15 @@ export async function servRoutes(fastify: FastifyInstance)
 		return reply.send({statusCode: 200, message: "Success", value: tfa});
 	});
 
+	// Endpoint temporaire pour nettoyer les cookies (à supprimer en production)
+	fastify.post("/auth/clear-cookies", async (request, reply) => {
+		reply.clearCookie("token", { path: '/' });
+		reply.send({ message: "Cookies cleared" });
+	});
+
 
 	// Gere Socket
 	socketHandler(fastify);
 
 }
+

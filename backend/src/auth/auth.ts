@@ -112,14 +112,10 @@ export async function loginOrCreateGoogleUser(email: string, googleId: string) {
 		if (!user.email) {
 			return {statusCode: 500, message: "Google Oauth Fail to get user in db"}
 		}
-
-		const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: user.twofa_enable ?? false});
-
 		console.log('Google OAuth success:', { email: user.email, statusCode: 200 });
 		return {
 			statusCode: 200,
 			message: "Successfully authenticated with Google",
-			token,
 			email: user.email
 		};
 	} catch (err) {
