@@ -66,10 +66,10 @@ export async function servRoutes(fastify: FastifyInstance)
 				return reply.status(result.statusCode).send({ error: result.message });
 			}
 
-			const { token, username } = result as { token: string; username: string; statusCode: number; message: string };
+			const { token, email } = result as { token: string; email: string; statusCode: number; message: string };
 
-			if (!username) {
-				return reply.status(404).send({error: "Username is missing"});
+			if (!email) {
+				return reply.status(404).send({error: "Email is missing"});
 			}
 
 			if (!token) {
@@ -123,13 +123,17 @@ export async function servRoutes(fastify: FastifyInstance)
 		if (typeof token !== "string") {
 			return reply.status(400).send({ error: "Token is missing or invalid." });
 		}
-		interface GetUserByTokenResult extends User {}
-		const email = await getUserByToken(token);
-		if (!email) {
+		
+		const userResult = await getUserByToken(token);
+		
+		// Vérifier si getUserByToken a retourné une erreur
+		if (typeof userResult !== "string") {
 			return reply.status(404).send({error: "User not found"});
 		}
+		
+		const email = userResult;
 		const tfa = db.prepare(`SELECT twofa_enable FROM users WHERE email = ?`).get(email);
-		return {statusCode: 200, message: "Success", value: tfa};
+		return reply.send({statusCode: 200, message: "Success", value: tfa});
 	});
 
 

@@ -68,6 +68,6 @@ export async function googleOauth(request: FastifyRequest, reply: FastifyReply, 
 		return result;
 	} catch (err) {
 		console.error('Google OAuth error:', err);
-		return { statusCode: 500, message: 'Authentication failed' };
+		return { statusCode: 500, message: 'G_oAuth Authentication failed' };
 	}
 }
