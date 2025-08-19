@@ -118,7 +118,7 @@ export async function servRoutes(fastify: FastifyInstance)
 		reply.send(result);
 	});
 
-	fastify.get("/api/auth/2fa/check", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+	fastify.get("/auth/2fa/check", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		if (typeof token !== "string") {
 			return reply.status(400).send({ error: "Token is missing or invalid." });

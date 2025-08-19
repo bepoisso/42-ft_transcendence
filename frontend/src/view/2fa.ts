@@ -78,7 +78,7 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 
 async function checkNewUser(): Promise <{statusCode: number, message: string, value?: boolean}> {
 	const response = await fetch("/api/auth/2fa/check", {
-		method: "POST",
+		method: "GET",
 		headers: {
 		"Content-Type": "application/json",
 		},
