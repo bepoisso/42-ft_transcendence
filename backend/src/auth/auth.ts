@@ -46,7 +46,7 @@ export async function register(username:string, email:string, password:string) {
 		return { statusCode: 200, message: "User Succefully register", token};
 	} catch (err) {
 		console.error(err);
-		return { statusCode: 400, message: "Bad request" };
+		return { statusCode: 400, message: err };
 	}
 };
 

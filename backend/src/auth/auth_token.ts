@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import fastify from "fastify";
-
+import db from "../db/db"
 import { FastifyRequest, FastifyReply } from 'fastify';
+import type { User } from "../types/db";
 
 export function signToken(user: { id: number; email: string; twofa_enable: boolean }): string {
 	const jwtsecret = process.env.JWT_SECRET;
@@ -18,7 +19,7 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export function verifyAuthToken(request:FastifyRequest, reply: FastifyReply, done: Function) {
+export async function verifyAuthToken(request:FastifyRequest, reply: FastifyReply, done: Function) {
 
 
 	try {
@@ -44,5 +45,23 @@ export function verifyAuthToken(request:FastifyRequest, reply: FastifyReply, don
 		done();
 	} catch (err) {
 		return reply.status(401).send({error: 'Invalid or expired token'});
+	}
+};
+
+
+export async function getUserByToken(token: string) {
+	try {
+		if (!token) {
+			throw new Error('Token is missing');
+		}
+		const jwtsecret = process.env.JWT_SECRET;
+		if (!jwtsecret) {
+			throw new Error('JWT_SECRET evironement variable is not set');
+		}
+		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
+		const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(decoded.id) as User;
+		return user;
+	} catch (err) {
+		return { statusCode: 404, message: "User not found or token invalid"};
 	}
 };

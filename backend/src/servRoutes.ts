@@ -8,7 +8,7 @@ import { Script } from "vm";
 import type { User } from "./types/db";
 import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
-import { verifyAuthToken } from "./auth/auth_token";
+import { verifyAuthToken, getUserByToken } from "./auth/auth_token";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -90,23 +90,45 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 	fastify.post("/auth/2fa/generate", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		const { username } = request.body as any;
-		const result = await generate2FA(username);
+		const token = request.cookies.token;
+		if (typeof token !== "string") {
+			return reply.status(400).send({ error: "Token is missing or invalid." });
+		}
+		interface GetUserByTokenResult extends User {}
+		const user: GetUserByTokenResult = await getUserByToken(token) as GetUserByTokenResult;
+		if (!user.email || typeof user.email !== "string") {
+			return reply.status(400).send({ error: "User email is missing or invalid." });
+		}
+		const result = await generate2FA(user.email);
 		reply.send(result);
 	});
 
 	fastify.post("/auth/2fa/verify", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		const {username, input} = request.body as any;
-		const result = await verify2FA(username, input);
+		const {input} = request.body as any;
+		const token = request.cookies.token;
+		if (typeof token !== "string") {
+			return reply.status(400).send({ error: "Token is missing or invalid." });
+		}
+		interface GetUserByTokenResult extends User {}
+		const user: GetUserByTokenResult = await getUserByToken(token) as GetUserByTokenResult;
+		if (!user.email || typeof user.email !== "string") {
+			return reply.status(400).send({ error: "User email is missing or invalid." });
+		}
+		const result = await verify2FA(user.email, input);
 		reply.send(result);
 	});
 
 	fastify.get("/api/auth/2fa/check", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		const user = db.prepare('SELECT * FROM users WHERE username = ?').get(request.body as any) as User;
+		const token = request.cookies.token;
+		if (typeof token !== "string") {
+			return reply.status(400).send({ error: "Token is missing or invalid." });
+		}
+		interface GetUserByTokenResult extends User {}
+		const user: GetUserByTokenResult = await getUserByToken(token) as GetUserByTokenResult;
 		if (!user) {
 			return reply.status(404).send({error: "User not found"});
 		}
-		return {status: user.twofa_enable};
+		return {statusCode: 200, message: "Success", value: user.twofa_enable};
 	});
 
 

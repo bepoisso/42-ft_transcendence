@@ -9,13 +9,13 @@ import { signToken, verifyAuthToken} from "../auth/auth_token"
 
 
 
-export async function generate2FA(username: string) {
-	if (!username) {
+export async function generate2FA(email: string) {
+	if (!email) {
 		return {statusCode: 401, message: "Invalid credential"};
 	}
 
 
-	const newSecret = twofactor.generateSecret({name: "ft_transcendence", account: username});
+	const newSecret = twofactor.generateSecret({name: "ft_transcendence", account: email});
 
 	const result: Generate2FAResponse = {
 		secret: newSecret.secret,
@@ -24,7 +24,7 @@ export async function generate2FA(username: string) {
 	};
 
 	try {
-		db.prepare('UPDATE users SET twofa_secret = ? WHERE username = ?').run(result.secret, username);
+		db.prepare('UPDATE users SET twofa_secret = ? WHERE email = ?').run(result.secret, email);
 		return { statusCode: 200, data: result };
 	} catch (err) {
 		console.error("Error generating 2FA:", err);
@@ -32,8 +32,8 @@ export async function generate2FA(username: string) {
 	}
 };
 
-export async function verify2FA(username: string, input: string) {
-	let user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User;
+export async function verify2FA(email: string, input: string) {
+	let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
 
 	if (!user) {
 		return { statusCode: 404, message: "User not found" };
@@ -58,6 +58,6 @@ export async function verify2FA(username: string, input: string) {
 	}
 }
 
-export async function is2faEnable(username: string) {
-	return db.prepare('SELECT twofa_enable FROM users WHERE username = ?').get(username);
+export async function is2faEnable(email: string) {
+	return db.prepare('SELECT twofa_enable FROM users WHERE email = ?').get(email);
 }
