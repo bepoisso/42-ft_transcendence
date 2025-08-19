@@ -50,9 +50,9 @@ export function renderLogin() {
 
 
 // Fonction pour savoir si on a une 2FA
-async function Login(email: string, password: string): Promise < {statusCode: number, message?: string, token: string}>
+async function Login(email: string, password: string): Promise < {statusCode: number, message?: string}>
 {
-	const response = await fetch("/api/users/tryLogin", {
+	const response = await fetch("/api/login", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -85,7 +85,6 @@ function formHandler(router: Router)
 			const data = await Login(email, password);
 			if (data.statusCode === 200) {
 				console.log("successfully logged in")
-				localStorage.setItem("username", data.token);
 				// rediriger vers 2FA
 				router.navigate("/2fa");
 			}
