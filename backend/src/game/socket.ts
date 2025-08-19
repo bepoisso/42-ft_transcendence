@@ -99,12 +99,12 @@ export async function socketHandler(fastify: FastifyInstance)
 		socket.on("disconnect", async () => {
 				userSockets.delete(socket.data.userId);
 
-				await db.user.update({
-					where: { id: socket.data.userId },
-					data: { isConnected: false }
-				});
+				// await db.user.update({
+				// 	where: { id: socket.data.userId },
+				// 	data: { isConnected: false }
+				// });
 			});
 
+		});
 	});
 }
-

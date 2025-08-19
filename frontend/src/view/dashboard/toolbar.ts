@@ -9,44 +9,44 @@ interface user {
 	avatarURL?: string;
 };
 
-async function fetchUserSuggestions(query: string) {
-	return {
-		statusCode: 200,
-		message: "all good",
-		users: [
-			{
-				id: 3,
-				name: "Thierry",
-				avatarURL: undefined,
-			},
-			{
-				id: 3,
-				name: "Stephanie",
-				avatarURL: undefined,
-			},
-			{
-				id: 3,
-				name: "Fab",
-				avatarURL: undefined,
-			},
-		]
-	}
-}
-// async function fetchUserSuggestions(query: string) : Promise <{
-// 	statusCode: number,
-// 	message?: string,
-// 	users: user[],
-// 	// Il faudra aussi ajouter les amis et meme tous les gens disponibles non ?
-// }> {
-// 	const response = await fetch(`/api/users?search=${encodeURIComponent(query)}`, {
-// 		method: "GET",
-// 		headers: {
-// 		"Content-Type": "application/json",
-// 		},
-// 	});
-// 	const data = await response.json();
-// 	return data;
+// async function fetchUserSuggestions(query: string) {
+// 	return {
+// 		statusCode: 200,
+// 		message: "all good",
+// 		users: [
+// 			{
+// 				id: 3,
+// 				name: "Thierry",
+// 				avatarURL: undefined,
+// 			},
+// 			{
+// 				id: 3,
+// 				name: "Stephanie",
+// 				avatarURL: undefined,
+// 			},
+// 			{
+// 				id: 3,
+// 				name: "Fab",
+// 				avatarURL: undefined,
+// 			},
+// 		]
+// 	}
 // }
+
+async function fetchUserSuggestions(query: string) : Promise <{
+	statusCode: number,
+	message?: string,
+	users: user[],
+}> {
+	const response = await fetch(`/api/users?search=${encodeURIComponent(query)}`, {
+		method: "GET",
+		headers: {
+		"Content-Type": "application/json",
+		},
+	});
+	const data = await response.json();
+	return data;
+}
 
 
 async function visitProfile(id: number) : Promise <{
@@ -108,7 +108,6 @@ export function searchBar(router: Router)
 		try {
 			const users = await fetchUserSuggestions(query);
 			if (users.statusCode !== 200) return ; // Cela veut dire qu'on a rien trouvé
-			console.log("on passe dans search bar"); // ============================================= DEL
 			renderSearch(router, users.users);
 		} catch (err) {
 			console.error("Error searching people : ", err);

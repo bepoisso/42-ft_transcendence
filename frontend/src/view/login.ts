@@ -85,7 +85,7 @@ function formHandler(router: Router)
 			const data = await Login(email, password);
 			if (data.statusCode === 200) {
 				console.log("successfully logged in")
-				localStorage.setItem("token", data.token);
+				// localStorage.setItem("token", data.token);
 				// rediriger vers 2FA
 				router.navigate("/2fa");
 			}

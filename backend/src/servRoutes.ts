@@ -109,6 +109,8 @@ export async function servRoutes(fastify: FastifyInstance)
 		return {status: user.twofa_enable};
 	});
 
+
 	// Gere Socket
 	socketHandler(fastify);
+
 }

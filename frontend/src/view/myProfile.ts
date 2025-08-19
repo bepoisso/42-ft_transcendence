@@ -114,7 +114,7 @@ export function renderMyProfile() {
 // 	return {statusCode: 200, message: "all good", name: "Hadri", tournamentName: "Spike", email:"Mon email", avatarURL: null, gamesPlayed: "10", gamesWon: "8"};
 // }
 
-async function fetchUserData(token: string) : Promise <{
+async function fetchUserData() : Promise <{
 	statusCode: number,
 	message?: string,
 	name: string,
@@ -127,9 +127,8 @@ async function fetchUserData(token: string) : Promise <{
 }>
 {
 	const response = await fetch("/api/myProfile", {
-		method: "POST",
+		method: "GET",
 		headers: {
-			"Authorization": `Bearer ${token}`,
 			"Content-Type": "application/json",
 		},
 	});
@@ -140,11 +139,8 @@ async function fetchUserData(token: string) : Promise <{
 
 export async function setMyProfile()
 {
-	const token = localStorage.getItem("token");
-	if (!token) return;
-
 	try {
-			const data = await fetchUserData(token);
+			const data = await fetchUserData();
 
 			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
@@ -369,6 +365,7 @@ function passwordHandler()
 
 export function myProfileHandler()
 {
+	setMyProfile();
 	saveHandler();
 	passwordHandler();
 }

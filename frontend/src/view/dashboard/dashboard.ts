@@ -169,35 +169,14 @@ export function modeClick(socket: Socket, router: Router, btnId: string, modes: 
 // 								Pouvoir cliquer sur son profil										||
 // ===================================================================================================
 
-async function myProfile(): Promise <{statusCode: number, message?: string}>
-{
-	const response = await fetch("/api/myProfile", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-	const data = await response.json();
-	return data;
-}
-
 export function myProfileClick(router: Router)
 {
 	const btnMyProfile = document.getElementById("user-name");
 	btnMyProfile?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
-		try {
-				const data = await myProfile();
-				if (data.statusCode !== 200) {
-					console.error("Error with dashboard : " + data.message);
-					throw new Error("Failed to go to myProfile");
-				}
-				router.navigate("/myProfile");
 
-		} catch (err) {
-				console.error("Error going to myProfile :", err);
-		}
+		router.navigate("/myProfile");
 
 	});
 }

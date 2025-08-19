@@ -9,3 +9,6 @@ CREATE TABLE users (
 	twofa_enable BOOLEAN DEFAULT 0,
 	twofa_secret TEXT UNIQUE
 );
+
+
+-- IL faut ajouter : avatarURL (string), games played (string), games won (string), friends (list), isConnected (boolean)
