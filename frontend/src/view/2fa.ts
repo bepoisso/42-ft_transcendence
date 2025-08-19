@@ -10,7 +10,7 @@ export function render2fa() {
       </h1>
 
       <!-- QR Code -->
-      <canvas id="qrcode" class="bg-white p-4 rounded-lg shadow-md"></canvas>
+      <canvas id="qrcode" class="bg-white p-4 rounded-lg shadow-md hidden"></canvas>
 
       <!-- Champ pour entrer le code -->
       <form id="verify-2fa-form" class="flex flex-col items-center space-y-4 w-full max-w-sm">
@@ -37,7 +37,7 @@ export function render2fa() {
 }
 
 
-async function generateQRCode(username: string):
+async function generateURI():
 Promise <{
 	statusCode: number,
 	data: {
@@ -52,7 +52,6 @@ Promise <{
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({username}),
 	});
 
 	const data = await response.json();
@@ -61,14 +60,14 @@ Promise <{
 }
 
 
-async function verify2fa(username: string, input: string): Promise <{statusCode: number, message: string}>
+async function verify2fa(input: string): Promise <{statusCode: number, message: string}>
 {
 	const response = await fetch("/api/auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({username, input}),
+		body: JSON.stringify({input}),
 	});
 
 	const data = await response.json();
@@ -76,17 +75,40 @@ async function verify2fa(username: string, input: string): Promise <{statusCode:
 	return data;
 }
 
+
+async function checkNewUser(): Promise <{statusCode: number, message: string, value?: boolean}> {
+	const response = await fetch("/api/auth/2fa/check", {
+		method: "POST",
+		headers: {
+		"Content-Type": "application/json",
+		},
+	});
+
+	const data = await response.json();
+	return data;
+}
+
 export async function logic2fa(router: Router)
 {
-	//const isNew = await checkNew();
-	const username = localStorage.getItem("username");
-	if (!username) return;
-	const data = await generateQRCode(username);
-	console.log(data);
+	const isNew = await checkNewUser();
+	if (isNew.statusCode === 200) {
+		if (isNew.value === true)
+		{
+			const data = await generateURI();
+			console.log(data);
 
-	const qrCodeContainer = document.getElementById("qrcode");
-	if (qrCodeContainer) {
-		await QRCode.toCanvas(qrCodeContainer, data.data.qr, { width: 200 });
+			const qrCodeContainer = document.getElementById("qrcode");
+			if (qrCodeContainer) {
+				qrCodeContainer.classList.remove("hidden");
+				await QRCode.toCanvas(qrCodeContainer, data.data.qr, { width: 200 });
+			}
+		}
+	} else {
+		const errorMessage = document.getElementById("error-message");
+			if (errorMessage) {
+				errorMessage.textContent = isNew.message;
+				return;
+		 }
 	}
 
 	const submit = document.getElementById("submit");
@@ -101,7 +123,7 @@ export async function logic2fa(router: Router)
 				return;
 		}
 		try {
-			const verify = await verify2fa(username, code);
+			const verify = await verify2fa(code);
 			console.log(verify);
 			if (verify.statusCode === 200) {
 				router.navigate("/dashboard");

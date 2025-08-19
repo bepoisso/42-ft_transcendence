@@ -54,11 +54,8 @@ export class App
 				gameLoop(self.router, params.id)
 			}
 		};
-		this.router = new Router(routes, this.isAuthentified.bind(this));
+		this.router = new Router(routes);
 	}
-
-	// Methode pour demander au backend si la personne est authentifiée
-	isAuthentified() {return true}
 
 	// Methode pour start l'app et trouver la premiere route
 	start() {

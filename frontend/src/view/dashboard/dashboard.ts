@@ -118,7 +118,9 @@ export async function setDashboard()
 	try {
 			const data = await fetchUserData();
 
-			// Soit on ne parvient pas à récup les infos
+			if (data.statusCode === 401) {
+
+			}
 			if (data.statusCode !== 200) {
 				// Handle l'erreur
 
