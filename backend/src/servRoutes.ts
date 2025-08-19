@@ -89,7 +89,7 @@ export async function servRoutes(fastify: FastifyInstance)
 			if (!user || !user.email) {
 				return reply.status(400).send({ error: "User information missing" });
 			}
-			
+
 			const result = await generate2FA(user.email);
 			reply.send(result);
 		} catch (error) {
@@ -104,12 +104,12 @@ export async function servRoutes(fastify: FastifyInstance)
 			if (!input) {
 				return reply.status(400).send({ error: "2FA code is required" });
 			}
-			
+
 			const user = (request as any).user;
 			if (!user || !user.email) {
 				return reply.status(400).send({ error: "User information missing" });
 			}
-			
+
 			const result = await verify2FA(user.email, input);
 			reply.send(result);
 		} catch (error) {
@@ -131,9 +131,5 @@ export async function servRoutes(fastify: FastifyInstance)
 		const tfa = db.prepare(`SELECT twofa_enable FROM users WHERE email = ?`).get(email);
 		return {statusCode: 200, message: "Success", value: tfa};
 	});
-
-
-	// Gere Socket
-	socketHandler(fastify);
 
 }

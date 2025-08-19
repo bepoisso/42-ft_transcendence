@@ -84,8 +84,8 @@ async function checkNewUser(): Promise <{statusCode: number, message: string, va
 
 export async function logic2fa(router: Router)
 {
+	console.log(window.location.search);
 	const isNew = await checkNewUser();
-	console.log("ldhrgld");
 	if (isNew.statusCode === 200) {
 		if (isNew.value.twofa_enable === 0)
 		{

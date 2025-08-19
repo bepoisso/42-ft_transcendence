@@ -113,16 +113,15 @@ async function fetchUserData() : Promise <{
 }
 
 
-export async function setDashboard()
+async function setDashboard(router: Router)
 {
 	try {
 			const data = await fetchUserData();
 
 			if (data.statusCode === 401) {
-
+				router.navigate("/login");
 			}
 			if (data.statusCode !== 200) {
-				// Handle l'erreur
 
 				console.error("Error with dash : " + data.message);
 				throw new Error("Failed to fetch user data");
@@ -199,6 +198,8 @@ export function myProfileClick(router: Router)
 export function dashboardHandler(router: Router)
 {
 	const socket = getSocket(router);
+
+	//setDashboard(router);
 
 	modeClick(socket, router, "btnLocal", "local");
 	modeClick(socket, router, "btnAI", "AI");

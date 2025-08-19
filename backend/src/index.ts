@@ -1,10 +1,12 @@
-import Fastify from 'fastify'
+import Fastify, { fastify } from 'fastify'
 import cors from "@fastify/cors";
-import websocket from "@fastify/websocket";
+import { Socket } from 'socket.io';
 import { servRoutes } from "./servRoutes";
 import { registerGoogleOAuth2Provider } from "./auth/auth_provider";
 import cookie from '@fastify/cookie';
+import { socketHandler } from './game/socket';
 import dotenv from 'dotenv';
+
 
 dotenv.config();
 
@@ -16,28 +18,30 @@ const gPortBack = process.env.PORT_BACK;
 //						buildServer() : configure le serveur				  ||
 // =============================================================================
 
+
 async function buildServer() {
+		const server = Fastify({ logger: true });
 
-	const server = Fastify({ logger: true });
 
 
-	await server.register(cors, {
-		origin: `http://localhost:${gPortBack}`, // en prod il faudra mettre le nom du serv
-	});
+		await server.register(cors, {
+			origin: `http://localhost:${gPortBack}`,
+			credentials: true
+		});
 
-	// On instaure Websocket ici
-	// On instaure Websocket ici
-	await server.register(websocket);
+		// Register cookie support
+		await server.register(cookie);
 
-	// Register cookie support
-	await server.register(cookie);
+		// Register socket handler after Socket.IO is set up
+		server.ready().then(() => {
+			socketHandler(server);
+		});
 
-	// Enregistre le fournisseur Google OAuth2
-	registerGoogleOAuth2Provider(server);
-	// Ici on ajoute le fichier de route qui contient toute les API + WS
-	await server.register(servRoutes);
+		// Register other middleware and routes
+		registerGoogleOAuth2Provider(server);
+		await server.register(servRoutes);
 
-	return server;
+		return server;
 }
 
 

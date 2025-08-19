@@ -8,7 +8,7 @@ import { Router } from "./router";
 import { renderHome } from "./view/home";
 import { loginHandler, renderLogin } from "./view/login";
 import { registerHandler, renderRegister } from "./view/register";
-import { dashboardHandler, renderDashboard, setDashboard} from "./view/dashboard/dashboard";
+import { dashboardHandler, renderDashboard } from "./view/dashboard/dashboard";
 import { renderGame, gameLoop } from "./view/game/game";
 import { logic2fa, render2fa } from "./view/2fa";
 import { renderMyProfile, myProfileHandler } from "./view/myProfile";
@@ -32,13 +32,12 @@ export class App
 				renderRegister();
 				registerHandler(self.router)
 			},
-			"/2fa": () => {
+			"/2fa/:id": () => {
 			render2fa();
 			logic2fa(self.router);
 			},
 			"/dashboard": () => {
 				renderDashboard();
-				setDashboard();
 				dashboardHandler(self.router);
 			},
 			"/myProfile": () => {

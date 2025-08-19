@@ -84,8 +84,6 @@ function formHandler(router: Router)
 		try {
 			const data = await Login(email, password);
 			if (data.statusCode === 200) {
-				console.log("successfully logged in")
-				// rediriger vers 2FA
 				router.navigate("/2fa");
 			}
 
@@ -102,7 +100,6 @@ function googleHandler(router: Router) {
 
 		try {
 			window.location.href = "/auth/google";
-			// demander a recupérer les infos
 		} catch (err) {
 		console.error("Erreur lors de la connexion Google :", err);
 		}
