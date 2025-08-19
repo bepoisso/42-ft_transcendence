@@ -19,32 +19,35 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export async function verifyAuthToken(request:FastifyRequest, reply: FastifyReply, done: Function) {
-
-
+export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply, done: Function) {
 	try {
 		const token = request.cookies.token;
 		if (!token) {
-			throw new Error('Token is missing');
+			reply.status(401).send({ error: 'Token is missing' });
+			return;
 		}
+		
 		const jwtsecret = process.env.JWT_SECRET;
 		if (!jwtsecret) {
-			throw new Error('JWT_SECRET evironement variable is not set');
+			reply.status(500).send({ error: 'Server configuration error' });
+			return;
 		}
+		
 		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
-
 		(request as any).user = decoded;
 
+		// Vérifier si 2FA est requis
 		if (!decoded.twofa_enable) {
 			const allowedFor2FA = ['/auth/2fa/generate', '/auth/2fa/verify', '/auth/2fa/check'];
 			if (!allowedFor2FA.includes(request.url)) {
-				return reply.status(403).send({ error: 'Two-Factor Authentication required' });
+				reply.status(403).send({ error: 'Two-Factor Authentication required' });
+				return;
 			}
 		}
 
 		done();
 	} catch (err) {
-		return reply.status(401).send({error: 'Invalid or expired token'});
+		reply.status(401).send({error: 'Invalid or expired token'});
 	}
 };
 
@@ -60,7 +63,7 @@ export async function getUserByToken(token: string) {
 		}
 		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
 		const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(decoded.id) as User;
-		return user;
+		return user.email;
 	} catch (err) {
 		return { statusCode: 404, message: "User not found or token invalid"};
 	}

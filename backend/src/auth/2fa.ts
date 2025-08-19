@@ -14,6 +14,16 @@ export async function generate2FA(email: string) {
 		return {statusCode: 401, message: "Invalid credential"};
 	}
 
+	// Vérifier si l'utilisateur a déjà un secret 2FA
+	const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
+	if (!user) {
+		return {statusCode: 404, message: "User not found"};
+	}
+
+	// Si l'utilisateur a déjà un secret et que 2FA est activé, retourner une erreur
+	if (user.twofa_secret && user.twofa_enable) {
+		return {statusCode: 400, message: "2FA already enabled for this user"};
+	}
 
 	const newSecret = twofactor.generateSecret({name: "ft_transcendence", account: email});
 
@@ -27,7 +37,6 @@ export async function generate2FA(email: string) {
 		db.prepare('UPDATE users SET twofa_secret = ? WHERE email = ?').run(result.secret, email);
 		return { statusCode: 200, data: result };
 	} catch (err) {
-		console.error("Error generating 2FA:", err);
 		return {statusCode: 500, message: String(err)};
 	}
 };

@@ -48,10 +48,7 @@ Promise <{
 }>
 {
 	const response = await fetch("/api/auth/2fa/generate", {
-		method: "POST",
-		headers: {
-		"Content-Type": "application/json",
-		},
+		method: "POST"
 	});
 
 	const data = await response.json();
@@ -76,12 +73,9 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 }
 
 
-async function checkNewUser(): Promise <{statusCode: number, message: string, value?: boolean}> {
+async function checkNewUser(): Promise <{statusCode: number, message: string, value:{ twofa_enable: number}}> {
 	const response = await fetch("/api/auth/2fa/check", {
-		method: "GET",
-		headers: {
-		"Content-Type": "application/json",
-		},
+		method: "GET"
 	});
 
 	const data = await response.json();
@@ -91,9 +85,11 @@ async function checkNewUser(): Promise <{statusCode: number, message: string, va
 export async function logic2fa(router: Router)
 {
 	const isNew = await checkNewUser();
+	console.log("ldhrgld");
 	if (isNew.statusCode === 200) {
-		if (isNew.value === true)
+		if (isNew.value.twofa_enable === 0)
 		{
+			console.log("value est bon");
 			const data = await generateURI();
 			console.log(data);
 

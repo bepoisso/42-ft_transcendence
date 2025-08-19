@@ -75,14 +75,8 @@ export async function servRoutes(fastify: FastifyInstance)
 			if (!token) {
 				return reply.status(400).send({ error: "Token is missing or invalid." });
 			}
-
 			reply.cookie("token", token, { httpOnly: true, secure: true });
-
-			if (await is2faEnable(username)) {
-				reply.redirect(`${gAdress}:${gPortFront}/2fa`);
-			} else {
-				reply.redirect(`${gAdress}:${gPortFront}/2fa`);
-			}
+			reply.redirect(`${gAdress}:${gPortFront}/2fa`);
 		} catch (error) {
 			console.error("Google OAuth callback error:", error);
 			return reply.status(500).send({ error: "Authentication failed" });
@@ -90,45 +84,52 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 	fastify.post("/auth/2fa/generate", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		const token = request.cookies.token;
-		if (typeof token !== "string") {
-			return reply.status(400).send({ error: "Token is missing or invalid." });
+		try {
+			const user = (request as any).user;
+			if (!user || !user.email) {
+				return reply.status(400).send({ error: "User information missing" });
+			}
+			
+			const result = await generate2FA(user.email);
+			reply.send(result);
+		} catch (error) {
+			console.error("2FA Generation error:", error);
+			return reply.status(500).send({ error: "Failed to generate 2FA" });
 		}
-		interface GetUserByTokenResult extends User {}
-		const user: GetUserByTokenResult = await getUserByToken(token) as GetUserByTokenResult;
-		if (!user.email || typeof user.email !== "string") {
-			return reply.status(400).send({ error: "User email is missing or invalid." });
-		}
-		const result = await generate2FA(user.email);
-		reply.send(result);
 	});
 
 	fastify.post("/auth/2fa/verify", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		const {input} = request.body as any;
-		const token = request.cookies.token;
-		if (typeof token !== "string") {
-			return reply.status(400).send({ error: "Token is missing or invalid." });
+		try {
+			const { input } = request.body as any;
+			if (!input) {
+				return reply.status(400).send({ error: "2FA code is required" });
+			}
+			
+			const user = (request as any).user;
+			if (!user || !user.email) {
+				return reply.status(400).send({ error: "User information missing" });
+			}
+			
+			const result = await verify2FA(user.email, input);
+			reply.send(result);
+		} catch (error) {
+			console.error("2FA Verification error:", error);
+			return reply.status(500).send({ error: "Failed to verify 2FA" });
 		}
-		interface GetUserByTokenResult extends User {}
-		const user: GetUserByTokenResult = await getUserByToken(token) as GetUserByTokenResult;
-		if (!user.email || typeof user.email !== "string") {
-			return reply.status(400).send({ error: "User email is missing or invalid." });
-		}
-		const result = await verify2FA(user.email, input);
-		reply.send(result);
 	});
 
-	fastify.get("/auth/2fa/check", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+	fastify.get("/auth/2fa/check", async (request, reply) => {
 		const token = request.cookies.token;
 		if (typeof token !== "string") {
 			return reply.status(400).send({ error: "Token is missing or invalid." });
 		}
 		interface GetUserByTokenResult extends User {}
-		const user: GetUserByTokenResult = await getUserByToken(token) as GetUserByTokenResult;
-		if (!user) {
+		const email = await getUserByToken(token);
+		if (!email) {
 			return reply.status(404).send({error: "User not found"});
 		}
-		return {statusCode: 200, message: "Success", value: user.twofa_enable};
+		const tfa = db.prepare(`SELECT twofa_enable FROM users WHERE email = ?`).get(email);
+		return {statusCode: 200, message: "Success", value: tfa};
 	});
 
 
