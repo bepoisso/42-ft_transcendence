@@ -30,7 +30,7 @@ export function getSocket(router: Router): Socket {
 		});
 
 		socket.on("friend_request_accepted", (data) => {
-
+			// TODO
 		})
 
 		socket.on("game_ready", (data) => {

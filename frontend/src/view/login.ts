@@ -85,7 +85,7 @@ function formHandler(router: Router)
 			const data = await Login(email, password);
 			if (data.statusCode === 200) {
 				console.log("successfully logged in")
-				// localStorage.setItem("token", data.token);
+				localStorage.setItem("username", data.token);
 				// rediriger vers 2FA
 				router.navigate("/2fa");
 			}
@@ -97,17 +97,17 @@ function formHandler(router: Router)
 }
 
 function googleHandler(router: Router) {
-  const btnGoogle = document.getElementById("google");
-  btnGoogle?.addEventListener("click", async (e) => {
-    e.preventDefault();
+	const btnGoogle = document.getElementById("google");
+	btnGoogle?.addEventListener("click", async (e) => {
+		e.preventDefault();
 
-    try {
-		window.location.href = "/auth/google";
-		// demander a recupérer les infos
-    } catch (err) {
-      console.error("Erreur lors de la connexion Google :", err);
-    }
-  });
+		try {
+			window.location.href = "/auth/google";
+			// demander a recupérer les infos
+		} catch (err) {
+		console.error("Erreur lors de la connexion Google :", err);
+		}
+	});
 }
 
 export function loginHandler(router: Router) {

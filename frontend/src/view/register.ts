@@ -163,7 +163,7 @@ function googleHandler(router: Router) {
 		console.error("Erreur lors de la connexion Google :", err);
 		}
 	});
-	}
+}
 
 export function registerHandler(router: Router) {
   formHandler(router); // ton handler du submit

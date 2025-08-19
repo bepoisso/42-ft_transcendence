@@ -37,7 +37,7 @@ export function render2fa() {
 }
 
 
-async function fetchURI(username: string):
+async function generateQRCode(username: string):
 Promise <{
 	statusCode: number,
 	data: {
@@ -78,9 +78,10 @@ async function verify2fa(username: string, input: string): Promise <{statusCode:
 
 export async function logic2fa(router: Router)
 {
+	//const isNew = await checkNew();
 	const username = localStorage.getItem("username");
 	if (!username) return;
-	const data = await fetchURI(username);
+	const data = await generateQRCode(username);
 	console.log(data);
 
 	const qrCodeContainer = document.getElementById("qrcode");
