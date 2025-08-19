@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import db from '../db/db';
 import cors from '@fastify/cors';
-import { METHODS } from "http";
+import { METHODS, STATUS_CODES } from "http";
 import { REPL_MODE_SLOPPY } from "repl";
 import { FastifyInstance } from "fastify";
 import { signToken } from './auth_token';
@@ -36,6 +36,15 @@ export async function register(username:string, email:string, password:string) {
 		return { statusCode: 401, message: "Invalid credential" };
 	}
 
+	const emailUsed = db.prepare(`SELECT id FROM users WHERE email = ?`).get(email);
+	if (emailUsed) {
+		return { statusCode: 409, message: "Email already used" };
+	}
+	const usernameUsed = db.prepare(`SELECT id FROM users WHERE username = ?`).get(username);
+	if (usernameUsed) {
+		return { statusCode: 409, message: "Username already used" };
+	}
+	
 	// Hash password
 	const passwordHash = await bcrypt.hash(password, 10);
 	
