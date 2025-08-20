@@ -21,7 +21,8 @@ CREATE TABLE users (
 	username_tournament TEXT
 );
 
--- Table des amis
+DROP TABLE IF EXISTS friends;
+
 CREATE TABLE friends (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	user_id INTEGER NOT NULL,
@@ -30,6 +31,7 @@ CREATE TABLE friends (
 	FOREIGN KEY (user_id) REFERENCES users(id),
 	FOREIGN KEY (friend_id) REFERENCES users(id)
 );
+
 
 -- Table des parties
 CREATE TABLE games (

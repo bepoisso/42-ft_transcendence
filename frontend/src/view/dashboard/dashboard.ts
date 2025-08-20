@@ -104,6 +104,13 @@ async function fetchUserData() : Promise<{
 }
 
 
+
+
+
+
+
+
+
 async function setDashboard(router: Router): Promise<number | undefined>
 {
 	try {
@@ -133,6 +140,7 @@ async function setDashboard(router: Router): Promise<number | undefined>
 			return data.id;
 	} catch (err) {
 		console.error("Error fetching user data:", err);
+		router.navigate("/login");
 		return undefined;
 	}
 }

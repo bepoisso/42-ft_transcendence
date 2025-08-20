@@ -26,7 +26,9 @@ async function buildServer() {
 			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_FRONT || '5173'}`,
 			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_BACK || '3000'}`
 		],
-		credentials: true // Important pour les cookies
+		credentials: true,
+		methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'OPTIONS'],
+		allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'] // Important pour les cookies
 	});
 
 	// On instaure Websocket ici
