@@ -14,7 +14,7 @@ CREATE TABLE users (
 	google_id TEXT UNIQUE,
 	twofa_enable BOOLEAN DEFAULT 0,
 	twofa_secret TEXT UNIQUE,
-	friend_list TEXT DEFAULT '[]',
+	friend_list TEXT DEFAULT '[]'
 );
 
 DROP TABLE IF EXISTS games;
@@ -26,7 +26,7 @@ CREATE TABLE games (
 	player_id_won NUMBER,
 	game_date TEXT,
 	score TEXT,
-	tournament_id NUMBER DEFAULT 0,
+	tournament_id NUMBER DEFAULT 0
 );
 
 DROP TABLE IF EXISTS tournament;

@@ -1,7 +1,8 @@
 import { Router } from "../../router";
 import { searchBar } from "./toolbar";
-import { fetchFriendsStatus } from "./fetchFriends";
+import { renderFriendsSidebar } from "./fetchFriends";
 import { getSocket } from "../../sockets/socket";
+import type { Friend } from "./fetchFriends";
 
 export function renderDashboard() {
   document.getElementById("app")!.innerHTML = `
@@ -81,28 +82,21 @@ export function renderDashboard() {
 // 					Appelle du back pour dynamiquement modifier les éléments						||
 // ===================================================================================================
 
-// // test sans back
-// async function fecthUserData(token: string) {
-// 	return {statusCode: 200, message: "all good", name: "Test"};
-// }
-
-
-async function fetchUserData() : Promise <{
-	statusCode: number,
-	message: string,
-	id?: number,
-	username?: string,
-	tournament_name?: string,
-	avatar_url?: string,
-	email?: string,
-	games_played?: number,
-	games_won?: number,
-	room_id?: number,
-	avatarURL?: string,
-	friend_list: string[]
-}>{
-	const response = await fetch("/api/userInfo", {
-		method: "POST",
+async function fetchUserData() : Promise<{
+  statusCode: number;
+  message: string;
+  id?: number;
+  username?: string;
+  username_tournament?: string;
+  avatar_url?: string;
+  email?: string;
+  games_played?: number;
+  games_won?: number;
+  room_id?: number;
+  friends?: Friend[]; // tableau d'amis
+}> {
+	const response = await fetch("/back/api/get/private", {
+		method: "GET",
 		credentials: 'include',
 	});
 	const data = await response.json();
@@ -129,12 +123,12 @@ async function setDashboard(router: Router): Promise<number | undefined>
 				userDiv.textContent = data.username!;
 				localStorage.setItem("username", data.username!);
 			}
-			if (data.avatarURL) {
+			if (data.avatar_url) {
 				const userAvatar = document.getElementById("user-avatar") as HTMLImageElement;
-				if (userAvatar) userAvatar.src = data.avatarURL;
+				if (userAvatar) userAvatar.src = data.avatar_url;
 			}
 
-			// Faudrait mettre la liste d'amis ici
+			renderFriendsSidebar(router, data.friends!);
 
 			return data.id;
 	} catch (err) {
@@ -231,10 +225,8 @@ export async function dashboardHandler(router: Router)
 	modeClick(socket, "btnLocal", "local", id);
 	modeClick(socket, "btnAI", "AI", id);
 	//modeClick(socket, router, "btnOnline", "online", id); => build logique marchmaking
-	fetchFriendsStatus(router); // a placer dans setDash
 
 	searchBar(router);
-	//Penser a la logique de tournois
 
 	matchmaking(socket, id);
 

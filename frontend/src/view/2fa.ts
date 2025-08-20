@@ -45,8 +45,7 @@ Promise <{
 		secret: string,
 		uri: string,
 	}
-}>
-{
+}> {
 	const response = await fetch("/api/auth/2fa/generate", {
 		method: "POST",
 		credentials: 'include'

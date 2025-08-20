@@ -52,20 +52,6 @@ export function renderVisitProfile() {
   `;
 }
 
-
-// // Test
-// function fetchUserData() {
-// 	return {
-// 		statusCode: 200,
-// 		message: "all good",
-// 		username: "Fab",
-// 		avatarURL: undefined,
-// 		gamesPlayed: "10",
-// 		gamesWon: "5",
-// 		friend: false
-// 	}
-// }
-
 async function fetchUserData(id: number, username: string): Promise<{
 	statusCode: number,
 	message?: string,
@@ -76,11 +62,13 @@ async function fetchUserData(id: number, username: string): Promise<{
 	gamesWon: string,
 	friend: boolean
 	}> {
-	const response = await fetch("/api/visitProfile", {
+	const response = await fetch("/back/api/get/user/public", {
 		method: "POST",
+		credentials: 'include',
 		headers: {
 		"Content-Type": "application/json",
 		},
+		body: JSON.stringify({id: id}),
 	});
 	return await response.json();
 }
@@ -156,5 +144,4 @@ export function visitProfileHandler(router: Router, id: number)
 	const socket = getSocket(router);
 	setVisitProfile(id);
 	inviteGame(socket);
-
 }

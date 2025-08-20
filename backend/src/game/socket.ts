@@ -170,7 +170,7 @@ export async function socketHandler(fastify: FastifyInstance)
 				if (data.type === "matchmaking") {
 					if (pendingMatchmaking < 0) {
 						pendingMatchmaking = data.from;
-						// le mettre en attente
+						// le mettre en attente avec un ws.send()
 					} else {
 						const id1 = pendingMatchmaking;
 						pendingMatchmaking = -1;

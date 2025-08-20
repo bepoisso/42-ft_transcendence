@@ -61,6 +61,7 @@ export function renderMyProfile() {
               Save
             </button>
 			<p id="error-save" class="text-red-500 mt-2"></p>
+			<p id="success-save" class="text-green-500 mt-2"></p>
           </div>
 
           <!-- Changer mot de passe -->
@@ -126,8 +127,8 @@ async function fetchUserData() : Promise <{
 	avatarURL?: string,
 	friend_list: string[]
 }>{
-	const response = await fetch("/api/userInfo", {
-		method: "POST",
+	const response = await fetch("/back/api/get/private", {
+		method: "GET",
 		credentials: 'include',
 	});
 	const data = await response.json();
@@ -192,16 +193,16 @@ export async function setMyProfile(router: Router)
 // ===================================================================================================
 
 async function saveUserData(userName: string):
-Promise <{statusCode: number, message?: string}>
+Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api/myProfile", {
-		method: "PUT",
+	const response = await fetch("/back/api/update/user/username", {
+		method: "PATCH",
 		credentials: 'include',
 		headers: {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-			name: userName,
+			username: userName,
 		}),
 	});
 	const data = await response.json();
@@ -221,14 +222,14 @@ function updateProfile()
 		if (!userNameInput) {
 			const errorMessage = document.getElementById("error-save");
 			if (errorMessage)
-				errorMessage.textContent = "Need to fill all informations";
+				errorMessage.textContent = "Username needs to be 3 char minimum";
 			return;
 		}
 
 		const userName = userNameInput.value;
 
 
-		const usernameRegex = /^[a-zA-Z0-9]{3,}$/;
+		const usernameRegex = /^[a-zA-Z0-9-_]{3,}$/;
 
 		if (!usernameRegex.test(userName)) {
 			const errorMessage = document.getElementById("error-save");
@@ -238,14 +239,20 @@ function updateProfile()
 		}
 
 		try {
-				const data = await saveUserData(userName);
+			const data = await saveUserData(userName);
 
-			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
-				console.error("Error with myProfile : " + data.message);
-				throw new Error("Failed to fetch user profile information");
+				const errorMessage = document.getElementById("error-save");
+				if (errorMessage) {
+					errorMessage.textContent = data.message;
+				}
+				return;
+			} else {
+				const successMessage = document.getElementById("success-save");
+				if (successMessage) {
+					successMessage.textContent = data.message;
+				}
 			}
-
 		} catch (err) {
 			console.error("Error saving user information: ", err);
 		}
@@ -256,13 +263,11 @@ function updateProfile()
 
 
 
-
-
 async function updatePassword(oldPass: string, newPass: string, confirmPass: string):
-Promise <{statusCode: number, message?: string}>
+Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api/myProfile/password", {
-		method: "PUT",
+	const response = await fetch("/back/api/update/user/password", {
+		method: "PATCH",
 		credentials: 'include',
 		headers: {
 			"Content-Type": "application/json",
@@ -288,8 +293,10 @@ function passwordHandler()
 		const confirmPassInput = document.getElementById("confirm-password") as HTMLInputElement | null;
 
 		if (!oldPassInput || !newPassInput || !confirmPassInput) {
+			const errorMessage = document.getElementById("error-password");
 			console.error("One or more input elements not found");
-			// ecrire un message d'erreur
+			if (errorMessage)
+				errorMessage.textContent = "Missing elements !";
 			return;
 		}
 
@@ -319,17 +326,22 @@ function passwordHandler()
 				errorMessage.textContent = "Password must be at least 8 characters long and contain at least one number and one special character.";
 				return;
 		}
-
-
 		try {
-				const data = await updatePassword(oldPass, newPass, confirmPass);
+			const data = await updatePassword(oldPass, newPass, confirmPass);
 
 			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
-				console.error("Error with myProfile : " + data.message);
-				throw new Error("Failed to fetch user profile information");
+				const errorMessage = document.getElementById("error-save");
+				if (errorMessage) {
+					errorMessage.textContent = data.message;
+				}
+				return;
+			} else {
+				const successMessage = document.getElementById("success-save");
+				if (successMessage) {
+					successMessage.textContent = data.message;
+				}
 			}
-
 		} catch (err) {
 			console.error("Error saving user information: ", err);
 		}

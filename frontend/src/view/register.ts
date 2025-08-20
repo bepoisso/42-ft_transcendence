@@ -60,6 +60,7 @@ export function renderRegister() {
 async function preRegister(username: string, email: string, password: string): Promise<{statusCode: number, message: string}> {
 	const response = await fetch("/api/register", {
 		method: "POST",
+		credentials: 'include',
 		headers: {
 		"Content-Type": "application/json",
 		},
