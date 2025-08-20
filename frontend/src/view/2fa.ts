@@ -46,7 +46,7 @@ Promise <{
 		uri: string,
 	}
 }> {
-	const response = await fetch("/api/auth/2fa/generate", {
+	const response = await fetch("/back/auth/2fa/generate", {
 		method: "POST",
 		credentials: 'include'
 	});
@@ -59,7 +59,7 @@ Promise <{
 
 async function verify2fa(input: string): Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api/auth/2fa/verify", {
+	const response = await fetch("/back/auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
@@ -75,7 +75,7 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 
 
 async function checkNewUser(): Promise <{statusCode: number, message: string, value:{ twofa_enable: number}}> {
-	const response = await fetch("/api/auth/2fa/check", {
+	const response = await fetch("/back/auth/2fa/check", {
 		method: "GET",
 		credentials: 'include'
 	});

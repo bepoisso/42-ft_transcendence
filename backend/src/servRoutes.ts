@@ -9,7 +9,10 @@ import type { User } from "./types/db";
 import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
 import { verifyAuthToken, getUserByToken, signToken } from "./auth/auth_token";
+import { getUserPrivate, getUserPublic, updateUsername, updateAvatar, updatePassword } from "./user/user"
+import { getGamesHistory } from "./user/games"
 import dotenv from "dotenv";
+import { verify } from "crypto";
 
 dotenv.config();
 
@@ -168,7 +171,42 @@ export async function servRoutes(fastify: FastifyInstance)
 		reply.send({ message: "Cookies cleared" });
 	});
 
+	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]},  async (request, reply) => {
+		const token = request.cookies.token;
+		const result = await getUserPrivate(token || "");
+		reply.send(result);
+	});
 
+	fastify.post("/api/get/user/public",{preHandler: [verifyAuthToken]},  async (request, reply) => {
+		const id: number = Number(request.id);
+		const token = request.cookies.token;
+		const result = await getUserPublic(id || 0);
+		reply.send(result);
+	});
+
+	fastify.get("/api/get/game/history", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const result = getGamesHistory(token || "");
+		reply.send(result);
+	});
+
+	fastify.patch("/api/update/user/username", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const { username } = request.body as any;
+		const result = updateUsername(username, token || "")
+	});
+
+	fastify.patch("/api/update/user/avatar", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const { avatar } = request.body as any;
+		const result = updateAvatar(avatar, token  || "")
+	});
+
+	fastify.patch("/api/update/user/password", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const { newPass, oldPass, confirmPass } = request.body as any;
+		const result = updatePassword(oldPass, newPass, confirmPass, token || "")
+	});
 	// Gere Socket
 	socketHandler(fastify);
 

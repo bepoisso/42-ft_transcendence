@@ -95,7 +95,7 @@ async function fetchUserData() : Promise<{
   room_id?: number;
   friends?: Friend[]; // tableau d'amis
 }> {
-	const response = await fetch("/back/api/get/private", {
+	const response = await fetch("/back/api/get/user/private", {
 		method: "GET",
 		credentials: 'include',
 	});

@@ -22,7 +22,7 @@ export default defineConfig({
           console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
         });
       },
-      rewrite: (path) => path.replace(/^\/api/, ''),
+      rewrite: (path) => path.replace(/^\/back/, ''),
     },
     '/auth': {
       target: 'http://localhost:3000',

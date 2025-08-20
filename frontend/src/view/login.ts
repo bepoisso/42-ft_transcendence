@@ -52,7 +52,7 @@ export function renderLogin() {
 // Fonction pour savoir si on a une 2FA
 async function Login(email: string, password: string): Promise < {statusCode: number, message?: string}>
 {
-	const response = await fetch("/api/login", {
+	const response = await fetch("/back/login", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
