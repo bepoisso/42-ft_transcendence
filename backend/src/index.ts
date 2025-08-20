@@ -30,7 +30,6 @@ async function buildServer() {
 	});
 
 	// On instaure Websocket ici
-	// On instaure Websocket ici
 	await server.register(websocket);
 
 	// Register cookie support

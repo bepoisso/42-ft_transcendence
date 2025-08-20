@@ -1,6 +1,5 @@
-import { Socket } from "socket.io-client";
 
-export function receiveInvit(socket: Socket, data: any)
+export function gameInvit(socket: WebSocket, data: any)
 {
 	const notification = document.createElement("div");
 	notification.className = `
@@ -8,7 +7,7 @@ export function receiveInvit(socket: Socket, data: any)
 	`;
 
 	const message = document.createElement("span");
-	message.textContent = `${data.from} invited you for a game !`;
+	message.textContent = `${data.from_name} invited you for a game !`;
 	notification.appendChild(message);
 
 	// Boutons
@@ -19,7 +18,7 @@ export function receiveInvit(socket: Socket, data: any)
 	acceptBtn.textContent = "✅";
 	acceptBtn.className = "px-3 py-1 bg-green-600 rounded hover:bg-green-700";
 	acceptBtn.onclick = () => {
-		socket.emit("accept_invite", { from: data.from });
+		socket.send(JSON.stringify({ type: "game_accepted", from: data.from, mode: "online"}));
 		notification.remove();
 	};
 
@@ -27,7 +26,6 @@ export function receiveInvit(socket: Socket, data: any)
 	declineBtn.textContent = "❌";
 	declineBtn.className = "px-3 py-1 bg-red-600 rounded hover:bg-red-700";
 	declineBtn.onclick = () => {
-		socket.emit("decline_invite", { from: data.from });
 		notification.remove();
 	};
 
@@ -41,7 +39,7 @@ export function receiveInvit(socket: Socket, data: any)
 	setTimeout(() => notification.remove(), 15000);
 }
 
-export function friendsInvit(socket: Socket, data: any)
+export function friendInvit(socket: WebSocket, data: any)
 {
 	const notification = document.createElement("div");
 	notification.className = `
@@ -49,7 +47,7 @@ export function friendsInvit(socket: Socket, data: any)
 	`;
 
 	const message = document.createElement("span");
-	message.textContent = `${data.from} wants you to be friends !`;
+	message.textContent = `${data.from_name} wants you to be friends !`;
 	notification.appendChild(message);
 
 	// Boutons
@@ -60,7 +58,7 @@ export function friendsInvit(socket: Socket, data: any)
 	acceptBtn.textContent = "✅";
 	acceptBtn.className = "px-3 py-1 bg-green-600 rounded hover:bg-green-700";
 	acceptBtn.onclick = () => {
-		socket.emit("accept_friend", { from: data.from });
+		socket.send(JSON.stringify({ type: "accept_friend_invite", from: data.from }));
 		notification.remove();
 	};
 
@@ -68,7 +66,6 @@ export function friendsInvit(socket: Socket, data: any)
 	declineBtn.textContent = "❌";
 	declineBtn.className = "px-3 py-1 bg-red-600 rounded hover:bg-red-700";
 	declineBtn.onclick = () => {
-		socket.emit("decline_friend", { from: data.from });
 		notification.remove();
 	};
 

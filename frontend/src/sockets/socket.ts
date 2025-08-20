@@ -5,38 +5,44 @@
 	Je fais ça pour avoir acces a ma connexions ws. Sinon elle serait perdue.
 	Par exemple ici je la crée dans dashboard.ts et la recupere plus tard dans game.ts
 */
-import { io, Socket } from "socket.io-client";
-import { friendsInvit, receiveInvit } from "./invite";
+
+import { friendInvit, gameInvit } from "./invite";
 import { Router } from "../router";
 
-export let socket: Socket | null = null;
+export let socket: WebSocket | null = null;
 
-export function getSocket(router: Router): Socket {
+export function getSocket(router: Router): WebSocket {
 	if (!socket) {
-		socket = io("http://localhost:3000", { withCredentials: true });
+		socket = new WebSocket("ws://localhost:3000");
 
-		socket.on("connect", () => {
-			console.log("Socket connectée : ", socket!.id);
-		});
+		socket.onopen = () => {
+			console.log("Socket connectée");
+		};
 
-		socket.on("receive_invite", (data) => {
-			console.log("Invitation reçue : ", data);
-			receiveInvit(socket!, data);
-		});
+		socket.onmessage = (event) => {
+			const data = JSON.parse(event.data);
 
-		socket.on("friend_request", (data) => {
-			console.log("Invitation reçue : ", data);
-			friendsInvit(socket!, data);
-		});
+			if (data.type === "game_receive_invite") {
+				console.log("Invitation reçue : ", data.from_name);
+				gameInvit(socket!, data);
+			}
 
-		socket.on("friend_request_accepted", (data) => {
-			// TODO
-		})
+			if (data.type === "friend_receive_invite") {
+				console.log("Invitation reçue : ", data.from_name);
+				friendInvit(socket!, data);
+			}
 
-		socket.on("game_ready", (data) => {
-			console.log("Game is ready : ", data);
-			router.navigate(`/game/${data.roomId}`);
-		})
+			if (data.type === "room_ready") {
+				console.log("Room number: ", data.roomId);
+				router.navigate(`/game/${data.roomId}`);
+			}
+
+
+
+
+
+
+		}
 	}
-	return socket;
+	return socket!;
 }

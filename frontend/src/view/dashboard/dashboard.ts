@@ -1,8 +1,7 @@
 import { Router } from "../../router";
-import { getSocket } from "../../sockets/socket";
-import { Socket } from "socket.io-client";
 import { searchBar } from "./toolbar";
 import { fetchFriendsStatus } from "./fetchFriends";
+import { getSocket } from "../../sockets/socket";
 
 export function renderDashboard() {
   document.getElementById("app")!.innerHTML = `
@@ -153,7 +152,7 @@ export async function setDashboard()
 // ===================================================================================================
 
 
-export function modeClick(socket: Socket, router: Router, btnId: string, modes: string)
+export function modeClick(socket: WebSocket, router: Router, btnId: string, modes: string)
 {
 	const btn = document.getElementById(btnId);
 	btn?.addEventListener("click", async (e) => {
@@ -161,7 +160,7 @@ export function modeClick(socket: Socket, router: Router, btnId: string, modes: 
 
 		console.log("TEST BOUTON "+ modes); // DEL ======================================================
 
-		socket.emit("start_game", { mode: modes }); // normalement pas besoin de username
+		//socket.emit("start_game", { mode: modes }); // normalement pas besoin de username ? a modifier en WS
 
 	});
 }

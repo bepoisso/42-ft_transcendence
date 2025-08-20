@@ -57,52 +57,57 @@ export function drawGame(gameState: GameState)
 	ctx.fill();
 }
 
-export function gameLoop(router: Router, roomId: string)
+export function gameLoop(router: Router, idRoom: string)
 {
 	const socket = getSocket(router);
 	let isLocal = false;
+	let askOnce = 0;
+	let localName;
 
 	// appelle game_info
-	socket.emit("game_info", { roomId });
+	socket.send(JSON.stringify({ type: "game_info", roomId: idRoom }));
 
 
 	// recupere game_update
-	socket.on("game_update", (gameState: GameState) => {
-		drawGame(gameState);
+	socket.onmessage = (event) => {
+		const data = JSON.parse(event.data);
 
-		// pour faire bouger le deuxieme boug avec w et s
-		if (gameState.mode === "local") {isLocal = true;}
-		else {isLocal = false;}
+		if (data.type === "game_update") {
+			// pour faire bouger le deuxième joueur avec w et s
+			isLocal = data.mode === "local";
+			if (isLocal === true && askOnce === 0) {
+				askOnce = 1;
+				//logique pour demander le nom du joueur seulement une fois
+				// localName = ?
+			}
 
-		// Met à jour les noms des joueurs
-		const player1 = document.getElementById("player1");
-		const player2 = document.getElementById("player2");
-		if (player1) player1.textContent = gameState.player1.name;
-		if (player2) player2.textContent = gameState.player2.name;
+			// Met à jour les noms des joueurs
+			const player1 = document.getElementById("player1");
+			const player2 = document.getElementById("player2");
+			if (player1) player1.textContent = data.gameState.player1.name;
+			if (player2) {
+				if (isLocal === false) player2.textContent = data.gameState.player2.name;
+				else player2.textContent = localName!;
+			}
 
-		// Met à jour le score
-		const scoreElem = document.getElementById("score");
-		if (scoreElem) scoreElem.textContent = `${gameState.player1.score} : ${gameState.player2.score}`;
-	});
+			// Met à jour le score
+			const scoreElem = document.getElementById("score");
+			if (scoreElem) scoreElem.textContent = `${data.gameState.player1.score} : ${data.gameState.player2.score}`;
+		}
 
-
-	// recupere game over
-	socket.on("game_over", (winner: string) => {
-		alert(`${winner} has won the game !`);
-		router.navigate("/dashboard");
-	});
-
+	}
+}
 
 	// event listener
-	window.addEventListener("keydown", (e) => {
-		if (e.key === "ArrowUp") socket.emit("move_paddle", { roomId, direction: "up" });
-		if (e.key === "ArrowDown") socket.emit("move_paddle", { roomId, direction: "down" });
-		if (isLocal) {
-			if (e.key === "w") socket.emit("move_paddle", { roomId, direction: "up" });
-			if (e.key === "s") socket.emit("move_paddle", { roomId, direction: "down" });
-		}
-	});
-}
+// 	window.addEventListener("keydown", (e) => {
+// 		if (e.key === "ArrowUp") socket.emit("move_paddle", { roomId, direction: "up" });
+// 		if (e.key === "ArrowDown") socket.emit("move_paddle", { roomId, direction: "down" });
+// 		if (isLocal) {
+// 			if (e.key === "w") socket.emit("move_paddle", { roomId, direction: "up" });
+// 			if (e.key === "s") socket.emit("move_paddle", { roomId, direction: "down" });
+// 		}
+// 	});
+// }
 
 
 
