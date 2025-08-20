@@ -18,7 +18,12 @@ export async function getUserPrivate(token: string) {
 		return { StatusCode: 404, message: "User not found" };
 	}
 
-	const friends = db.prepare(`SELECT * FROM friends WHERE user_id = ? OR friend_id = ?`).all(user.id, user.id) as Friend[];
+	const friends = db.prepare(`SELECT f.id, f.status,
+		u.id as friend_id, u.username, u.avatar_url, u.is_connected
+		FROM friends f
+		JOIN users u ON (u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END)
+		WHERE f.user_id = ? OR f.friend_id = ?
+`).all(user.id, user.id, user.id);
 
 	return {
 		statusCode: 200,

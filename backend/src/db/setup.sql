@@ -32,7 +32,7 @@ CREATE TABLE games (
 	player_id_left NUMBER NOT NULL,
 	player_id_right NUMBER,
 	player_id_won NUMBER,
-	game_date TEXT,
+	game_date TEXT NOT NULL,
 	score TEXT,
 	tournament_id NUMBER DEFAULT 0
 );
@@ -45,5 +45,5 @@ CREATE TABLE tournament (
 	nbr_player NUMBER NOT NULL,
 	player_list TEXT,
 	player_won NUMBER,
-	tournament_date TEXT
+	tournament_date TEXT NOT NULL
 );

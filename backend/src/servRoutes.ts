@@ -10,6 +10,7 @@ import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
 import { verifyAuthToken, getUserByToken, signToken } from "./auth/auth_token";
 import { getUserPrivate, getUserPublic } from "./user/user"
+import { getGamesHistory } from "./user/games"
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -169,7 +170,7 @@ export async function servRoutes(fastify: FastifyInstance)
 		reply.send({ message: "Cookies cleared" });
 	});
 
-	fastify.get("/api/get/user/private",{preHandler: [verifyAuthToken]},  async (request, reply) => {
+	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]},  async (request, reply) => {
 		const token = request.cookies.token;
 		const result = await getUserPrivate(token || "");
 		reply.send(result);
@@ -179,6 +180,12 @@ export async function servRoutes(fastify: FastifyInstance)
 		const id: number = Number(request.id);
 		const token = request.cookies.token;
 		const result = await getUserPublic(id || 0);
+		reply.send(result);
+	});
+
+	fastify.get("/api/get/game/history", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const result = getGamesHistory(token || "");
 		reply.send(result);
 	});
 
