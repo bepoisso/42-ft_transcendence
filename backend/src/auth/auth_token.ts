@@ -24,14 +24,14 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 	try {
 		const token = request.cookies.token;
 		if (!token) {
-			reply.status(401).send({ error: 'Token is missing' });
-			console.log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
+			reply.send({statusCode: 401, error: 'Token is missing' });
+			console.log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", request);
 			return;
 		}
 		
 		const jwtsecret = process.env.JWT_SECRET;
 		if (!jwtsecret) {
-			reply.status(500).send({ error: 'Server configuration error' });
+			reply.send({statusCode: 500, error: 'Server configuration error' });
 			return;
 		}
 		
@@ -41,14 +41,14 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 		if (!decoded.twofa_enable) {
 			const allowedFor2FA = ['/auth/2fa/generate', '/auth/2fa/verify', '/auth/2fa/check'];
 			if (!allowedFor2FA.includes(request.url)) {
-				reply.status(403).send({ error: 'Two-Factor Authentication required' });
+				reply.send({ statusCode:403, error: 'Two-Factor Authentication required' });
 				return;
 			}
 		}
 
 		done();
 	} catch (err) {
-		reply.status(401).send({error: 'Invalid or expired token'});
+		reply.send({statusCode: 401 ,error: 'Invalid or expired token'});
 	}
 };
 

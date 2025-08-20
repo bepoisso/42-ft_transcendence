@@ -13,6 +13,7 @@ import { getUserPrivate, getUserPublic, updateUsername, updateAvatar, updatePass
 import { getGamesHistory } from "./user/games"
 import dotenv from "dotenv";
 import { sign, verify } from "crypto";
+import { verifyToken } from "node-2fa";
 
 dotenv.config();
 
@@ -88,14 +89,14 @@ export async function servRoutes(fastify: FastifyInstance)
 			const { email } = result as { email: string; statusCode: number; message: string };
 
 			if (!email) {
-				return reply.status(404).send({error: "Email is missing"});
+				return reply.send({ statusCode: 404, error: "Email is missing" });
 			}
 
 			const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
 
 			const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: user.twofa_enable ?? false});
 			if (!token) {
-				return reply.status(500).send({ error: "Can not create token" });
+				return reply.send({ statusCode: 400, error: "Can not create token" });
 			}
 			
 			reply.clearCookie("token", { path: '/' });
@@ -110,7 +111,7 @@ export async function servRoutes(fastify: FastifyInstance)
 			reply.redirect(`http://localhost:5173/2fa`);
 		} catch (error) {
 			console.error("Google OAuth callback error:", error);
-			return reply.status(500).send({ error: "Authentication failed" });
+			return reply.send({ statusCode: 500, error: "Authentication failed" });
 		}
 	});
 
@@ -118,14 +119,14 @@ export async function servRoutes(fastify: FastifyInstance)
 		try {
 			const user = (request as any).user;
 			if (!user || !user.email) {
-				return reply.status(400).send({ error: "User information missing" });
+				return reply.send({statusCode: 400,  error: "User information missing" });
 			}
 			
 			const result = await generate2FA(user.email);
 			reply.send(result);
 		} catch (error) {
 			console.error("2FA Generation error:", error);
-			return reply.status(500).send({ error: "Failed to generate 2FA" });
+			return reply.send({statusCode: 500,  error: "Failed to generate 2FA" });
 		}
 	});
 
@@ -133,12 +134,12 @@ export async function servRoutes(fastify: FastifyInstance)
 		try {
 			const { input } = request.body as any;
 			if (!input) {
-				return reply.status(400).send({ error: "2FA code is required" });
+				return reply.send({statusCode: 400,  error: "2FA code is required" });
 			}
 			
 			const user = (request as any).user;
 			if (!user || !user.email) {
-				return reply.status(400).send({ error: "User information missing" });
+				return reply.send({statusCode: 400,  error: "User information missing" });
 			}
 			
 			const result = await verify2FA(user.email, input);
@@ -155,19 +156,19 @@ export async function servRoutes(fastify: FastifyInstance)
 			reply.send(result);
 		} catch (error) {
 			console.error("2FA Verification error:", error);
-			return reply.status(500).send({ error: "Failed to verify 2FA" });
+			return reply.send({statusCode: 500,  error: "Failed to verify 2FA" });
 		}
 	});
 
-	fastify.get("/auth/2fa/check", async (request, reply) => {
+	fastify.get("/auth/2fa/check", {preHandler: verifyAuthToken}, async (request, reply) => {
 		const token = request.cookies.token;
 		if (typeof token !== "string") {
-			return reply.status(400).send({ error: "Token is missing or invalid." });
+			return reply.send({statusCode: 400, error: "Token is missing or invalid." });
 		}
 		
 		const userResult = await getUserByToken(token);
 		if (typeof userResult !== "string") {
-			return reply.status(404).send({error: "User not found"});
+			return reply.send({statusCode: 400, error: "User not found"});
 		}
 		
 		const email = userResult;
