@@ -12,7 +12,7 @@ import { verifyAuthToken, getUserByToken, signToken } from "./auth/auth_token";
 import { getUserPrivate, getUserPublic, updateUsername, updateAvatar, updatePassword } from "./user/user"
 import { getGamesHistory } from "./user/games"
 import dotenv from "dotenv";
-import { verify } from "crypto";
+import { sign, verify } from "crypto";
 
 dotenv.config();
 
@@ -54,7 +54,7 @@ export async function servRoutes(fastify: FastifyInstance)
 				secure: false,
 				sameSite: 'lax',
 				path: '/',
-				maxAge: 24 * 60 * 60 * 1000
+				maxAge: 15 * 60 * 1000
 			});
 		}
 		reply.send(result);
@@ -71,7 +71,7 @@ export async function servRoutes(fastify: FastifyInstance)
 				secure: false,
 				sameSite: 'lax',
 				path: '/',
-				maxAge: 24 * 60 * 60 * 1000
+				maxAge: 15 * 60 * 1000
 			});
 		}
 		reply.send(result);
@@ -142,6 +142,16 @@ export async function servRoutes(fastify: FastifyInstance)
 			}
 			
 			const result = await verify2FA(user.email, input);
+
+			reply.clearCookie("token", { path: '/' });
+			
+			reply.cookie("token", result.token || "", { 
+				httpOnly: true, 
+				secure: false,
+				sameSite: 'lax',
+				path: '/',
+				maxAge: 4 * 60 * 60 * 1000
+			});
 			reply.send(result);
 		} catch (error) {
 			console.error("2FA Verification error:", error);
@@ -171,14 +181,14 @@ export async function servRoutes(fastify: FastifyInstance)
 		reply.send({ message: "Cookies cleared" });
 	});
 
-	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]},  async (request, reply) => {
+	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const result = await getUserPrivate(token || "");
 		reply.send(result);
 	});
 
-	fastify.post("/api/get/user/public",{preHandler: [verifyAuthToken]},  async (request, reply) => {
-		const id: number = Number(request.id);
+	fastify.post("/api/get/user/public", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const { id } = request.body as any;
 		const token = request.cookies.token;
 		const result = await getUserPublic(id || 0);
 		reply.send(result);
@@ -186,27 +196,32 @@ export async function servRoutes(fastify: FastifyInstance)
 
 	fastify.get("/api/get/game/history", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
-		const result = getGamesHistory(token || "");
+		const result = await getGamesHistory(token || "");
 		reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/username", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { username } = request.body as any;
-		const result = updateUsername(username, token || "")
+		const result = await updateUsername(username, token || "")
+		reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/avatar", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { avatar } = request.body as any;
-		const result = updateAvatar(avatar, token  || "")
+		const result = await updateAvatar(avatar, token  || "")
+		reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/password", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { newPass, oldPass, confirmPass } = request.body as any;
-		const result = updatePassword(oldPass, newPass, confirmPass, token || "")
+		const result = await updatePassword(oldPass, newPass, confirmPass, token || "")
+		reply.send(result);
 	});
+
+
 	// Gere Socket
 	socketHandler(fastify);
 

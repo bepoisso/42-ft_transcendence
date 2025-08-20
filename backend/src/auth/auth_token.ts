@@ -3,6 +3,7 @@ import fastify from "fastify";
 import db from "../db/db"
 import { FastifyRequest, FastifyReply } from 'fastify';
 import type { User } from "../types/db";
+import cookies from "@fastify/cookie"
 
 export function signToken(user: { id: number; email: string; twofa_enable: boolean }): string {
 	const jwtsecret = process.env.JWT_SECRET;
@@ -24,6 +25,7 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 		const token = request.cookies.token;
 		if (!token) {
 			reply.status(401).send({ error: 'Token is missing' });
+			console.log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
 			return;
 		}
 		

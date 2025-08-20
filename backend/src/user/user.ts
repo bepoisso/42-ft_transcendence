@@ -5,35 +5,40 @@ import bcrypt from 'bcrypt';
 
 
 export async function getUserPrivate(token: string) {
-	const email = getUserByToken(token);
+	const email = await getUserByToken(token);
 	if (!email) {
 		return { statusCode: 404, message: "User not found" };
 	}
-
-	const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
-	if (!user) {
-		return { StatusCode: 404, message: "User not found" };
+	
+	try {
+		const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
+		if (!user) {
+			return { StatusCode: 404, message: "User not found" };
+		}
+	
+		const friends = db.prepare(`SELECT f.id, f.status,
+			u.id as friend_id, u.username, u.avatar_url, u.is_connected
+			FROM friends f
+			JOIN users u ON (u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END)
+			WHERE f.user_id = ? OR f.friend_id = ?`).all(user.id, user.id, user.id);
+	
+		return {
+			statusCode: 200,
+			message: "Success",
+			id: user.id,
+			username: user.username,
+			username_tournamenet: user.username_tournament,
+			avatar_url: user.avatar_url,
+			email: user.email,
+			games_played: user.games_played,
+			games_won: user.games_won,
+			room_id: user.room_id,
+			friends: friends
+		};
+	} catch (err) {
+		return {statusCode: 500, message: "Internal server error", err};
 	}
 
-	const friends = db.prepare(`SELECT f.id, f.status,
-		u.id as friend_id, u.username, u.avatar_url, u.is_connected
-		FROM friends f
-		JOIN users u ON (u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END)
-		WHERE f.user_id = ? OR f.friend_id = ?`).all(user.id, user.id, user.id);
-
-	return {
-		statusCode: 200,
-		message: "Success",
-		id: user.id,
-		username: user.username,
-		username_tournamenet: user.username_tournament,
-		avatar_url: user.avatar_url,
-		email: user.email,
-		games_played: user.games_played,
-		games_won: user.games_won,
-		room_id: user.room_id,
-		friends: friends
-	};
 }
 
 export async function getUserPublic(id: number) {
@@ -63,7 +68,7 @@ export async function updateUsername(newUsername: string, token: string) {
 		return { statusCode: 400, message: "Username is required" };
 	}
 	
-	const email = getUserByToken(token);
+	const email = await getUserByToken(token);
 	if (!email) {
 		return { statusCode: 404, message: "User not found" };
 	}
@@ -91,7 +96,7 @@ export async function updateAvatar(newAvatar: string, token: string) {
 		return { statusCode: 400, message: "Avatar URL is required" };
 	}
 	
-	const email = getUserByToken(token);
+	const email = await getUserByToken(token);
 	if (!email) {
 		return { statusCode: 404, message: "User not found" };
 	}
@@ -110,7 +115,7 @@ export async function updateAvatar(newAvatar: string, token: string) {
 }
 
 export async function updatePassword(oldPass: string, newPass: string, confirmPass: string, token: string) {
-	const email = getUserByToken(token);
+	const email = await getUserByToken(token);
 	if (!email) {
 		return {statusCode: 404, message: "User not found"};
 	}
@@ -145,6 +150,7 @@ export async function updatePassword(oldPass: string, newPass: string, confirmPa
 
 	try {
 		db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(newPassHash, user.id);
+		return { statusCode: 200, message: "Password updated successfully" };
 	} catch (err) {
 		return { statusCode: 500, message: "Internal server error", err }
 	}

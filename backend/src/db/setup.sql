@@ -14,15 +14,18 @@ CREATE TABLE users (
 	google_id TEXT UNIQUE,
 	twofa_enable BOOLEAN DEFAULT 0,
 	twofa_secret TEXT UNIQUE,
-	username_tournament TEXT,
-	CREATE TABLE friends (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL,
-		friend_id INTEGER NOT NULL,
-		status TEXT DEFAULT 'pending',
-		FOREIGN KEY (user_id) REFERENCES users(id),
-		FOREIGN KEY (friend_id) REFERENCES users(id)
-	);
+	username_tournament TEXT
+);
+
+DROP TABLE IF EXISTS friends;
+
+CREATE TABLE friends (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	friend_id INTEGER NOT NULL,
+	status TEXT DEFAULT 'pending',
+	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (friend_id) REFERENCES users(id)
 );
 
 DROP TABLE IF EXISTS games;

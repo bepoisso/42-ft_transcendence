@@ -4,7 +4,7 @@ import type { Games, Tournament } from "../types/games";
 import type { User } from "../types/db";
 
 export async function getGamesHistory(token: string) {
-	const email = getUserByToken(token);
+	const email = await getUserByToken(token);
 	if (!token) {
 		return { statusCode: 404, message: "User not found" };
 	}
@@ -13,11 +13,7 @@ export async function getGamesHistory(token: string) {
 	if (!user) {
 		return { statusCode: 404, message: "User not found" };
 	}
-
-	const games = db.prepare(`SELECT * FROM games WHERE player_id_left = ? OR player_id_right = ?`).get(user.id, user.id) as Games;
-	if (!games) {
-		return { statusCode: 404, message: "Games not founds" };
-	}
+	const games = db.prepare(`SELECT * FROM games WHERE player_id_left = ? OR player_id_right = ?`).all(user.id, user.id) as Games[];
 
 	return { statusCode: 200, message: "Success", games };
 }
