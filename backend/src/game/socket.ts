@@ -131,7 +131,7 @@ export async function socketHandler(fastify: FastifyInstance)
 				// Logique game
 				if (data.type === "game_info") {
 					const gameRoom = getGameRoom(data.roomId);
-					if (!gameRoom) return ;
+					if (!gameRoom) return ; // on pourrait aussi return si l'id n'est pas correct ?
 					const gameState = gameRoom.gameState;
 					ws.send(JSON.stringify({
 						type: "game_update",
@@ -141,6 +141,29 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
+				if (data.type === "move_paddle") {
+					// recuperer les deux ws
+					// check si c'est local ou IA, dans ce cas c'est simple on ne renvoie qu'à ws
+					// Meme si j'ai deja ws, pour assurer on va aller chercher les deux sockets manuellement
+
+					const gameRoom = getGameRoom(data.roomId);
+					if (!gameRoom) return ;
+
+					const fromId = getId.get(ws);
+					//updateGame(gameRoom, fromId, data.direction, data.movement); // on a tout ?
+
+					// renvoyer "game_update"
+				}
+
+
+				if (data.type === "reconnect") {
+					const gameRoom = getGameRoom(data.roomId);
+					if (!gameRoom || (gameRoom.player1.id_player !== data.fromId && gameRoom.player2.id_player !== data.fromId)) {
+						ws.send(JSON.stringify({ type: "error", message: "Error trying to reconnect to the game" }));
+					} else {
+						ws.send(JSON.stringify({type: "room_ready", roomId: data.roomId}))
+					}
+				}
 
 
 

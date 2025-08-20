@@ -141,13 +141,13 @@ async function setVisitProfile(id: number)
 
 
 
-function inviteGame(socket: Socket) {
+function inviteGame(socket: WebSocket) {
 	const btn = document.getElementById("invite-play");
 	btn?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
 		const userId = localStorage.getItem("userId"); // id de l'ami que j'invite
-		socket.emit("send_invite", {to: userId });
+		//socket.emit("send_invite", {to: userId });
 	});
 }
 

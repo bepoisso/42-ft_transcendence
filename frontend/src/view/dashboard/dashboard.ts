@@ -87,61 +87,58 @@ export function renderDashboard() {
 // }
 
 
-interface friend {
-	id: number,
-	name: string,
-	avatarURL?: string,
-	online?: boolean
-}
-
 async function fetchUserData() : Promise <{
 	statusCode: number,
 	message?: string,
-	name: string,
-	avatarURL?: string
-	friends?: friend[]
+	id: number,
+	username: string,
+	avatar_url: string,
+	email: string,
+	games_played: number,
+	games_won: number,
+	room_id: number,
+	avatarURL?: string,
+	friend_list: string[]
 }>{
-	const response = await fetch("/api/dashboard", {
+	const response = await fetch("/api/userInfo", {
 		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
+		credentials: 'include',
 	});
 	const data = await response.json();
 	return data;
 }
 
 
-export async function setDashboard()
+async function setDashboard(router: Router): Promise<number | undefined>
 {
 	try {
 			const data = await fetchUserData();
 
 			if (data.statusCode === 401) {
-
+				router.navigate("/login");
 			}
-			if (data.statusCode !== 200) {
-				// Handle l'erreur
-
+			else if (data.statusCode !== 200) {
 				console.error("Error with dash : " + data.message);
 				throw new Error("Failed to fetch user data");
-
 			}
 
 			// Sinon
 			const userDiv = document.getElementById("user-name");
 			if (userDiv) {
-				userDiv.textContent = data.name;
-				localStorage.setItem("username", data.name);
+				userDiv.textContent = data.username;
+				localStorage.setItem("username", data.username);
 			}
 			if (data.avatarURL) {
 				const userAvatar = document.getElementById("user-avatar") as HTMLImageElement;
 				if (userAvatar) userAvatar.src = data.avatarURL;
 			}
 
+			// Faudrait mettre la liste d'amis ici
 
+			return data.id;
 	} catch (err) {
 		console.error("Error fetching user data:", err);
+		return undefined;
 	}
 }
 
@@ -152,15 +149,19 @@ export async function setDashboard()
 // ===================================================================================================
 
 
-export function modeClick(socket: WebSocket, router: Router, btnId: string, modes: string)
+export function modeClick(socket: WebSocket, btnId: string, modes: string, id: any)
 {
 	const btn = document.getElementById(btnId);
 	btn?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
-		console.log("TEST BOUTON "+ modes); // DEL ======================================================
+		console.log("TEST BOUTON "+ modes);
 
-		//socket.emit("start_game", { mode: modes }); // normalement pas besoin de username ? a modifier en WS
+		socket.send(JSON.stringify({
+			type: "game_accepted",
+			from: id,
+			mode: modes,
+		}))
 
 	});
 }
@@ -176,36 +177,47 @@ export function myProfileClick(router: Router)
 	btnMyProfile?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
-
 		router.navigate("/myProfile");
-
 	});
 }
 
 
 
-// import { sendInvite } from "../sockets/invite";
-// export function testFakeInvite() {
-// 	const socket = getSocket();
+async function isInGame(): Promise<number>
+{
+	try {
+			const data = await fetchUserData();
+			return data.room_id;
+	} catch (err) {
+		console.error("Error fetching user data:", err);
+		return -1;
+	}
+}
 
-// 	setTimeout(() => {
-// 		// ⚠️ ici on déclenche manuellement ton callback
-// 		sendInvite(socket, { from: "Alice", gameId: "fake123" });
-// 	}, 2000);
-// }
 
-
-export function dashboardHandler(router: Router)
+export async function dashboardHandler(router: Router)
 {
 	const socket = getSocket(router);
+	const id = setDashboard(router);
+	if (!id) return;
 
-	modeClick(socket, router, "btnLocal", "local");
-	modeClick(socket, router, "btnAI", "AI");
-	modeClick(socket, router, "btnOnline", "online");
-	fetchFriendsStatus(router);
+	const roomId = await isInGame();
+
+	if (roomId > 0) {
+		socket.send(JSON.stringify({
+			type: "reconnect",
+			from: id,
+			roomId: roomId,
+		}))
+	}
+	myProfileClick(router);
+
+	modeClick(socket, "btnLocal", "local", id);
+	modeClick(socket, "btnAI", "AI", id);
+	//modeClick(socket, router, "btnOnline", "online", id); => build logique marchmaking
+	fetchFriendsStatus(router); // a placer dans setDash
 
 	searchBar(router);
-	myProfileClick(router);
 	//Penser a la logique de tournois
 
 

@@ -57,9 +57,10 @@ export function drawGame(gameState: GameState)
 	ctx.fill();
 }
 
-export function gameLoop(router: Router, idRoom: string)
+export function gameLoop(router: Router, id_Room: string)
 {
 	const socket = getSocket(router);
+	const idRoom = Number(id_Room);
 	let isLocal = false;
 	let askOnce = 0;
 	let localName;
@@ -78,7 +79,7 @@ export function gameLoop(router: Router, idRoom: string)
 			if (isLocal === true && askOnce === 0) {
 				askOnce = 1;
 				//logique pour demander le nom du joueur seulement une fois
-				// localName = ?
+				// localName = ? /!\ doit etre unique
 			}
 
 			// Met à jour les noms des joueurs
@@ -96,18 +97,58 @@ export function gameLoop(router: Router, idRoom: string)
 		}
 
 	}
+
+	// On gere deux evenements, la touche enfoncée et la touche relevée.
+	// On donne l'info "local" pour que le serv puisse ignorer le mouvement si le mode n'est pas local
+	window.addEventListener("keydown", (e) =>
+	{
+		if (e.key === "ArrowUp" || e.key === "w") {
+			socket.send(JSON.stringify({
+			type: "move_paddle",
+			roomId: idRoom,
+			direction: "up",
+			local: isLocal,
+			movement: "start"}));
+		}
+
+		if (e.key === "ArrowDown" || e.key === "s") {
+			socket.send(JSON.stringify({
+			type: "move_paddle",
+			roomId: idRoom,
+			direction: "down",
+			local: isLocal,
+			movement: "start"}));
+		}
+	});
+
+	window.addEventListener("keyup", (e) =>
+	{
+		if (e.key === "ArrowUp" || e.key === "w") {
+			socket.send(JSON.stringify({
+			type: "move_paddle",
+			roomId: idRoom,
+			direction: "up",
+			local: isLocal,
+			movement: "stop"}));
+		}
+
+		if (e.key === "ArrowDown" || e.key === "s") {
+			socket.send(JSON.stringify({
+			type: "move_paddle",
+			roomId: idRoom,
+			direction: "down",
+			local: isLocal,
+			movement: "stop"}));
+		}
+	});
+
+
+
+
 }
 
-	// event listener
-// 	window.addEventListener("keydown", (e) => {
-// 		if (e.key === "ArrowUp") socket.emit("move_paddle", { roomId, direction: "up" });
-// 		if (e.key === "ArrowDown") socket.emit("move_paddle", { roomId, direction: "down" });
-// 		if (isLocal) {
-// 			if (e.key === "w") socket.emit("move_paddle", { roomId, direction: "up" });
-// 			if (e.key === "s") socket.emit("move_paddle", { roomId, direction: "down" });
-// 		}
-// 	});
-// }
+
+
 
 
 
