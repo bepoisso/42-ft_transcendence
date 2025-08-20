@@ -29,6 +29,7 @@ export async function socketHandler(fastify: FastifyInstance)
 
 	const getSocket = new Map<number, WebSocket>();
 	const getId = new Map<WebSocket, number>();
+	let pendingMatchmaking = -1;
 
 	wss.on("connection", async (ws, req) => {
 
@@ -166,8 +167,30 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
+				if (data.type === "matchmaking") {
+					if (pendingMatchmaking < 0) {
+						pendingMatchmaking = data.from;
+						// le mettre en attente
+					} else {
+						const id1 = pendingMatchmaking;
+						pendingMatchmaking = -1;
+						const id2 = data.from;
+						const idRoom = getNextRoomId();
+						const toSocket = getSocket.get(id1);
 
 
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, id1);
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, id2);
+
+						const gameRoom = initGameRoom(idRoom, id2, id1, data.mode);
+
+						setRoom(idRoom, gameRoom);
+
+						db.prepare(`INSERT INTO games (player_id_left, player_id_right, room_id, game_date) VALUES (?, ?, ?, ?)`).run(id1, id2, idRoom, new Date().toISOString());
+						if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
+						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+					}
+				}
 
 
 			} catch (err) {

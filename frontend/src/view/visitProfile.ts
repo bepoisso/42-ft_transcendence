@@ -1,5 +1,4 @@
 import { getSocket } from "../sockets/socket";
-import { Socket } from "socket.io-client";
 import { Router } from "../router";
 
 export function renderVisitProfile() {

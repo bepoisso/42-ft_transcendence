@@ -151,7 +151,7 @@ function formHandler(router: Router)
 
 
 
-function googleHandler(router: Router) {
+function googleHandler() {
 	const btnGoogle = document.getElementById("google");
 	btnGoogle?.addEventListener("click", async (e) => {
 		e.preventDefault();
@@ -167,5 +167,5 @@ function googleHandler(router: Router) {
 
 export function registerHandler(router: Router) {
   formHandler(router); // ton handler du submit
-  googleHandler(router); // ton handler du bouton Google
+  googleHandler(); // ton handler du bouton Google
 }

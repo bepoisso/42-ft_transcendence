@@ -41,7 +41,7 @@ export function renderDashboard() {
           <div class="bg-indigo-950 p-4 rounded-lg space-y-4">
             <h3 class="text-lg font-bold mb-2 text-left">Training</h3>
             <div class="flex justify-between space-x-4">
-              <button id="bntLocal" class="flex-1 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">Local</button>
+              <button id="btnLocal" class="flex-1 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">Local</button>
               <button id="btnAI" class="flex-1 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">AI</button>
             </div>
           </div>
@@ -89,14 +89,15 @@ export function renderDashboard() {
 
 async function fetchUserData() : Promise <{
 	statusCode: number,
-	message?: string,
-	id: number,
-	username: string,
-	avatar_url: string,
-	email: string,
-	games_played: number,
-	games_won: number,
-	room_id: number,
+	message: string,
+	id?: number,
+	username?: string,
+	tournament_name?: string,
+	avatar_url?: string,
+	email?: string,
+	games_played?: number,
+	games_won?: number,
+	room_id?: number,
 	avatarURL?: string,
 	friend_list: string[]
 }>{
@@ -125,8 +126,8 @@ async function setDashboard(router: Router): Promise<number | undefined>
 			// Sinon
 			const userDiv = document.getElementById("user-name");
 			if (userDiv) {
-				userDiv.textContent = data.username;
-				localStorage.setItem("username", data.username);
+				userDiv.textContent = data.username!;
+				localStorage.setItem("username", data.username!);
 			}
 			if (data.avatarURL) {
 				const userAvatar = document.getElementById("user-avatar") as HTMLImageElement;
@@ -186,12 +187,27 @@ export function myProfileClick(router: Router)
 async function isInGame(): Promise<number>
 {
 	try {
-			const data = await fetchUserData();
-			return data.room_id;
+		const data = await fetchUserData();
+			return data.room_id!;
 	} catch (err) {
 		console.error("Error fetching user data:", err);
 		return -1;
 	}
+}
+
+export function matchmaking(socket: WebSocket, id: any)
+{
+	const btnMyProfile = document.getElementById("btnOnline");
+	btnMyProfile?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		socket.send(JSON.stringify({
+			type: "matchmaking",
+			from: id,
+		//	mode: modes,
+		}))
+
+	});
 }
 
 
@@ -220,6 +236,7 @@ export async function dashboardHandler(router: Router)
 	searchBar(router);
 	//Penser a la logique de tournois
 
+	matchmaking(socket, id);
 
 	//testFakeInvite();
 }
