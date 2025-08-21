@@ -189,7 +189,7 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 				if (data.type === "matchmaking") {
-					console.log("🎲 Demande de matchmaking de l'utilisateur:", data.from);
+					console.log("Demande de matchmaking de l'utilisateur:", data.from);
 
 					if (matchmakingQueue === -1) {
 						matchmakingQueue = data.from;
@@ -225,7 +225,7 @@ export async function socketHandler(fastify: FastifyInstance)
 
 						// Reset de la queue
 						matchmakingQueue = -1;
-						console.log("✅ Room online créée avec succès, ID:", idRoom);
+						console.log("Room online créée avec succès, ID:", idRoom);
 					}
 				}
 

@@ -23,7 +23,6 @@ export class Router {
 	async checkRoute()
 	{
 		const path = window.location.pathname;
-		console.log("🛣️  Vérification route pour path:", path);
 
 		// Essayer de matcher les routes dynamiques
 		for (const [routePattern, handler] of this._routes.entries())
@@ -46,7 +45,7 @@ export class Router {
 		console.log("🔧 matchRoute appelé avec pattern:", routePattern, "path:", currentPath);
 		const patternParts = routePattern.split("/").filter(Boolean); // Route avec :id
 		const pathParts = currentPath.split("/").filter(Boolean);     // URL réelle
-		
+
 		console.log("📝 Pattern parts:", patternParts);
 		console.log("📝 Path parts:", pathParts);
 
