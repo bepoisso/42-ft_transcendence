@@ -6,15 +6,15 @@ import bcrypt from 'bcrypt';
 
 export async function getUserPrivate(token: string) {
 	console.log("👤 getUserPrivate() appelé avec token:", token ? "Token présent" : "Token manquant");
-	
+
 	const email = await getUserByToken(token);
 	console.log("📧 getUserByToken() résultat:", email ? `Email: ${email}` : "Email null/undefined");
-	
+
 	if (!email) {
 		console.log("❌ getUserPrivate: User not found, retour 404");
 		return { statusCode: 404, message: "User not found" };
 	}
-	
+
 	try {
 		console.log("🔍 Recherche utilisateur avec email:", email);
 		const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
@@ -22,14 +22,14 @@ export async function getUserPrivate(token: string) {
 			console.log("❌ getUserPrivate: User not found in database");
 			return { StatusCode: 404, message: "User not found" };
 		}
-	
+
 		console.log("👥 Recherche des amis pour user ID:", user.id);
 		const friends = db.prepare(`SELECT f.id, f.status,
 			u.id as friend_id, u.username, u.avatar_url, u.is_connected
 			FROM friends f
 			JOIN users u ON (u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END)
 			WHERE f.user_id = ? OR f.friend_id = ?`).all(user.id, user.id, user.id);
-	
+
 		console.log("✅ getUserPrivate: Retour des données utilisateur");
 		return {
 			statusCode: 200,
@@ -77,7 +77,7 @@ export async function updateUsername(newUsername: string, token: string) {
 	if (!newUsername) {
 		return { statusCode: 400, message: "Username is required" };
 	}
-	
+
 	const email = await getUserByToken(token);
 	if (!email) {
 		return { statusCode: 404, message: "User not found" };
@@ -97,7 +97,7 @@ export async function updateUsername(newUsername: string, token: string) {
 		db.prepare(`UPDATE users SET username = ? WHERE email = ?`).run(newUsername, email);
 		return { statusCode: 200, message: "Username updated successfully" };
 	} catch (err) {
-		return { statusCode: 500, message: "Failed to update username" }; 
+		return { statusCode: 500, message: "Failed to update username" };
 	}
 }
 
@@ -105,7 +105,7 @@ export async function updateAvatar(newAvatar: string, token: string) {
 	if (!newAvatar) {
 		return { statusCode: 400, message: "Avatar URL is required" };
 	}
-	
+
 	const email = await getUserByToken(token);
 	if (!email) {
 		return { statusCode: 404, message: "User not found" };
@@ -120,7 +120,7 @@ export async function updateAvatar(newAvatar: string, token: string) {
 		db.prepare(`UPDATE users SET avatar_url = ? WHERE email = ?`).run(newAvatar, email);
 		return { statusCode: 200, message: "Avatar updated successfully" };
 	} catch (err) {
-		return { statusCode: 500, message: "Failed to update avatar" }; 
+		return { statusCode: 500, message: "Failed to update avatar" };
 	}
 }
 
@@ -142,13 +142,13 @@ export async function updatePassword(oldPass: string, newPass: string, confirmPa
 	if (newPass !== confirmPass) {
 		return { statusCode: 400, message: "New password and confirm password do not match" };
 	}
-	
+
 	const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
 	if (!user) {
 		return { statusCode: 404, message: "User not found" };
 	}
 
-	const verify = await bcrypt.compare(newPass, user.password_hash || '');
+	const verify = await bcrypt.compare(oldPass, user.password_hash || '');
 	if (!verify) {
 		return { statusCode: 401, message: "Missmatch old password" };
 	}
@@ -156,7 +156,7 @@ export async function updatePassword(oldPass: string, newPass: string, confirmPa
 	const newPassHash = await bcrypt.hash(newPass, 10);
 	if (!newPassHash) {
 		return { statusCode: 500, message: "Internal server error" };
-	} 
+	}
 
 	try {
 		db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(newPassHash, user.id);

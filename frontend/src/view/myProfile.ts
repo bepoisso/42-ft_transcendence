@@ -285,9 +285,9 @@ Promise <{statusCode: number, message: string}>
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-			password: oldPass,
-			newPassword: newPass,
-			confirmPassword: confirmPass
+			oldPass: oldPass,
+			newPass: newPass,
+			confirmPass: confirmPass
 		}),
 	});
 	const data = await response.json();
