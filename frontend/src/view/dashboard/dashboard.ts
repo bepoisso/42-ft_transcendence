@@ -199,7 +199,7 @@ export function matchmaking(socket: WebSocket, id: any)
 		socket.send(JSON.stringify({
 			type: "matchmaking",
 			from: id,
-		//	mode: modes,
+			mode: "online",
 		}))
 
 	});

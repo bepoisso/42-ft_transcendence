@@ -28,6 +28,7 @@ export async function socketHandler(fastify: FastifyInstance)
 
 	const getSocket = new Map<number, WebSocket>();
 	const getId = new Map<WebSocket, number>();
+	let matchmaking = -1;
 
 	// Route WebSocket avec Fastify
 	fastify.get('/ws', { websocket: true }, (connection, req) => {
@@ -185,8 +186,28 @@ export async function socketHandler(fastify: FastifyInstance)
 					}
 				}
 
+				if (data.type === "matchmaking") {
+					if (matchmaking == -1) {
+						matchmaking = data.id;
+						// logique de wait en front a implementer
+					} else {
+						const idRoom = getNextRoomId();
+						console.log("🌐 Mode online");
+						const toSocket = getSocket.get(matchmaking);
+						const idTo = getId.get(ws);
+						if (!idTo) return;
 
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, idTo);
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, matchmaking);
 
+						const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode);
+						setRoom(idRoom, gameRoom);
+
+						db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(matchmaking, idTo, new Date().toISOString());
+						if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
+						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+						}
+				}
 
 
 
