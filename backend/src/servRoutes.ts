@@ -10,7 +10,7 @@ import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
 import { verifyAuthToken, getUserByToken, signToken } from "./auth/auth_token";
 import { getUserPrivate, getUserPublic, updateUsername, updateAvatar, updatePassword } from "./user/user"
-import { getGamesHistory, getTournamentHistory, getPendingTournament, createTournament, finishTournament } from "./user/games"
+import { getGamesHistory, getTournamentHistory, getPendingTournament, createTournament, finishTournament, addPlayerToTournament } from "./user/games"
 import dotenv from "dotenv";
 import { sign, verify } from "crypto";
 import { verifyToken } from "node-2fa";
@@ -243,6 +243,13 @@ export async function servRoutes(fastify: FastifyInstance)
 	fastify.post("/api/update/tournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const {playerIdWon, tournamentId} = request.body as any;
 		const result = await finishTournament(playerIdWon, tournamentId);
+		return reply.send(result);
+	});
+
+	fastify.post("/api/add/tournament/player", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const { tournamentId } = request.body as any;
+		const token = request.cookies.token;
+		const result = await addPlayerToTournament(token || "", tournamentId);
 		return reply.send(result);
 	});
 
