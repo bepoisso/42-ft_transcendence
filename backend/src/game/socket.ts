@@ -29,7 +29,7 @@ export async function socketHandler(fastify: FastifyInstance)
 
 	const getSocket = new Map<number, WebSocket>();
 	const getId = new Map<WebSocket, number>();
-	let pendingMatchmaking = -1;
+	let matchmaking = -1;
 
 	// Route WebSocket avec Fastify
 	fastify.get('/ws', { websocket: true }, (connection, req) => {
@@ -188,31 +188,29 @@ export async function socketHandler(fastify: FastifyInstance)
 					}
 				}
 
-
 				if (data.type === "matchmaking") {
-					if (pendingMatchmaking < 0) {
-						pendingMatchmaking = data.from;
-						// le mettre en attente
+					if (matchmaking == -1) {
+						matchmaking = data.id;
+						// logique de wait en front a implementer
 					} else {
-						const id1 = pendingMatchmaking;
-						pendingMatchmaking = -1;
-						const id2 = data.from;
 						const idRoom = getNextRoomId();
-						const toSocket = getSocket.get(id1);
+						console.log("🌐 Mode online");
+						const toSocket = getSocket.get(matchmaking);
+						const idTo = getId.get(ws);
+						if (!idTo) return;
 
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, idTo);
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, matchmaking);
 
-						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, id1);
-						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, id2);
-
-						const gameRoom = initGameRoom(idRoom, id2, id1, data.mode);
-
+						const gameRoom = initGameRoom(idRoom, matchmaking, idTo, data.mode);
 						setRoom(idRoom, gameRoom);
 
-						db.prepare(`INSERT INTO games (player_id_left, player_id_right, room_id, game_date) VALUES (?, ?, ?, ?)`).run(id1, id2, idRoom, new Date().toISOString());
+						db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(matchmaking, idTo, new Date().toISOString());
 						if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 					}
 				}
+
 
 
 			} catch (err) {
