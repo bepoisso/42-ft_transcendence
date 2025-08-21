@@ -20,41 +20,32 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply) {
+export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply, done: Function) {
 	try {
 		const token = request.cookies.token;
+		console.log("🔑 token is : ", token, " 🔑");
 		if (!token) {
-			reply.send({statusCode: 401, error: 'Token is missing' });
-			console.log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", request);
-			return;
+			return reply.status(401).send({statusCode: 401, error: 'Token is missing' });
 		}
-
+		
 		const jwtsecret = process.env.JWT_SECRET;
 		if (!jwtsecret) {
-			reply.send({statusCode: 500, error: 'Server configuration error' });
-			return;
+			return reply.status(500).send({statusCode: 500, error: 'Server configuration error' });
 		}
-
-		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
+		
+		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean, exp: number, iat: number};
 		(request as any).user = decoded;
-
-		console.log("🔐 Token décodé:", { id: decoded.id, email: decoded.email, twofa_enable: decoded.twofa_enable });
-		console.log("🌐 URL demandée:", request.url);
-
+		console.log("🔑 Decript token is : ", decoded, " 🔑");
 		if (!decoded.twofa_enable) {
-			console.log("⚠️  2FA non activé, vérification des URLs autorisées...");
 			const allowedFor2FA = ['/auth/2fa/generate', '/auth/2fa/verify', '/auth/2fa/check'];
 			if (!allowedFor2FA.includes(request.url)) {
-				console.log("❌ URL non autorisée sans 2FA");
-				reply.send({ statusCode:403, error: 'Two-Factor Authentication required' });
-				return;
+				return reply.status(403).send({ statusCode:403, error: 'Two-Factor Authentication required' });
 			}
-		} else {
-			console.log("✅ 2FA activé, accès autorisé");
 		}
+
+		done();
 	} catch (err) {
-		reply.send({statusCode: 401 ,error: 'Invalid or expired token'});
-		return;
+		return reply.status(401).send({statusCode: 401 ,error: 'Invalid or expired token'});
 	}
 };
 
