@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import db from "../db/db";
 import { setRoom } from "./interface";
 import { initGameRoom } from "./initialisation";
+import { updateGame, gameLoop } from "./logic"
 
 
 /*
@@ -125,6 +126,9 @@ export async function socketHandler(fastify: FastifyInstance)
 					db.prepare(`INSERT INTO games (player_id_left, player_id_right, room_id, game_date) VALUES (?, ?, ?, ?)`).run(data.from, idTo, idRoom, new Date().toISOString());
 					if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
 					ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+
+					gameRoom.gameState.is_running = true;
+					gameLoop(gameRoom);
 				}
 
 
@@ -151,9 +155,7 @@ export async function socketHandler(fastify: FastifyInstance)
 					if (!gameRoom) return ;
 
 					const fromId = getId.get(ws);
-					//updateGame(gameRoom, fromId, data.direction, data.movement); // on a tout ?
-
-					// renvoyer "game_update"
+					updateGame(gameRoom, fromId, data.direction, data.movement);
 				}
 
 
