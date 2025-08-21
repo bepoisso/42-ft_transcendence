@@ -30,7 +30,6 @@ export async function socketHandler(fastify: FastifyInstance)
 	const getSocket = new Map<number, WebSocket>();
 	const getId = new Map<WebSocket, number>();
 	let matchmakingQueue: number = -1; // File d'attente pour le matchmaking
-	let matchmaking = -1;
 
 	// Route WebSocket avec Fastify
 	fastify.get('/ws', { websocket: true }, (connection, req) => {
