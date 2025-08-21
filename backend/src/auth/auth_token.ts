@@ -20,7 +20,7 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply, done: Function) {
+export function verifyAuthToken(request: FastifyRequest, reply: FastifyReply, done: Function) {
 	try {
 		const token = request.cookies.token;
 		console.log("🔑 token is : ", token, " 🔑");
