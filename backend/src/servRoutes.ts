@@ -10,10 +10,11 @@ import db from "./db/db"
 import { TokenExpiredError } from "jsonwebtoken";
 import { verifyAuthToken, getUserByToken, signToken } from "./auth/auth_token";
 import { getUserPrivate, getUserPublic, updateUsername, updateAvatar, updatePassword } from "./user/user"
-import { getGamesHistory } from "./user/games"
+import { getGamesHistory, getTournamentHistory, getPendingTournament, createTournament, finishTournament } from "./user/games"
 import dotenv from "dotenv";
 import { sign, verify } from "crypto";
 import { verifyToken } from "node-2fa";
+import fastifyOauth2 from "@fastify/oauth2";
 
 dotenv.config();
 
@@ -220,6 +221,29 @@ export async function servRoutes(fastify: FastifyInstance)
 		const { newPass, oldPass, confirmPass } = request.body as any;
 		const result = await updatePassword(oldPass, newPass, confirmPass, token || "")
 		return reply.send(result);
+	});
+
+	fastify.get("/api/get/tournament/history", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const result = await getTournamentHistory();
+		return reply.send(result);
+	});
+
+	fastify.get("/api/get/tournament/pending", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const result = await getPendingTournament();
+		return reply.send(result);
+	});
+
+	fastify.post("/api/create/tournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const {name , nbrPlayer } = request.body as any;
+		const token = request.cookies.token;
+		const result = await createTournament(name, nbrPlayer, token || "");
+		return reply.send(result);
+	});
+
+	fastify.post("/api/update/tournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const {playerIdWon, tournamentId} = request.body as any;
+		const result = await finishTournament(playerIdWon, tournamentId);
+		return reply.send(request);
 	});
 
 

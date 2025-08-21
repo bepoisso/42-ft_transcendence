@@ -40,13 +40,21 @@ CREATE TABLE games (
 	tournament_id NUMBER DEFAULT 0
 );
 
-DROP TABLE IF EXISTS tournament;
+DROP TABLE IF EXISTS tournaments;
 
-CREATE TABLE tournament (
+CREATE TABLE tournaments (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	tournament_name TEXT NOT NULL,
 	nbr_player NUMBER NOT NULL,
-	player_list TEXT,
+	player_one NUMBER NOT NULL,
+	player_two NUMBER,
+	player_three NUMBER,
+	player_four NUMBER,
+	player_five NUMBER,
+	player_six NUMBER,
+	player_seven NUMBER,
+	player_eight NUMBER,
 	player_won NUMBER,
-	tournament_date TEXT NOT NULL
+	tournament_date TEXT NOT NULL,
+	tournament_status TEXT NOT NULL DEFAULT 'pending'
 );
