@@ -179,47 +179,47 @@ export async function servRoutes(fastify: FastifyInstance)
 	// Endpoint temporaire pour nettoyer les cookies (à supprimer en production)
 	fastify.post("/auth/clear-cookies", async (request, reply) => {
 		reply.clearCookie("token", { path: '/' });
-		reply.send({ message: "Cookies cleared" });
+		return reply.send({ message: "Cookies cleared" });
 	});
 
 	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const result = await getUserPrivate(token || "");
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.post("/api/get/user/public", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const { id } = request.body as any;
 		const token = request.cookies.token;
 		const result = await getUserPublic(id || 0);
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.get("/api/get/game/history", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const result = await getGamesHistory(token || "");
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/username", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { username } = request.body as any;
-		const result = await updateUsername(username, token || "")
-		reply.send(result);
+		const result = await updateUsername(username, token || "");
+		return reply.status(result.statusCode || 500).send({ message: result.message });
 	});
 
 	fastify.patch("/api/update/user/avatar", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { avatar } = request.body as any;
-		const result = await updateAvatar(avatar, token  || "")
-		reply.send(result);
+		const result = await updateAvatar(avatar, token  || "");
+		return reply.status(result.statusCode || 500).send({ message: result.message });
 	});
 
 	fastify.patch("/api/update/user/password", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { newPass, oldPass, confirmPass } = request.body as any;
-		const result = await updatePassword(oldPass, newPass, confirmPass, token || "")
-		reply.send(result);
+		const result = await updatePassword(oldPass, newPass, confirmPass, token || "");
+		return reply.status(result.statusCode || 500).send({ message: result.message });
 	});
 
 

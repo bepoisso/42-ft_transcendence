@@ -69,7 +69,7 @@ export async function updateUsername(newUsername: string, token: string) {
 	}
 	
 	const email = await getUserByToken(token);
-	if (!email) {
+	if (typeof email !== "string") {
 		return { statusCode: 404, message: "User not found" };
 	}
 
@@ -97,7 +97,7 @@ export async function updateAvatar(newAvatar: string, token: string) {
 	}
 	
 	const email = await getUserByToken(token);
-	if (!email) {
+	if (typeof email !== "string") {
 		return { statusCode: 404, message: "User not found" };
 	}
 
@@ -116,17 +116,17 @@ export async function updateAvatar(newAvatar: string, token: string) {
 
 export async function updatePassword(oldPass: string, newPass: string, confirmPass: string, token: string) {
 	const email = await getUserByToken(token);
-	if (!email) {
+	if (typeof email !== "string") {
 		return {statusCode: 404, message: "User not found"};
 	}
 
 	if (!oldPass || !newPass || !confirmPass) {
-		return { statusCode: 401, message: "Invalid credential" };
+		return { statusCode: 400, message: "Invalid credential" };
 	}
 
-	const passRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	if (!passRegex.test(oldPass) || !passRegex.test(newPass) || !passRegex.test(confirmPass)) {
-		return { statuscode: 401, message: "Invalid credential" };
+	const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+	if (!passRegex.test(newPass) || !passRegex.test(confirmPass)) {
+		return { statusCode: 401, message: "Invalid credential" };
 	}
 
 	if (newPass !== confirmPass) {
@@ -138,9 +138,9 @@ export async function updatePassword(oldPass: string, newPass: string, confirmPa
 		return { statusCode: 404, message: "User not found" };
 	}
 
-	const verify = await bcrypt.compare(newPass, user.password_hash || '');
-	if (!verify) {
-		return { statusCode: 401, message: "Missmatch old password" };
+	const verifyOldPass = await bcrypt.compare(oldPass, user.password_hash || '');
+	if (!verifyOldPass) {
+		return { statusCode: 401, message: "Incorrect old password" };
 	}
 
 	const newPassHash = await bcrypt.hash(newPass, 10);
