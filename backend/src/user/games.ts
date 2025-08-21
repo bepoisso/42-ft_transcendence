@@ -36,11 +36,8 @@ export async function getTournamentHistory() {
 
 export async function getPendingTournament() {
 	try {
-		const tournament = db.prepare(`SELECT * FROM tournaments WHERE tournament_status = 'pending'`);
-		if (!tournament) {
-			return { statusCode: 500, message: "Internal server error" };
-		}
-		return {statusCode: 200, message: "Success", tournament};
+		const tournaments = db.prepare(`SELECT * FROM tournaments WHERE tournament_status = 'pending'`).all();
+		return { statusCode: 200, message: "Success", tournaments };
 	} catch (err) {
 		return { statusCode: 500, message: "Internal server error" };
 	}
@@ -48,7 +45,7 @@ export async function getPendingTournament() {
 
 
 export async function createTournament(name: string, nbrPlayer: number, token: string) {
-	if (!name || !nbrPlayer || (nbrPlayer !== 4 && nbrPlayer !== 8)) { 
+	if (!name || !nbrPlayer || nbrPlayer !== 8) { 
 		return { statusCode: 400, message: "Invalid credentials" };
 	}
 
@@ -57,7 +54,7 @@ export async function createTournament(name: string, nbrPlayer: number, token: s
 		return { statusCode: 400, message: "Invalid tournament name" };
 	}
 
-	const email = getUserByToken(token);
+	const email = await getUserByToken(token);
 	const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
 	if (!user) {
 		return { statusCode: 404, message: "User not found" };
@@ -75,10 +72,10 @@ export async function finishTournament(playerIdWon: number, tournamentId: number
 	if (!playerIdWon) {
 		return { statusCode: 401, message: "Invalid credential" }
 	}
-
+	const currentStatus = db.prepare(`SELECT tournament_status  FROM tournaments WHERE id = ?`).get(tournamentId);
 	try {
 		db.prepare(`UPDATE tournaments SET player_won = ?, tournament_status = 'finish' WHERE id = ?`).run(playerIdWon, tournamentId);
-		return { statusCode: 200, message: "Tournament finished" };
+		return { statusCode: 200, message: "Tournament finished success" };
 	} catch (err) {
 		return { statusCode: 500, message: "Internal server error" };
 	}

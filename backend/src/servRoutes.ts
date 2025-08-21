@@ -243,7 +243,7 @@ export async function servRoutes(fastify: FastifyInstance)
 	fastify.post("/api/update/tournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const {playerIdWon, tournamentId} = request.body as any;
 		const result = await finishTournament(playerIdWon, tournamentId);
-		return reply.send(request);
+		return reply.send(result);
 	});
 
 
