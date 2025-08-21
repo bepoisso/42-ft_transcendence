@@ -213,19 +213,8 @@ export async function dashboardHandler(router: Router)
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
-	const { id, roomId } = userData;
-	console.log("🎯 User data:", { id, roomId });
+	const { id } = userData;
 
-	if (roomId && roomId > 0) {
-		console.log("Reconnect parce qu'il a quitté une game : ", roomId);
-		socket.send(JSON.stringify({
-			type: "reconnect",
-			from: id,
-			roomId: roomId,
-		}))
-	} else {
-		console.log("User not in any active game room");
-	}
 
 	myProfileClick(router);
 
