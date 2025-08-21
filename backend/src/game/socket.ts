@@ -29,6 +29,7 @@ export async function socketHandler(fastify: FastifyInstance)
 
 	const getSocket = new Map<number, WebSocket>();
 	const getId = new Map<WebSocket, number>();
+	let matchmakingQueue: number = -1; // File d'attente pour le matchmaking
 	let matchmaking = -1;
 
 	// Route WebSocket avec Fastify
@@ -189,25 +190,43 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 				if (data.type === "matchmaking") {
-					if (matchmaking == -1) {
-						matchmaking = data.id;
-						// logique de wait en front a implementer
+					console.log("🎲 Demande de matchmaking de l'utilisateur:", data.from);
+
+					if (matchmakingQueue === -1) {
+						matchmakingQueue = data.from;
+						console.log("User : ", data.from, "ajouté à la file d'attente");
+						ws.send(JSON.stringify({
+							type: "matchmaking_waiting",
+							message: "Recherche d'un adversaire..."
+						}));
 					} else {
+						console.log("Match trouvé! Joueur 1:", matchmakingQueue, "vs Joueur 2:", data.from);
+
 						const idRoom = getNextRoomId();
-						console.log("🌐 Mode online");
-						const toSocket = getSocket.get(matchmaking);
-						const idTo = getId.get(ws);
-						if (!idTo) return;
+						const toSocket = getSocket.get(matchmakingQueue);
+						const player1Id = matchmakingQueue;
+						const player2Id = data.from;
 
-						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, idTo);
-						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, matchmaking);
+						// Mise à jour de la DB
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, player1Id);
+						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, player2Id);
 
-						const gameRoom = initGameRoom(idRoom, matchmaking, idTo, data.mode);
+						// Création de la room
+						const gameRoom = initGameRoom(idRoom, player1Id, player2Id, "online");
 						setRoom(idRoom, gameRoom);
 
-						db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(matchmaking, idTo, new Date().toISOString());
-						if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
+						// Insertion en DB
+						db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(player1Id, player2Id, new Date().toISOString());
+
+						// Notification aux deux joueurs
+						if (toSocket) {
+							toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+						}
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+
+						// Reset de la queue
+						matchmakingQueue = -1;
+						console.log("✅ Room online créée avec succès, ID:", idRoom);
 					}
 				}
 
