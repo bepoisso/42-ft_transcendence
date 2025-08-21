@@ -134,7 +134,7 @@ export async function updatePassword(oldPass: string, newPass: string, confirmPa
 		return { statusCode: 401, message: "Invalid credential" };
 	}
 
-	const passRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 	if (!passRegex.test(oldPass) || !passRegex.test(newPass) || !passRegex.test(confirmPass)) {
 		return { statuscode: 401, message: "Invalid credential" };
 	}
