@@ -52,13 +52,21 @@ export function renderLogin() {
 // Fonction pour savoir si on a une 2FA
 async function Login(email: string, password: string): Promise < {statusCode: number, message?: string}>
 {
-	const response = await fetch("/api/login", {
+	const response = await fetch("/back/login", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({email, password}),
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = response.json();
 	return data;
 }

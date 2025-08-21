@@ -49,9 +49,9 @@ export async function servRoutes(fastify: FastifyInstance)
 		const result = await register(username, email, password);
 		if (typeof result.token === "string") {
 			reply.clearCookie("token", { path: '/' });
-			
-			reply.cookie("token", result.token, { 
-				httpOnly: true, 
+
+			reply.cookie("token", result.token, {
+				httpOnly: true,
 				secure: false,
 				sameSite: 'lax',
 				path: '/',
@@ -66,9 +66,9 @@ export async function servRoutes(fastify: FastifyInstance)
 		const result = await login(email, password);
 		if (typeof result.token === "string") {
 			reply.clearCookie("token", { path: '/' });
-			
-			reply.cookie("token", result.token, { 
-				httpOnly: true, 
+
+			reply.cookie("token", result.token, {
+				httpOnly: true,
 				secure: false,
 				sameSite: 'lax',
 				path: '/',
@@ -98,11 +98,11 @@ export async function servRoutes(fastify: FastifyInstance)
 			if (!token) {
 				return reply.send({ statusCode: 400, error: "Can not create token" });
 			}
-			
+
 			reply.clearCookie("token", { path: '/' });
 
-			reply.cookie("token", token, { 
-				httpOnly: true, 
+			reply.cookie("token", token, {
+				httpOnly: true,
 				secure: false, // Changez à true en production avec HTTPS
 				sameSite: 'lax',
 				path: '/',
@@ -121,7 +121,7 @@ export async function servRoutes(fastify: FastifyInstance)
 			if (!user || !user.email) {
 				return reply.send({statusCode: 400,  error: "User information missing" });
 			}
-			
+
 			const result = await generate2FA(user.email);
 			reply.send(result);
 		} catch (error) {
@@ -136,18 +136,18 @@ export async function servRoutes(fastify: FastifyInstance)
 			if (!input) {
 				return reply.send({statusCode: 400,  error: "2FA code is required" });
 			}
-			
+
 			const user = (request as any).user;
 			if (!user || !user.email) {
 				return reply.send({statusCode: 400,  error: "User information missing" });
 			}
-			
+
 			const result = await verify2FA(user.email, input);
 
 			reply.clearCookie("token", { path: '/' });
-			
-			reply.cookie("token", result.token || "", { 
-				httpOnly: true, 
+
+			reply.cookie("token", result.token || "", {
+				httpOnly: true,
 				secure: false,
 				sameSite: 'lax',
 				path: '/',
@@ -165,12 +165,12 @@ export async function servRoutes(fastify: FastifyInstance)
 		if (typeof token !== "string") {
 			return reply.send({statusCode: 400, error: "Token is missing or invalid." });
 		}
-		
+
 		const userResult = await getUserByToken(token);
 		if (typeof userResult !== "string") {
 			return reply.send({statusCode: 400, error: "User not found"});
 		}
-		
+
 		const email = userResult;
 		const tfa = db.prepare(`SELECT twofa_enable FROM users WHERE email = ?`).get(email);
 		return reply.send({statusCode: 200, message: "Success", value: tfa});
@@ -179,47 +179,47 @@ export async function servRoutes(fastify: FastifyInstance)
 	// Endpoint temporaire pour nettoyer les cookies (à supprimer en production)
 	fastify.post("/auth/clear-cookies", async (request, reply) => {
 		reply.clearCookie("token", { path: '/' });
-		reply.send({ message: "Cookies cleared" });
+		return reply.send({ message: "Cookies cleared" });
 	});
 
 	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const result = await getUserPrivate(token || "");
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.post("/api/get/user/public", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const { id } = request.body as any;
 		const token = request.cookies.token;
 		const result = await getUserPublic(id || 0);
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.get("/api/get/game/history", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const result = await getGamesHistory(token || "");
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/username", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { username } = request.body as any;
 		const result = await updateUsername(username, token || "")
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/avatar", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { avatar } = request.body as any;
 		const result = await updateAvatar(avatar, token  || "")
-		reply.send(result);
+		return reply.send(result);
 	});
 
 	fastify.patch("/api/update/user/password", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const { newPass, oldPass, confirmPass } = request.body as any;
 		const result = await updatePassword(oldPass, newPass, confirmPass, token || "")
-		reply.send(result);
+		return reply.send(result);
 	});
 
 

@@ -44,6 +44,14 @@ async function fetchUserSuggestions(query: string) : Promise <{
 		"Content-Type": "application/json",
 		},
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = await response.json();
 	return data;
 }
@@ -59,6 +67,14 @@ async function visitProfile(id: number) : Promise <{
 			"Content-Type": "application/json",
 		},
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = await response.json();
 	return data;
 }
