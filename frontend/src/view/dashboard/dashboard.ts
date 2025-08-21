@@ -196,6 +196,7 @@ export function matchmaking(socket: WebSocket, id: any)
 	btnMyProfile?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
+		console
 		socket.send(JSON.stringify({
 			type: "matchmaking",
 			from: id,
@@ -208,9 +209,7 @@ export function matchmaking(socket: WebSocket, id: any)
 
 export async function dashboardHandler(router: Router)
 {
-	console.log("🏠 Dashboard loading - about to create WebSocket connection...");
 	const socket = await getSocket(router);
-	console.log("🏠 Dashboard - WebSocket obtained, state:", socket.readyState);
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
@@ -218,21 +217,20 @@ export async function dashboardHandler(router: Router)
 	console.log("🎯 User data:", { id, roomId });
 
 	if (roomId && roomId > 0) {
-		console.log("🔄 Attempting to reconnect to room:", roomId);
+		console.log("Reconnect parce qu'il a quitté une game : ", roomId);
 		socket.send(JSON.stringify({
 			type: "reconnect",
 			from: id,
 			roomId: roomId,
 		}))
 	} else {
-		console.log("ℹ️ User not in any active game room");
+		console.log("User not in any active game room");
 	}
 
 	myProfileClick(router);
 
 	modeClick(socket, "btnLocal", "local", id);
 	modeClick(socket, "btnAI", "AI", id);
-	//modeClick(socket, router, "btnOnline", "online", id); => build logique marchmaking
 
 	searchBar(router);
 
