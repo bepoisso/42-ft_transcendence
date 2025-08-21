@@ -8,13 +8,24 @@ CREATE TABLE users (
 	avatar_url TEXT,
 	games_played NUMBER DEFAULT 0,
 	games_won NUMBER DEFAULT 0,
-	is_connected NUMBER DEFAULT 0,
+	is_connected NUMBER DEFAULT 0 NOT NULL,
 	socket_id NUMBER DEFAULT 0,
-	room_id NUMBER DEFAULT 0,
+	room_id NUMBER DEFAULT 0 NOT NULL,
 	google_id TEXT UNIQUE,
 	twofa_enable BOOLEAN DEFAULT 0,
 	twofa_secret TEXT UNIQUE,
-	friend_list TEXT DEFAULT '[]'
+	username_tournament TEXT
+);
+
+DROP TABLE IF EXISTS friends;
+
+CREATE TABLE friends (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	friend_id INTEGER NOT NULL,
+	status TEXT DEFAULT 'pending',
+	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (friend_id) REFERENCES users(id)
 );
 
 DROP TABLE IF EXISTS games;
@@ -24,7 +35,7 @@ CREATE TABLE games (
 	player_id_left NUMBER NOT NULL,
 	player_id_right NUMBER,
 	player_id_won NUMBER,
-	game_date TEXT,
+	game_date TEXT NOT NULL,
 	score TEXT,
 	tournament_id NUMBER DEFAULT 0
 );
@@ -37,5 +48,5 @@ CREATE TABLE tournament (
 	nbr_player NUMBER NOT NULL,
 	player_list TEXT,
 	player_won NUMBER,
-	tournament_date TEXT
+	tournament_date TEXT NOT NULL
 );

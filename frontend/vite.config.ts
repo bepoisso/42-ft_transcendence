@@ -7,7 +7,7 @@ export default defineConfig({
     host: 'localhost', // Force l'utilisation de localhost au lieu de 127.0.0.1
     port: 5173,
   proxy: {
-    '/api': {
+    '/back': {
       target: 'http://localhost:3000',
       changeOrigin: true,
       secure: false,
@@ -22,7 +22,7 @@ export default defineConfig({
           console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
         });
       },
-      rewrite: (path) => path.replace(/^\/api/, ''),
+      rewrite: (path) => path.replace(/^\/back/, ''),
     },
     '/auth': {
       target: 'http://localhost:3000',

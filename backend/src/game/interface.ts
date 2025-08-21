@@ -64,7 +64,7 @@ let idRoom = 0;
 
 
 export function getNextRoomId(): number {
-	return idRoom++;
+	return ++idRoom; // Pre-increment: d'abord incrémente, puis retourne
 }
 
 export function setRoom(id: number, gameRoom: GameRoom) {
@@ -72,6 +72,6 @@ export function setRoom(id: number, gameRoom: GameRoom) {
 }
 
 export function getGameRoom(id: number): GameRoom | null {
-	return rooms.get(idRoom) ?? null;
+	return rooms.get(id) ?? null;
 }
 

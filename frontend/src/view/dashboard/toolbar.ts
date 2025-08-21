@@ -9,29 +9,6 @@ interface user {
 	avatarURL?: string;
 };
 
-// async function fetchUserSuggestions(query: string) {
-// 	return {
-// 		statusCode: 200,
-// 		message: "all good",
-// 		users: [
-// 			{
-// 				id: 3,
-// 				name: "Thierry",
-// 				avatarURL: undefined,
-// 			},
-// 			{
-// 				id: 3,
-// 				name: "Stephanie",
-// 				avatarURL: undefined,
-// 			},
-// 			{
-// 				id: 3,
-// 				name: "Fab",
-// 				avatarURL: undefined,
-// 			},
-// 		]
-// 	}
-// }
 
 async function fetchUserSuggestions(query: string) : Promise <{
 	statusCode: number,
@@ -44,6 +21,14 @@ async function fetchUserSuggestions(query: string) : Promise <{
 		"Content-Type": "application/json",
 		},
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = await response.json();
 	return data;
 }
@@ -59,6 +44,14 @@ async function visitProfile(id: number) : Promise <{
 			"Content-Type": "application/json",
 		},
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = await response.json();
 	return data;
 }

@@ -13,20 +13,31 @@ export function renderMyProfile() {
       <div class="flex flex-1 w-full p-6 bg-gray-900">
 
         <!-- Colonne gauche : Avatar -->
-    	<form id="avatar-form" class="w-1/4 flex flex-col items-center space-y-4 border-r border-gray-700 pr-6">
-			<img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
-		  <div class="flex space-x-4">
-			<input type="file" id="avatar-file" accept="image/*" class="hidden" />
-			<label for="avatar-file" class="cursor-pointer px-4 py-2  bg-blue-600 rounded hover:bg-blue-700 "> Change avatar </label>
-			<button type="button" id="change-avatar" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm"> save </button>
-		  </div>
-		</form>
+        <form id="avatar-form" class="w-1/4 flex flex-col items-center space-y-4 border-r border-gray-700 pr-6">
+          <!-- Avatar affiché -->
+          <img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar"
+            class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
 
+          <!-- Boutons -->
+          <div class="flex flex-col space-y-3 w-full">
+            <!-- Champ URL -->
+            <input type="url" id="avatar-url" placeholder="https://example.com/image.png"
+              class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none">
+            <div class="flex space-x-4">
+              <input type="file" id="avatar-file" accept="image/*" class="hidden" />
+
+              <button type="button" id="change-avatar"
+                class="px-4 py-2 bg-green-600 rounded hover:bg-green-700 text-sm">
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
 
         <!-- Colonne droite : Infos utilisateur -->
         <div class="w-3/4 pl-6 space-y-8">
 
-          <!-- Username + Tournament Username -->
+          <!-- Username -->
           <div class="flex gap-6">
             <div class="flex-1">
               <label class="block text-gray-400 mb-1 text-left">Username</label>
@@ -36,11 +47,8 @@ export function renderMyProfile() {
           </div>
 
           <!-- Email -->
-          <div>
-            <label class="block text-gray-400 mb-1 text-left">Email</label>
-            <input id="myEmail" type="email" value="Loading..."
-              class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none">
-          </div>
+          <input id="myEmail" type="email" value="Loading..."
+            class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none" readonly>
 
           <!-- Stats -->
           <div class="flex gap-6">
@@ -60,11 +68,12 @@ export function renderMyProfile() {
               class="px-6 py-2 bg-green-600 rounded hover:bg-green-700 font-semibold">
               Save
             </button>
-			<p id="error-save" class="text-red-500 mt-2"></p>
+            <p id="error-save" class="text-red-500 mt-2"></p>
+            <p id="success-save" class="text-green-500 mt-2"></p>
           </div>
 
           <!-- Changer mot de passe -->
-          <div class="  rounded-lg space-y-4">
+          <div class="rounded-lg space-y-4">
             <h2 class="text-lg font-bold border-b border-gray-700 pb-2 text-left">Changer le mot de passe</h2>
 
             <div>
@@ -93,7 +102,15 @@ export function renderMyProfile() {
                 Update password
               </button>
             </div>
-			<p id="error-password" class="text-red-500 mt-2"></p>
+            <p id="error-password" class="text-red-500 mt-2"></p>
+          </div>
+
+          <!-- Historique des parties -->
+          <div class="rounded-lg space-y-4">
+            <h2 class="text-lg font-bold border-b border-gray-700 pb-2 text-left">Historique des parties</h2>
+            <div id="game-history" class="space-y-2 max-h-64 overflow-y-auto">
+              <p class="text-gray-400">Chargement de l’historique...</p>
+            </div>
           </div>
 
         </div>
@@ -108,10 +125,6 @@ export function renderMyProfile() {
 // 					Appelle du back pour dynamiquement modifier les éléments						||
 // ===================================================================================================
 
-// // test sans back
-// async function fetchUserData(token: string) {
-// 	return {statusCode: 200, message: "all good", name: "Hadri", tournamentName: "Spike", email:"Mon email", avatarURL: null, gamesPlayed: "10", gamesWon: "8"};
-// }
 
 async function fetchUserData() : Promise <{
 	statusCode: number,
@@ -126,8 +139,8 @@ async function fetchUserData() : Promise <{
 	avatarURL?: string,
 	friend_list: string[]
 }>{
-	const response = await fetch("/api/userInfo", {
-		method: "POST",
+	const response = await fetch("/back/api/get/user/private", {
+		method: "GET",
 		credentials: 'include',
 	});
 	const data = await response.json();
@@ -192,16 +205,16 @@ export async function setMyProfile(router: Router)
 // ===================================================================================================
 
 async function saveUserData(userName: string):
-Promise <{statusCode: number, message?: string}>
+Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api/myProfile", {
-		method: "PUT",
+	const response = await fetch("/back/api/update/user/username", {
+		method: "PATCH",
 		credentials: 'include',
 		headers: {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-			name: userName,
+			username: userName,
 		}),
 	});
 	const data = await response.json();
@@ -221,14 +234,14 @@ function updateProfile()
 		if (!userNameInput) {
 			const errorMessage = document.getElementById("error-save");
 			if (errorMessage)
-				errorMessage.textContent = "Need to fill all informations";
+				errorMessage.textContent = "Username needs to be 3 char minimum";
 			return;
 		}
 
 		const userName = userNameInput.value;
 
 
-		const usernameRegex = /^[a-zA-Z0-9]{3,}$/;
+		const usernameRegex = /^[a-zA-Z0-9-_]{3,}$/;
 
 		if (!usernameRegex.test(userName)) {
 			const errorMessage = document.getElementById("error-save");
@@ -238,14 +251,20 @@ function updateProfile()
 		}
 
 		try {
-				const data = await saveUserData(userName);
+			const data = await saveUserData(userName);
 
-			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
-				console.error("Error with myProfile : " + data.message);
-				throw new Error("Failed to fetch user profile information");
+				const errorMessage = document.getElementById("error-save");
+				if (errorMessage) {
+					errorMessage.textContent = data.message;
+				}
+				return;
+			} else {
+				const successMessage = document.getElementById("success-save");
+				if (successMessage) {
+					successMessage.textContent = data.message;
+				}
 			}
-
 		} catch (err) {
 			console.error("Error saving user information: ", err);
 		}
@@ -256,21 +275,19 @@ function updateProfile()
 
 
 
-
-
 async function updatePassword(oldPass: string, newPass: string, confirmPass: string):
-Promise <{statusCode: number, message?: string}>
+Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api/myProfile/password", {
-		method: "PUT",
+	const response = await fetch("/back/api/update/user/password", {
+		method: "PATCH",
 		credentials: 'include',
 		headers: {
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-			password: oldPass,
-			newPassword: newPass,
-			confirmPassword: confirmPass
+			oldPass: oldPass,
+			newPass: newPass,
+			confirmPass: confirmPass
 		}),
 	});
 	const data = await response.json();
@@ -288,8 +305,10 @@ function passwordHandler()
 		const confirmPassInput = document.getElementById("confirm-password") as HTMLInputElement | null;
 
 		if (!oldPassInput || !newPassInput || !confirmPassInput) {
+			const errorMessage = document.getElementById("error-password");
 			console.error("One or more input elements not found");
-			// ecrire un message d'erreur
+			if (errorMessage)
+				errorMessage.textContent = "Missing elements !";
 			return;
 		}
 
@@ -319,17 +338,22 @@ function passwordHandler()
 				errorMessage.textContent = "Password must be at least 8 characters long and contain at least one number and one special character.";
 				return;
 		}
-
-
 		try {
-				const data = await updatePassword(oldPass, newPass, confirmPass);
+			const data = await updatePassword(oldPass, newPass, confirmPass);
 
 			// Soit on ne parvient pas à récup les infos
 			if (data.statusCode !== 200) {
-				console.error("Error with myProfile : " + data.message);
-				throw new Error("Failed to fetch user profile information");
+				const errorMessage = document.getElementById("error-save");
+				if (errorMessage) {
+					errorMessage.textContent = data.message;
+				}
+				return;
+			} else {
+				const successMessage = document.getElementById("success-save");
+				if (successMessage) {
+					successMessage.textContent = data.message;
+				}
 			}
-
 		} catch (err) {
 			console.error("Error saving user information: ", err);
 		}
@@ -338,39 +362,53 @@ function passwordHandler()
 }
 
 
+async function saveAvatar(avatar: string):
+Promise <{statusCode: number, message: string}>
+{
+	const response = await fetch("/back/api/update/user/avatar", {
+		method: "PATCH",
+		credentials: 'include',
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			avatar: avatar,
+		}),
+	});
+	const data = await response.json();
+	return data;
+}
+
+
 async function uploadAvatar() {
-	const btn = document.getElementById("change-avatar");
-	const fileInput = document.getElementById("avatar-file") as HTMLInputElement;
+	const avatarImg = document.getElementById("user-avatar") as HTMLImageElement | null;
+	const avatarUrlInput = document.getElementById("avatar-url") as HTMLInputElement | null;
+	const saveBtn = document.getElementById("change-avatar") as HTMLButtonElement | null;
 
-	btn?.addEventListener("click", async (e) => {
-		e.preventDefault();
-
-		if (!fileInput.files || fileInput.files.length === 0) {
-			alert("Please select a file first!");
-			return;
-		}
-
-		const formData = new FormData();
-		formData.append("avatar", fileInput.files[0]);
+	saveBtn?.addEventListener("click", async () => {  // <-- callback async
+		const url = avatarUrlInput?.value.trim();
+		if (avatarImg && url) {
+		avatarImg.src = url;
 
 		try {
-			const response = await fetch("/api/upload/avatar", {
-				method: "POST",
-				body: formData,
-			});
+			// Ici on envoie l’URL au backend (et pas l’élément <img>)
+			const data = await saveAvatar(url);
 
-			if (!response.ok) {
-				throw new Error("Upload failed");
+			if (data.statusCode !== 200) {
+			const errorMessage = document.getElementById("error-save");
+			if (errorMessage) {
+				errorMessage.textContent = data.message;
 			}
-
-			const data = await response.json();
-			console.log("Uploaded avatar URL:", data.url);
-
-			const avatarImg = document.getElementById("user-avatar") as HTMLImageElement;
-			if (avatarImg) avatarImg.src = data.url;
-
+			return;
+			} else {
+			const successMessage = document.getElementById("success-save");
+			if (successMessage) {
+				successMessage.textContent = data.message;
+			}
+			}
 		} catch (err) {
-		console.error("Error uploading avatar:", err);
+			console.error("Error saving user information: ", err);
+		}
 		}
 	});
 }

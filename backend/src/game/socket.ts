@@ -1,8 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { getGameRoom, getNextRoomId } from "./interface";
-import cookie from "cookie";
+import * as cookie from "cookie";
 import { WebSocket } from "@fastify/websocket";
-import { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
 import db from "../db/db";
 import { setRoom } from "./interface";
@@ -26,13 +25,18 @@ import { updateGame, gameLoop } from "./logic"
 
 export async function socketHandler(fastify: FastifyInstance)
 {
-	const wss = new WebSocketServer({ server: fastify.server });
+	console.log("🚀 Initialisation du WebSocket handler");
 
 	const getSocket = new Map<number, WebSocket>();
 	const getId = new Map<WebSocket, number>();
 	let pendingMatchmaking = -1;
 
-	wss.on("connection", async (ws, req) => {
+	// Route WebSocket avec Fastify
+	fastify.get('/ws', { websocket: true }, (connection, req) => {
+		console.log("🔌 Nouvelle tentative de connexion WebSocket");
+		console.log("📋 Headers de la requête:", req.headers);
+
+		const ws = connection;
 
 		const cookies = cookie.parse(req.headers.cookie || "");
 		const token = cookies["token"];
@@ -47,11 +51,17 @@ export async function socketHandler(fastify: FastifyInstance)
 				twofa_enable: boolean;
 			};
 
-			getSocket.set(payload.id, ws);
-			getId.set(ws, payload.id);
-			console.log(`Utilisateur connecté : ${payload.id}`);
+		getSocket.set(payload.id, ws);
+		getId.set(ws, payload.id);
+		console.log(`🟢 Utilisateur connecté avec succès - ID: ${payload.id}, Email: ${payload.email}`);
+		console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
 
-		} catch (err) {
+		// Envoyer un message de confirmation de connexion
+		ws.send(JSON.stringify({
+			type: "connection_confirmed",
+			message: "WebSocket connection established successfully",
+			userId: payload.id
+		}));		} catch (err) {
 			console.log("JWT invalide");
 			ws.close(); // déconnecte la socket
 			return;
@@ -61,6 +71,7 @@ export async function socketHandler(fastify: FastifyInstance)
 		ws.on("message", (message: string) => {
 			try {
 				const data = JSON.parse(message);
+				console.log("📦 Message reçu du client:", data); // Debug: voir tous les messages
 
 				//implementer chaque logique
 				if (data.type === "game_send_invite") {
@@ -101,18 +112,22 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 				if (data.type === "game_accepted") {
+					console.log("🎮 Game accepted - Mode:", data.mode, "From:", data.from);
 					const idRoom = getNextRoomId();
 
-					const toSocket = getSocket.get(data.from);
 					if (data.mode === "local" || data.mode === "AI") {
-
-						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode); // probleme ici on va avoir le meme nom pour les deux joueurs
+						console.log("🎯 Mode local/AI - création de la room:", idRoom);
+						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 						setRoom(idRoom, gameRoom);
-						// est ce que on doit le faire dans ce cas si ? db.prepare(`INSERT INTO games (player_id_left, player_id_right, room_id, game_date) VALUES (?, ?, ?, ?)`).run(data.from, idTo, idRoom, new Date().toISOString());
+						console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+						return; // 🔴 IMPORTANT: sortir ici pour éviter l'exécution du code online
 					}
 
+					// Mode online (matchmaking) - ne s'exécute que si ce n'est PAS local/AI
+					console.log("🌐 Mode online");
+					const toSocket = getSocket.get(data.from);
 					const idTo = getId.get(ws);
 					if (!idTo) return;
 
@@ -120,10 +135,9 @@ export async function socketHandler(fastify: FastifyInstance)
 					db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 
 					const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode);
-
 					setRoom(idRoom, gameRoom);
 
-					db.prepare(`INSERT INTO games (player_id_left, player_id_right, room_id, game_date) VALUES (?, ?, ?, ?)`).run(data.from, idTo, idRoom, new Date().toISOString());
+					db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(data.from, idTo, new Date().toISOString());
 					if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
 					ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 
@@ -135,12 +149,18 @@ export async function socketHandler(fastify: FastifyInstance)
 
 				// Logique game
 				if (data.type === "game_info") {
+					console.log("📡 Demande game_info reçue pour room:", data.roomId);
 					const gameRoom = getGameRoom(data.roomId);
-					if (!gameRoom) return ; // on pourrait aussi return si l'id n'est pas correct ?
+					if (!gameRoom) {
+						console.log("❌ Room non trouvée:", data.roomId);
+						ws.send(JSON.stringify({ type: "error", message: "Game room not found" }));
+						return;
+					}
 					const gameState = gameRoom.gameState;
+					console.log("✅ Envoi game_update pour room:", data.roomId);
 					ws.send(JSON.stringify({
 						type: "game_update",
-						game: gameState,
+						gameState: gameState, // Correction: gameState au lieu de game
 						mode: gameRoom.mode,
 					}));
 				}
@@ -200,6 +220,25 @@ export async function socketHandler(fastify: FastifyInstance)
 			}
 		});
 
+		// Gestion de la déconnexion
+		ws.on("close", (code: number, reason: string) => {
+			const userId = getId.get(ws);
+			console.log(`🔌 WebSocket fermée - Code: ${code}, Raison: ${reason}, User ID: ${userId}`);
+			if (userId) {
+				getSocket.delete(userId);
+				getId.delete(ws);
+				console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
+			}
+		});
+
+		// Gestion des erreurs de socket
+		ws.on("error", (error: any) => {
+			const userId = getId.get(ws);
+			console.error("🔴 Erreur WebSocket pour l'utilisateur ID:", userId || "inconnu");
+			console.error("📝 Détails de l'erreur:", error);
+		});
 
 	});
+
+	console.log("✅ WebSocket handler initialisé avec succès");
 }

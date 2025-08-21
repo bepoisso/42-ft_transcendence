@@ -52,21 +52,7 @@ export function renderVisitProfile() {
   `;
 }
 
-
-// // Test
-// function fetchUserData() {
-// 	return {
-// 		statusCode: 200,
-// 		message: "all good",
-// 		username: "Fab",
-// 		avatarURL: undefined,
-// 		gamesPlayed: "10",
-// 		gamesWon: "5",
-// 		friend: false
-// 	}
-// }
-
-async function fetchUserData(id: number, username: string): Promise<{
+async function fetchUserData(id: number): Promise<{
 	statusCode: number,
 	message?: string,
 	userId: string,
@@ -76,11 +62,13 @@ async function fetchUserData(id: number, username: string): Promise<{
 	gamesWon: string,
 	friend: boolean
 	}> {
-	const response = await fetch("/api/visitProfile", {
+	const response = await fetch("/back/api/get/user/public", {
 		method: "POST",
+		credentials: 'include',
 		headers: {
 		"Content-Type": "application/json",
 		},
+		body: JSON.stringify({id: id}),
 	});
 	return await response.json();
 }
@@ -89,8 +77,7 @@ async function fetchUserData(id: number, username: string): Promise<{
 async function setVisitProfile(id: number)
 {
 	try {
-		const username = localStorage.getItem("username")!;
-		const data = await fetchUserData(id, username);
+		const data = await fetchUserData(id);
 
 		if (data.statusCode !== 200) {
 			console.error("Error with visitProfile : " + data.message);
@@ -128,9 +115,9 @@ async function setVisitProfile(id: number)
 		if (addFriendBtn) {
 			if (!data.friend) {
 				addFriendBtn.classList.remove("hidden");
-		} else {
+			} else {
 			addFriendBtn.classList.add("hidden");
-		}
+			}
 		}
 
 	} catch (err) {
@@ -151,10 +138,9 @@ function inviteGame(socket: WebSocket) {
 }
 
 
-export function visitProfileHandler(router: Router, id: number)
+export async function visitProfileHandler(router: Router, id: number)
 {
-	const socket = getSocket(router);
+	const socket = await getSocket(router);
 	setVisitProfile(id);
 	inviteGame(socket);
-
 }

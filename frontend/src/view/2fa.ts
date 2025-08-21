@@ -47,10 +47,17 @@ Promise <{
 	}
 }>
 {
-	const response = await fetch("/api/auth/2fa/generate", {
+	const response = await fetch("/back/auth/2fa/generate", {
 		method: "POST",
 		credentials: 'include'
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
 
 	const data = await response.json();
 
@@ -60,7 +67,7 @@ Promise <{
 
 async function verify2fa(input: string): Promise <{statusCode: number, message: string}>
 {
-	const response = await fetch("/api/auth/2fa/verify", {
+	const response = await fetch("/back/auth/2fa/verify", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
@@ -69,6 +76,13 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 		credentials: 'include'
 	});
 
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = await response.json();
 
 	return data;
@@ -76,10 +90,17 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 
 
 async function checkNewUser(): Promise <{statusCode: number, message: string, value:{ twofa_enable: number}}> {
-	const response = await fetch("/api/auth/2fa/check", {
+	const response = await fetch("/back/auth/2fa/check", {
 		method: "GET",
 		credentials: 'include'
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
 
 	const data = await response.json();
 	return data;

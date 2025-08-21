@@ -1,7 +1,8 @@
 import { Router } from "../../router";
 import { searchBar } from "./toolbar";
-import { fetchFriendsStatus } from "./fetchFriends";
+import { renderFriendsSidebar } from "./fetchFriends";
 import { getSocket } from "../../sockets/socket";
+import type { Friend } from "./fetchFriends";
 
 export function renderDashboard() {
   document.getElementById("app")!.innerHTML = `
@@ -81,36 +82,40 @@ export function renderDashboard() {
 // 					Appelle du back pour dynamiquement modifier les éléments						||
 // ===================================================================================================
 
-// // test sans back
-// async function fecthUserData(token: string) {
-// 	return {statusCode: 200, message: "all good", name: "Test"};
-// }
-
-
-async function fetchUserData() : Promise <{
-	statusCode: number,
-	message: string,
-	id?: number,
-	username?: string,
-	tournament_name?: string,
-	avatar_url?: string,
-	email?: string,
-	games_played?: number,
-	games_won?: number,
-	room_id?: number,
-	avatarURL?: string,
-	friend_list: string[]
-}>{
-	const response = await fetch("/api/userInfo", {
-		method: "POST",
+async function fetchUserData() : Promise<{
+  statusCode: number;
+  message: string;
+  id?: number;
+  username?: string;
+  username_tournament?: string;
+  avatar_url?: string;
+  email?: string;
+  games_played?: number;
+  games_won?: number;
+  room_id?: number;
+  friends?: Friend[]; // tableau d'amis
+}> {
+	const response = await fetch("/back/api/get/user/private", {
+		method: "GET",
 		credentials: 'include',
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
 	const data = await response.json();
 	return data;
 }
 
 
-async function setDashboard(router: Router): Promise<number | undefined>
+
+
+
+async function setDashboard(router: Router): Promise<{id: number, roomId: number} | undefined>
 {
 	try {
 			const data = await fetchUserData();
@@ -129,16 +134,17 @@ async function setDashboard(router: Router): Promise<number | undefined>
 				userDiv.textContent = data.username!;
 				localStorage.setItem("username", data.username!);
 			}
-			if (data.avatarURL) {
+			if (data.avatar_url) {
 				const userAvatar = document.getElementById("user-avatar") as HTMLImageElement;
-				if (userAvatar) userAvatar.src = data.avatarURL;
+				if (userAvatar) userAvatar.src = data.avatar_url;
 			}
 
-			// Faudrait mettre la liste d'amis ici
+			renderFriendsSidebar(router, data.friends!);
 
-			return data.id;
+			return {id: data.id!, roomId: data.room_id || 0};
 	} catch (err) {
 		console.error("Error fetching user data:", err);
+		router.navigate("/login");
 		return undefined;
 	}
 }
@@ -184,15 +190,19 @@ export function myProfileClick(router: Router)
 
 
 
-async function isInGame(): Promise<number>
+export function matchmaking(socket: WebSocket, id: any)
 {
-	try {
-		const data = await fetchUserData();
-			return data.room_id!;
-	} catch (err) {
-		console.error("Error fetching user data:", err);
-		return -1;
-	}
+	const btnMyProfile = document.getElementById("btnOnline");
+	btnMyProfile?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		socket.send(JSON.stringify({
+			type: "matchmaking",
+			from: id,
+		//	mode: modes,
+		}))
+
+	});
 }
 
 export function matchmaking(socket: WebSocket, id: any)
@@ -213,31 +223,37 @@ export function matchmaking(socket: WebSocket, id: any)
 
 export async function dashboardHandler(router: Router)
 {
-	const socket = getSocket(router);
-	const id = setDashboard(router);
-	if (!id) return;
+	console.log("🏠 Dashboard loading - about to create WebSocket connection...");
+	const socket = await getSocket(router);
+	console.log("🏠 Dashboard - WebSocket obtained, state:", socket.readyState);
+	const userData = await setDashboard(router);
+	if (!userData) return;
 
-	const roomId = await isInGame();
+	const { id, roomId } = userData;
+	console.log("🎯 User data:", { id, roomId });
 
-	if (roomId > 0) {
+	if (roomId && roomId > 0) {
+		console.log("🔄 Attempting to reconnect to room:", roomId);
 		socket.send(JSON.stringify({
 			type: "reconnect",
 			from: id,
 			roomId: roomId,
 		}))
+	} else {
+		console.log("ℹ️ User not in any active game room");
 	}
+
 	myProfileClick(router);
 
 	modeClick(socket, "btnLocal", "local", id);
 	modeClick(socket, "btnAI", "AI", id);
 	//modeClick(socket, router, "btnOnline", "online", id); => build logique marchmaking
-	fetchFriendsStatus(router); // a placer dans setDash
 
 	searchBar(router);
-	//Penser a la logique de tournois
 
 	matchmaking(socket, id);
 
-	//testFakeInvite();
+	matchmaking(socket, id);
+
 }
 

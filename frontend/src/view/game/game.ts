@@ -1,4 +1,4 @@
-import { getSocket } from "../../sockets/socket";
+import { getSocket, sendMessage } from "../../sockets/socket";
 import { Router } from "../../router";
 import type { GameState } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
@@ -57,24 +57,30 @@ export function drawGame(gameState: GameState)
 	ctx.fill();
 }
 
-export function gameLoop(router: Router, id_Room: string)
+export async function gameLoop(router: Router, id_Room: string)
 {
-	const socket = getSocket(router);
+	console.log("🎯 gameLoop appelé avec id_Room:", id_Room, "type:", typeof id_Room);
+	const socket = await getSocket(router);
 	const idRoom = Number(id_Room);
+	console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
+	
 	let isLocal = false;
 	let askOnce = 0;
 	let localName;
 
 	// appelle game_info
+	console.log("on entre dans la game");
+	console.log("📤 Envoi game_info avec roomId:", idRoom);
 	socket.send(JSON.stringify({ type: "game_info", roomId: idRoom }));
 
-
-	// recupere game_update
+	// Handler spécifique pour les messages de jeu
+	const originalOnMessage = socket.onmessage;
 	socket.onmessage = (event) => {
 		const data = JSON.parse(event.data);
-
+		
+		// Traite d'abord les messages de jeu
 		if (data.type === "game_update") {
-			// pour faire bouger le deuxième joueur avec w et s
+			console.log("🎮 Game update reçu:", data.type, data.mode);
 			isLocal = data.mode === "local";
 			if (isLocal === true && askOnce === 0) {
 				askOnce = 1;
@@ -94,9 +100,14 @@ export function gameLoop(router: Router, id_Room: string)
 			// Met à jour le score
 			const scoreElem = document.getElementById("score");
 			if (scoreElem) scoreElem.textContent = `${data.gameState.player1.score} : ${data.gameState.player2.score}`;
+			
+			// Dessine le jeu
+			drawGame(data.gameState);
+		} else if (originalOnMessage) {
+			// Relaie les autres messages vers le handler original
+			originalOnMessage.call(socket, event);
 		}
-
-	}
+	};
 
 	// On gere deux evenements, la touche enfoncée et la touche relevée.
 	// On donne l'info "local" pour que le serv puisse ignorer le mouvement si le mode n'est pas local

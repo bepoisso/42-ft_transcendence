@@ -4,42 +4,16 @@ import { Router } from "../../router";
 // 								Logique d'amis	sur le téco											||
 // ===================================================================================================
 
-
-interface Friend {
+export type Friend = {
   id: number;
+  friend_id: number;
   username: string;
-  avatarURL?: string;
-  online: boolean;
-}
+  avatar_url: string;
+  status: "pending" | "accepted";
+  isConnected : number
+};
 
-
-function test(query: string) {
-	return {
-		friends: [
-			{
-				id: 3,
-				username: "Thierry",
-				avatarURL: undefined,
-				online: true,
-			},
-			{
-				id: 2,
-				username: "Stephanie",
-				avatarURL: undefined,
-				online: true,
-			},
-			{
-				id: 1,
-				username: "Fab",
-				avatarURL: undefined,
-				online: false,
-			},
-		]
-	}
-}
-
-
-function renderFriendsSidebar(router: Router, friends: Friend[])
+export function renderFriendsSidebar(router: Router, friends: Friend[])
 {
 	const sidebar = document.getElementById("friends-list");
 	if (!sidebar) return;
@@ -58,8 +32,8 @@ function renderFriendsSidebar(router: Router, friends: Friend[])
 
 		// avatar
 		const avatar = document.createElement("img");
-		if (friend.avatarURL)
-			avatar.src = friend.avatarURL;
+		if (friend.avatar_url)
+			avatar.src = friend.avatar_url;
 		else
 			avatar.src = "../assets/basic_avatar.png";
 		avatar.className = "w-8 h-8 rounded-full";
@@ -67,7 +41,7 @@ function renderFriendsSidebar(router: Router, friends: Friend[])
 
 		// status
 		const statusDot = document.createElement("span");
-		statusDot.className = `w-3 h-3 rounded-full ${friend.online ? "bg-green-500" : "bg-red-500"}`;
+		statusDot.className = `w-3 h-3 rounded-full ${friend.isConnected ? "bg-green-500" : "bg-red-500"}`;
 		friendEl.appendChild(statusDot);
 
 		// username
@@ -75,29 +49,11 @@ function renderFriendsSidebar(router: Router, friends: Friend[])
 		username.textContent = friend.username;
 		friendEl.appendChild(username);
 
+		// friend_id
 		friendEl.addEventListener("click", () => {
-			router.navigate(`/visitProfile/${friend.id}`);
+			router.navigate(`/visitProfile/${friend.friend_id}`);
 		});
-
 
 		sidebar.appendChild(friendEl);
 	});
-}
-
-
-
-
-export async function fetchFriendsStatus(router: Router)
-{
-	// try {
-	// 	const res = await fetch("api/friends/status");
-	// 	if (!res.ok) throw new Error("Erreur serveur");
-
-	// 	const friends = await res.json();
-	// 	renderFriendsSidebar(friends);
-	// } catch (err) {
-	// 	console.error("Impossible de récupérer les amis :", err);
-	// }
-
-	renderFriendsSidebar(router, test("str").friends); // a delete juste pour test
 }

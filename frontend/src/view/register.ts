@@ -58,13 +58,20 @@ export function renderRegister() {
 
 // Fonction pour appeler user-service pour sauvegarder le user en tant que non vérifié
 async function preRegister(username: string, email: string, password: string): Promise<{statusCode: number, message: string}> {
-	const response = await fetch("/api/register", {
+	const response = await fetch("/back/register", {
 		method: "POST",
 		headers: {
 		"Content-Type": "application/json",
 		},
 		body: JSON.stringify({username, email, password}),
 	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
 
 	const data = response.json();
 
