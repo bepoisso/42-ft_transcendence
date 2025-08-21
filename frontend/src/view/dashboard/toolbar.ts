@@ -9,29 +9,6 @@ interface user {
 	avatarURL?: string;
 };
 
-// async function fetchUserSuggestions(query: string) {
-// 	return {
-// 		statusCode: 200,
-// 		message: "all good",
-// 		users: [
-// 			{
-// 				id: 3,
-// 				name: "Thierry",
-// 				avatarURL: undefined,
-// 			},
-// 			{
-// 				id: 3,
-// 				name: "Stephanie",
-// 				avatarURL: undefined,
-// 			},
-// 			{
-// 				id: 3,
-// 				name: "Fab",
-// 				avatarURL: undefined,
-// 			},
-// 		]
-// 	}
-// }
 
 async function fetchUserSuggestions(query: string) : Promise <{
 	statusCode: number,

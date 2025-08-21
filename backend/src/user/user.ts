@@ -5,23 +5,32 @@ import bcrypt from 'bcrypt';
 
 
 export async function getUserPrivate(token: string) {
+	console.log("👤 getUserPrivate() appelé avec token:", token ? "Token présent" : "Token manquant");
+	
 	const email = await getUserByToken(token);
+	console.log("📧 getUserByToken() résultat:", email ? `Email: ${email}` : "Email null/undefined");
+	
 	if (!email) {
+		console.log("❌ getUserPrivate: User not found, retour 404");
 		return { statusCode: 404, message: "User not found" };
 	}
 	
 	try {
+		console.log("🔍 Recherche utilisateur avec email:", email);
 		const user = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as User;
 		if (!user) {
+			console.log("❌ getUserPrivate: User not found in database");
 			return { StatusCode: 404, message: "User not found" };
 		}
 	
+		console.log("👥 Recherche des amis pour user ID:", user.id);
 		const friends = db.prepare(`SELECT f.id, f.status,
 			u.id as friend_id, u.username, u.avatar_url, u.is_connected
 			FROM friends f
 			JOIN users u ON (u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END)
 			WHERE f.user_id = ? OR f.friend_id = ?`).all(user.id, user.id, user.id);
 	
+		console.log("✅ getUserPrivate: Retour des données utilisateur");
 		return {
 			statusCode: 200,
 			message: "Success",
@@ -36,6 +45,7 @@ export async function getUserPrivate(token: string) {
 			friends: friends
 		};
 	} catch (err) {
+		console.error("💥 getUserPrivate: Erreur dans try/catch:", err);
 		return {statusCode: 500, message: "Internal server error", err};
 	}
 

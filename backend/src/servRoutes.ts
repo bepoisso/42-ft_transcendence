@@ -224,7 +224,9 @@ export async function servRoutes(fastify: FastifyInstance)
 
 
 	// Gere Socket
+	console.log("🔧 Enregistrement du gestionnaire WebSocket...");
 	socketHandler(fastify);
+	console.log("✅ Gestionnaire WebSocket enregistré");
 
 }
 

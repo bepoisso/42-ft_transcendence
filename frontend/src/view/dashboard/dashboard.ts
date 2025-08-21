@@ -115,7 +115,7 @@ async function fetchUserData() : Promise<{
 
 
 
-async function setDashboard(router: Router): Promise<number | undefined>
+async function setDashboard(router: Router): Promise<{id: number, roomId: number} | undefined>
 {
 	try {
 			const data = await fetchUserData();
@@ -141,7 +141,7 @@ async function setDashboard(router: Router): Promise<number | undefined>
 
 			renderFriendsSidebar(router, data.friends!);
 
-			return data.id;
+			return {id: data.id!, roomId: data.room_id || 0};
 	} catch (err) {
 		console.error("Error fetching user data:", err);
 		router.navigate("/login");
@@ -190,17 +190,6 @@ export function myProfileClick(router: Router)
 
 
 
-async function isInGame(): Promise<number>
-{
-	try {
-		const data = await fetchUserData();
-			return data.room_id!;
-	} catch (err) {
-		console.error("Error fetching user data:", err);
-		return -1;
-	}
-}
-
 export function matchmaking(socket: WebSocket, id: any)
 {
 	const btnMyProfile = document.getElementById("btnOnline");
@@ -219,28 +208,35 @@ export function matchmaking(socket: WebSocket, id: any)
 
 export async function dashboardHandler(router: Router)
 {
-//	const socket = getSocket(router);
-	const id = await setDashboard(router);
-	if (!id) return;
+	console.log("🏠 Dashboard loading - about to create WebSocket connection...");
+	const socket = await getSocket(router);
+	console.log("🏠 Dashboard - WebSocket obtained, state:", socket.readyState);
+	const userData = await setDashboard(router);
+	if (!userData) return;
 
-	//const roomId = await isInGame();
+	const { id, roomId } = userData;
+	console.log("🎯 User data:", { id, roomId });
 
-	// if (roomId > 0) {
-	// 	socket.send(JSON.stringify({
-	// 		type: "reconnect",
-	// 		from: id,
-	// 		roomId: roomId,
-	// 	}))
-	// }
+	if (roomId && roomId > 0) {
+		console.log("🔄 Attempting to reconnect to room:", roomId);
+		socket.send(JSON.stringify({
+			type: "reconnect",
+			from: id,
+			roomId: roomId,
+		}))
+	} else {
+		console.log("ℹ️ User not in any active game room");
+	}
+
 	myProfileClick(router);
 
-	// modeClick(socket, "btnLocal", "local", id);
-	// modeClick(socket, "btnAI", "AI", id);
+	modeClick(socket, "btnLocal", "local", id);
+	modeClick(socket, "btnAI", "AI", id);
 	//modeClick(socket, router, "btnOnline", "online", id); => build logique marchmaking
 
 	searchBar(router);
 
-//	matchmaking(socket, id);
+	matchmaking(socket, id);
 
 
 }

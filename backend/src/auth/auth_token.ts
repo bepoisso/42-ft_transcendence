@@ -20,7 +20,7 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply, done: Function) {
+export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const token = request.cookies.token;
 		if (!token) {
@@ -28,27 +28,33 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 			console.log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", request);
 			return;
 		}
-		
+
 		const jwtsecret = process.env.JWT_SECRET;
 		if (!jwtsecret) {
 			reply.send({statusCode: 500, error: 'Server configuration error' });
 			return;
 		}
-		
+
 		const decoded = jwt.verify(token, jwtsecret) as {id: number; email:string, twofa_enable: boolean};
 		(request as any).user = decoded;
 
+		console.log("🔐 Token décodé:", { id: decoded.id, email: decoded.email, twofa_enable: decoded.twofa_enable });
+		console.log("🌐 URL demandée:", request.url);
+
 		if (!decoded.twofa_enable) {
+			console.log("⚠️  2FA non activé, vérification des URLs autorisées...");
 			const allowedFor2FA = ['/auth/2fa/generate', '/auth/2fa/verify', '/auth/2fa/check'];
 			if (!allowedFor2FA.includes(request.url)) {
+				console.log("❌ URL non autorisée sans 2FA");
 				reply.send({ statusCode:403, error: 'Two-Factor Authentication required' });
 				return;
 			}
+		} else {
+			console.log("✅ 2FA activé, accès autorisé");
 		}
-
-		done();
 	} catch (err) {
 		reply.send({statusCode: 401 ,error: 'Invalid or expired token'});
+		return;
 	}
 };
 

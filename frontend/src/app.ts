@@ -44,13 +44,13 @@ export class App
 				renderMyProfile();
 				myProfileHandler(self.router);
 			},
-			"/visitProfile/:id": (params: any) => {
+			"/visitProfile/:id": async (params: any) => {
 				renderVisitProfile();
-				visitProfileHandler(self.router, params.id);
+				await visitProfileHandler(self.router, params.id);
 			},
-			"/game/:id": (params: any) => {
+			"/game/:id": async (params: any) => {
 				renderGame();
-				gameLoop(self.router, params.id)
+				await gameLoop(self.router, params.id)
 			}
 		};
 		this.router = new Router(routes);

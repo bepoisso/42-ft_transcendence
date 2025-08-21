@@ -138,9 +138,9 @@ function inviteGame(socket: WebSocket) {
 }
 
 
-export function visitProfileHandler(router: Router, id: number)
+export async function visitProfileHandler(router: Router, id: number)
 {
-	const socket = getSocket(router);
+	const socket = await getSocket(router);
 	setVisitProfile(id);
 	inviteGame(socket);
 }

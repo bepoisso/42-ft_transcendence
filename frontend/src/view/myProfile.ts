@@ -12,34 +12,32 @@ export function renderMyProfile() {
       <!-- CONTENU -->
       <div class="flex flex-1 w-full p-6 bg-gray-900">
 
-       <!-- Colonne gauche : Avatar -->
-		<form id="avatar-form" class="w-1/4 flex flex-col items-center space-y-4 border-r border-gray-700 pr-6">
-		<!-- Avatar affiché -->
-		<img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar"
-			class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
+        <!-- Colonne gauche : Avatar -->
+        <form id="avatar-form" class="w-1/4 flex flex-col items-center space-y-4 border-r border-gray-700 pr-6">
+          <!-- Avatar affiché -->
+          <img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar"
+            class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
 
-		<!-- Boutons -->
-		<div class="flex flex-col space-y-3 w-full">
-			<!-- Champ URL -->
-			<input type="url" id="avatar-url" placeholder="https://example.com/image.png"
-				class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none">
-				<div class="flex space-x-4">
-			<input type="file" id="avatar-file" accept="image/*" class="hidden" />
+          <!-- Boutons -->
+          <div class="flex flex-col space-y-3 w-full">
+            <!-- Champ URL -->
+            <input type="url" id="avatar-url" placeholder="https://example.com/image.png"
+              class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none">
+            <div class="flex space-x-4">
+              <input type="file" id="avatar-file" accept="image/*" class="hidden" />
 
-			<button type="button" id="change-avatar"
-					class="px-4 py-2 bg-green-600 rounded hover:bg-green-700 text-sm">
-				Save
-			</button>
-			</div>
-		</div>
-		</form>
-
-
+              <button type="button" id="change-avatar"
+                class="px-4 py-2 bg-green-600 rounded hover:bg-green-700 text-sm">
+                Save
+              </button>
+            </div>
+          </div>
+        </form>
 
         <!-- Colonne droite : Infos utilisateur -->
         <div class="w-3/4 pl-6 space-y-8">
 
-          <!-- Username + Tournament Username -->
+          <!-- Username -->
           <div class="flex gap-6">
             <div class="flex-1">
               <label class="block text-gray-400 mb-1 text-left">Username</label>
@@ -50,7 +48,7 @@ export function renderMyProfile() {
 
           <!-- Email -->
           <input id="myEmail" type="email" value="Loading..."
-		  class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none"readonly>
+            class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none" readonly>
 
           <!-- Stats -->
           <div class="flex gap-6">
@@ -70,12 +68,12 @@ export function renderMyProfile() {
               class="px-6 py-2 bg-green-600 rounded hover:bg-green-700 font-semibold">
               Save
             </button>
-			<p id="error-save" class="text-red-500 mt-2"></p>
-			<p id="success-save" class="text-green-500 mt-2"></p>
+            <p id="error-save" class="text-red-500 mt-2"></p>
+            <p id="success-save" class="text-green-500 mt-2"></p>
           </div>
 
           <!-- Changer mot de passe -->
-          <div class="  rounded-lg space-y-4">
+          <div class="rounded-lg space-y-4">
             <h2 class="text-lg font-bold border-b border-gray-700 pb-2 text-left">Changer le mot de passe</h2>
 
             <div>
@@ -104,7 +102,15 @@ export function renderMyProfile() {
                 Update password
               </button>
             </div>
-			<p id="error-password" class="text-red-500 mt-2"></p>
+            <p id="error-password" class="text-red-500 mt-2"></p>
+          </div>
+
+          <!-- Historique des parties -->
+          <div class="rounded-lg space-y-4">
+            <h2 class="text-lg font-bold border-b border-gray-700 pb-2 text-left">Historique des parties</h2>
+            <div id="game-history" class="space-y-2 max-h-64 overflow-y-auto">
+              <p class="text-gray-400">Chargement de l’historique...</p>
+            </div>
           </div>
 
         </div>
@@ -119,10 +125,6 @@ export function renderMyProfile() {
 // 					Appelle du back pour dynamiquement modifier les éléments						||
 // ===================================================================================================
 
-// // test sans back
-// async function fetchUserData(token: string) {
-// 	return {statusCode: 200, message: "all good", name: "Hadri", tournamentName: "Spike", email:"Mon email", avatarURL: null, gamesPlayed: "10", gamesWon: "8"};
-// }
 
 async function fetchUserData() : Promise <{
 	statusCode: number,
