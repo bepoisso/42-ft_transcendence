@@ -199,26 +199,12 @@ export function matchmaking(socket: WebSocket, id: any)
 		socket.send(JSON.stringify({
 			type: "matchmaking",
 			from: id,
-		//	mode: modes,
+			mode: "online",
 		}))
 
 	});
 }
 
-export function matchmaking(socket: WebSocket, id: any)
-{
-	const btnMyProfile = document.getElementById("btnOnline");
-	btnMyProfile?.addEventListener("click", async (e) => {
-		e.preventDefault(); // Empêche le rechargement
-
-		socket.send(JSON.stringify({
-			type: "matchmaking",
-			from: id,
-		//	mode: modes,
-		}))
-
-	});
-}
 
 
 export async function dashboardHandler(router: Router)
