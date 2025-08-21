@@ -101,7 +101,7 @@ export async function updateAvatar(newAvatar: string, token: string) {
 		return { statusCode: 404, message: "User not found" };
 	}
 
-	const avatarRegex = /^[a-zA-Z0-9]{3,}$/; // A CHANGER
+	const avatarRegex = /.*\.(jpg|jpeg|png|webp)(\?.*)?$/i;
 	if (!avatarRegex.test(newAvatar)) {
 		return { statusCode: 401, message: "Invalid credential" };
 	}
