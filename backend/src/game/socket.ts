@@ -200,13 +200,13 @@ export async function socketHandler(fastify: FastifyInstance)
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, idTo);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, matchmaking);
 
-						const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode);
+						const gameRoom = initGameRoom(idRoom, matchmaking, idTo, data.mode);
 						setRoom(idRoom, gameRoom);
 
 						db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(matchmaking, idTo, new Date().toISOString());
 						if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
-						}
+					}
 				}
 
 
