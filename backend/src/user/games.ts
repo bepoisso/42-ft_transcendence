@@ -132,7 +132,6 @@ export async function addPlayerToTournament(token: string, tournamentId: number)
 		if (playerSlot === 0) {
 			return { statusCode: 400, message: "Tournament is already full" };
 		}
-		console.log("TTTTTTTTTTTTTTTTTTT ", playerSlot);
 		db.prepare(`UPDATE tournaments SET player_${playerSlot} = ? WHERE id = ?`).run(playerId, tournamentId);
 
 		return { statusCode: 200, message: `Player ${playerId} successfully added to the tournament at position ${playerSlot}` };
@@ -141,20 +140,21 @@ export async function addPlayerToTournament(token: string, tournamentId: number)
 	}
 }
 
-/* CREATE TABLE tournaments (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	tournament_name TEXT NOT NULL,
-	nbr_player NUMBER NOT NULL,
-	player_1 NUMBER NOT NULL,
-	player_2 NUMBER,
-	player_3 NUMBER,
-	player_4 NUMBER,
-	player_5 NUMBER,
-	player_6 NUMBER,
-	player_7 NUMBER,
-	player_8 NUMBER,
-	player_won NUMBER,
-	tournament_date TEXT NOT NULL,
-	tournament_status TEXT NOT NULL DEFAULT 'pending'
-);
- */
+export async function finishGame(playerIdWon: number, score: string, gameId: number) {
+	const game = db.prepare(`SELECT * FROM game WHERE id = ?`).get(gameId) as Games;
+	if (!game) {
+		return { statusCode: 404, message: "Game not found" };
+	}
+	
+	const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(playerIdWon) as User;
+	if (!user) {
+		return { statusCode: 404, message: "Player not found" };
+	}
+
+	try {
+		db.prepare(`UPDATE games SET player_id_won = ?, score = ? WHERE id = ?`).run(playerIdWon, score, gameId);
+		return { statusCode: 200, message: "Success game updated" };
+	} catch (err) {
+		return { statusCode: 500, message: "Internal server error", err };
+	}
+}
