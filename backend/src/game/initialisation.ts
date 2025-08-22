@@ -27,6 +27,7 @@ export function initGameRoom(idRoom: number, id_player1: number, id_player2: num
 			username: username2,
 		},
 		gameState: initGame(username1, username2, id_player1, id_player2),
+		sockets: [],
 	}
 	return gameroom;
 }

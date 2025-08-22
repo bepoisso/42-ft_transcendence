@@ -33,9 +33,28 @@ export function gameLoop(gameRoom: GameRoom): void {
 	else if (scoreResult === 2)
 		player2.score++;
 
-	// loop if game is running
-	if (gameRoom.gameState.is_running == true)
-		gameLoop(gameRoom);
+	// check if game end (max score)
+	const MAX_SCORE = 10;
+	if (player1.score >= MAX_SCORE || player2.score >= MAX_SCORE) {
+		gameRoom.gameState.is_running = false;
+		clearInterval((gameRoom as any).interval);
+
+		// send end msg to all players
+		const winner = player1.score >= MAX_SCORE ? player1.username : player2.username;
+		const sockets = (gameRoom as any).sockets || [];
+		const endMessage = JSON.stringify({
+			type: "game_over",
+			winner: winner,
+			player1Score: player1.score,
+			player2Score: player2.score
+		});
+
+		sockets.forEach((sock: WebSocket | undefined) => {
+			if (sock && sock.readyState === 1) {
+				sock.send(endMessage);
+			}
+		});
+	}
 }
 
 function handleInput(player1: Player, player2: Player, paddle1: Paddle, paddle2: Paddle): void {

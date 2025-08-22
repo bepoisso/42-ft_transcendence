@@ -56,6 +56,7 @@ export interface GameRoom {
 	player1: PlayerConnection;
 	player2: PlayerConnection;
 	gameState: GameState;
+	sockets: WebSocket[];
 }
 
 

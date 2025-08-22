@@ -63,7 +63,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	const socket = await getSocket(router);
 	const idRoom = Number(id_Room);
 	console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
-	
+
 	let isLocal = false;
 	let askOnce = 0;
 	let localName;
@@ -77,7 +77,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	const originalOnMessage = socket.onmessage;
 	socket.onmessage = (event) => {
 		const data = JSON.parse(event.data);
-		
+
 		// Traite d'abord les messages de jeu
 		if (data.type === "game_update") {
 			console.log("🎮 Game update reçu:", data.type, data.mode);
@@ -100,7 +100,7 @@ export async function gameLoop(router: Router, id_Room: string)
 			// Met à jour le score
 			const scoreElem = document.getElementById("score");
 			if (scoreElem) scoreElem.textContent = `${data.gameState.player1.score} : ${data.gameState.player2.score}`;
-			
+
 			// Dessine le jeu
 			drawGame(data.gameState);
 		} else if (originalOnMessage) {
@@ -114,6 +114,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	window.addEventListener("keydown", (e) =>
 	{
 		if (e.key === "ArrowUp" || e.key === "w") {
+			e.preventDefault();
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -123,6 +124,7 @@ export async function gameLoop(router: Router, id_Room: string)
 		}
 
 		if (e.key === "ArrowDown" || e.key === "s") {
+			e.preventDefault();
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -135,6 +137,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	window.addEventListener("keyup", (e) =>
 	{
 		if (e.key === "ArrowUp" || e.key === "w") {
+			e.preventDefault();
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -144,6 +147,7 @@ export async function gameLoop(router: Router, id_Room: string)
 		}
 
 		if (e.key === "ArrowDown" || e.key === "s") {
+			e.preventDefault();
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,

@@ -135,6 +135,7 @@ export async function socketHandler(fastify: FastifyInstance)
 					db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 
 					const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode);
+					(gameRoom as any).sockets = [toSocket, ws];
 					setRoom(idRoom, gameRoom);
 
 					db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(data.from, idTo, new Date().toISOString());
@@ -142,7 +143,13 @@ export async function socketHandler(fastify: FastifyInstance)
 					ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 
 					gameRoom.gameState.is_running = true;
-					gameLoop(gameRoom);
+
+					// boucle game loop et envoi des infos auz joueurs
+					gameRoom.gameState.is_running = true;
+					(gameRoom as any).interval = setInterval(() => {
+						gameLoop(gameRoom);
+						broadcastGameUpdate(gameRoom);
+					}, 30);
 				}
 
 
@@ -179,14 +186,6 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
-				if (data.type === "reconnect") {
-					const gameRoom = getGameRoom(data.roomId);
-					if (!gameRoom || (gameRoom.player1.id_player !== data.fromId && gameRoom.player2.id_player !== data.fromId)) {
-						ws.send(JSON.stringify({ type: "error", message: "Error trying to reconnect to the game" }));
-					} else {
-						ws.send(JSON.stringify({type: "room_ready", roomId: data.roomId}))
-					}
-				}
 
 				if (data.type === "matchmaking") {
 					console.log("Demande de matchmaking de l'utilisateur:", data.from);
@@ -257,4 +256,16 @@ export async function socketHandler(fastify: FastifyInstance)
 	});
 
 	console.log("✅ WebSocket handler initialisé avec succès");
+}
+
+function broadcastGameUpdate(gameRoom: any) {
+	const gameState = gameRoom.gameState;
+	const mode = gameRoom.mode;
+	const sockets = gameRoom.sockets || [];
+	const message = JSON.stringify({ type: "game_update", gameState, mode });
+	sockets.forEach((sock: WebSocket | undefined) => {
+		if (sock && sock.readyState === 1) { // 1 = OPEN
+			sock.send(message);
+		}
+	});
 }
