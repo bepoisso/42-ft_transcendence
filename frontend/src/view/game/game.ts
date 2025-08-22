@@ -59,18 +59,19 @@ export function drawGame(gameState: GameState)
 
 export async function gameLoop(router: Router, id_Room: string)
 {
-	console.log("🎯 gameLoop appelé avec id_Room:", id_Room, "type:", typeof id_Room);
+	// console.log("🎯 gameLoop appelé avec id_Room:", id_Room, "type:", typeof id_Room);
 	const socket = await getSocket(router);
 	const idRoom = Number(id_Room);
-	console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
+	// console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
 
 	let isLocal = false;
 	let askOnce = 0;
-	let localName;
+	let localName = "Player 2"; // Default value
+	let playerPerspective = "player1";
 
 	// appelle game_info
-	console.log("on entre dans la game");
-	console.log("📤 Envoi game_info avec roomId:", idRoom);
+	// console.log("on entre dans la game");
+	// console.log("📤 Envoi game_info avec roomId:", idRoom);
 	socket.send(JSON.stringify({ type: "game_info", roomId: idRoom }));
 
 	// Handler spécifique pour les messages de jeu
@@ -80,22 +81,26 @@ export async function gameLoop(router: Router, id_Room: string)
 
 		// Traite d'abord les messages de jeu
 		if (data.type === "game_update") {
-			console.log("🎮 Game update reçu:", data.type, data.mode);
+			// console.log("🎮 Game update reçu:", data.type, data.mode);
 			isLocal = data.mode === "local";
 			if (isLocal === true && askOnce === 0) {
 				askOnce = 1;
-				//logique pour demander le nom du joueur seulement une fois
-				// localName = ? /!\ doit etre unique
+				localName = prompt("Enter name for Player 2:") || "Player 2";
 			}
+
+			if (data.perspective) playerPerspective = data.perspective;
 
 			// Met à jour les noms des joueurs
 			const player1 = document.getElementById("player1");
 			const player2 = document.getElementById("player2");
-			if (player1) player1.textContent = data.gameState.player1.name;
+			if (player1) player1.textContent = data.gameState.player1.username;
 			if (player2) {
-				if (isLocal === false) player2.textContent = data.gameState.player2.name;
+				if (isLocal === false) player2.textContent = data.gameState.player2.username;
 				else player2.textContent = localName!;
 			}
+
+			console.log("PLAYER 1: ", data.gameState.player1.username);
+			console.log("PLAYER 2: ", data.gameState.player2.username);
 
 			// Met à jour le score
 			const scoreElem = document.getElementById("score");
@@ -116,21 +121,25 @@ export async function gameLoop(router: Router, id_Room: string)
 		if (e.key === "ArrowUp" || e.key === "w") {
 			e.preventDefault();
 			socket.send(JSON.stringify({
-			type: "move_paddle",
-			roomId: idRoom,
-			direction: "up",
-			local: isLocal,
-			movement: "start"}));
+				type: "move_paddle",
+				roomId: idRoom,
+				direction: "up",
+				local: isLocal,
+				movement: "start",
+				perspective: playerPerspective
+			}));
 		}
 
 		if (e.key === "ArrowDown" || e.key === "s") {
 			e.preventDefault();
 			socket.send(JSON.stringify({
-			type: "move_paddle",
-			roomId: idRoom,
-			direction: "down",
-			local: isLocal,
-			movement: "start"}));
+				type: "move_paddle",
+				roomId: idRoom,
+				direction: "down",
+				local: isLocal,
+				movement: "start",
+				perspective: playerPerspective
+			}));
 		}
 	});
 
@@ -139,21 +148,25 @@ export async function gameLoop(router: Router, id_Room: string)
 		if (e.key === "ArrowUp" || e.key === "w") {
 			e.preventDefault();
 			socket.send(JSON.stringify({
-			type: "move_paddle",
-			roomId: idRoom,
-			direction: "up",
-			local: isLocal,
-			movement: "stop"}));
+				type: "move_paddle",
+				roomId: idRoom,
+				direction: "up",
+				local: isLocal,
+				movement: "stop",
+				perspective: playerPerspective
+			}));
 		}
 
 		if (e.key === "ArrowDown" || e.key === "s") {
 			e.preventDefault();
 			socket.send(JSON.stringify({
-			type: "move_paddle",
-			roomId: idRoom,
-			direction: "down",
-			local: isLocal,
-			movement: "stop"}));
+				type: "move_paddle",
+				roomId: idRoom,
+				direction: "down",
+				local: isLocal,
+				movement: "stop",
+				perspective: playerPerspective
+			}));
 		}
 	});
 

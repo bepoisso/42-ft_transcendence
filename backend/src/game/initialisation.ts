@@ -47,7 +47,7 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 				height: 100,
 				x: 10,
 				y: 0,
-				speed: 50
+				speed: 15
 			},
 			key_pressed: ""
 		},
@@ -61,7 +61,7 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 				height: 100,
 				x: WIDTH - 30,
 				y: HEIGHT - 100,
-				speed: 50
+				speed: 15
 			},
 			key_pressed: ""
 		},
@@ -70,9 +70,9 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			x : WIDTH / 2,
 			y : HEIGHT / 2,
 			radius: 11,
-			xDirect : 50,
+			xDirect : 5,
 			yDirect : 0,
-			speed: 1
+			speed: 50
 		},
 		is_running: false
 	}

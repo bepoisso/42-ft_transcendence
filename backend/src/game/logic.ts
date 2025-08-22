@@ -1,8 +1,15 @@
 import { GameRoom, Player, Paddle, Ball, HEIGHT, WIDTH } from "./interface";
 
-export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direction: string, movement: string) : void {
-	const currentPlayer: Player = gameRoom.player1.id_player == fromID ? gameRoom.gameState.player1 : gameRoom.gameState.player2;
-	const currentPaddle: Paddle = currentPlayer.paddle;
+export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direction: string, movement: string, perspective?: string) : void {
+	let currentPlayer: Player;
+	if (perspective === "player1") {
+		currentPlayer = gameRoom.gameState.player1;
+	} else if (perspective === "player2") {
+		currentPlayer = gameRoom.gameState.player2;
+	} else {
+		// Fallback to old method
+		currentPlayer = gameRoom.player1.id_player == fromID ? gameRoom.gameState.player1 : gameRoom.gameState.player2;
+	}
 
 	if (movement == "start") {
 		if (direction == "up" || direction == "UP")
@@ -109,7 +116,7 @@ function updateBall(player1: Player, player2: Player, paddle1: Paddle, paddle2: 
 		ball.yDirect = ball.speed * Math.sin(angleRad);
 
 		// increase speed at each collision
-		ball.speed += 0.2;
+		ball.speed *= 0.2;
 	}
 
 	// check if point scored and reset the ball
