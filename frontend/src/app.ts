@@ -13,6 +13,7 @@ import { renderGame, gameLoop } from "./view/game/game";
 import { logic2fa, render2fa } from "./view/2fa";
 import { renderMyProfile, myProfileHandler } from "./view/myProfile";
 import { renderVisitProfile, visitProfileHandler } from "./view/visitProfile";
+import { renderTournaments, tournamentHandler} from "./view/tournament";
 
 
 export class App
@@ -23,7 +24,7 @@ export class App
 	constructor() {
 		const self = this;
 		const routes = {
-			"/" : renderHome,
+			"/home" : renderHome,
 			"/login": () => {
 				renderLogin();
 				loginHandler(self.router)
@@ -36,7 +37,7 @@ export class App
 			render2fa();
 			logic2fa(self.router);
 			},
-			"/dashboard": () => {
+			"/": () => {
 				renderDashboard();
 				dashboardHandler(self.router);
 			},
@@ -51,6 +52,10 @@ export class App
 			"/game/:id": async (params: any) => {
 				renderGame();
 				await gameLoop(self.router, params.id)
+			},
+			"/tournament": async () => {
+				renderTournaments();
+				await tournamentHandler(self.router);
 			}
 		};
 		this.router = new Router(routes);

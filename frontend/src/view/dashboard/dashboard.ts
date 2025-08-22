@@ -224,7 +224,5 @@ export async function dashboardHandler(router: Router)
 	searchBar(router);
 
 	matchmaking(socket, id);
-
-
 }
 

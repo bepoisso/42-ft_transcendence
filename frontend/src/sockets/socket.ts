@@ -73,21 +73,23 @@ export function getSocket(router: Router): Promise<WebSocket> {
 					router.navigate(`/game/${data.roomId}`);
 				}
 
+
+
 			}
 		} else if (socket.readyState === WebSocket.OPEN) {
-			console.log("🔄 Socket existante déjà ouverte");
+			console.log("Socket existante déjà ouverte");
 			resolve(socket);
 		} else if (socket.readyState === WebSocket.CONNECTING) {
-			console.log("⏳ Socket existante en cours de connexion, attente...");
+			console.log("Socket existante en cours de connexion, attente...");
 			socket.onopen = () => {
-				console.log("✅ Socket existante maintenant connectée");
+				console.log("Socket existante maintenant connectée");
 				resolve(socket!);
 			};
 			socket.onerror = (error) => {
 				reject(error);
 			};
 		} else {
-			console.log("🔄 Socket existante fermée, création d'une nouvelle...");
+			console.log("Socket existante fermée, création d'une nouvelle...");
 			socket = null;
 			// Recursive call to create new socket
 			resolve(getSocket(router));

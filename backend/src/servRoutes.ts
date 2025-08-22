@@ -14,6 +14,7 @@ import { getGamesHistory } from "./user/games"
 import dotenv from "dotenv";
 import { sign, verify } from "crypto";
 import { verifyToken } from "node-2fa";
+import { createTournament } from "./tournament/tournament";
 
 dotenv.config();
 
@@ -223,10 +224,16 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 
-	// Gere Socket
-	console.log("🔧 Enregistrement du gestionnaire WebSocket...");
-	socketHandler(fastify);
-	console.log("✅ Gestionnaire WebSocket enregistré");
+	fastify.post("/tournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const {tournamentName, playerTName } = request.body as any;
+		const result = await createTournament(tournamentName, playerTName, token || "");
+	});
 
+
+
+
+	// Gere Socket
+	socketHandler(fastify);
 }
 

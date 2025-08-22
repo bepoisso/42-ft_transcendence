@@ -20,16 +20,14 @@ import { initGameRoom } from "./initialisation";
 	io.emit = envoie a tout le monde
 
 */
-
+export const getSocket = new Map<number, WebSocket>();
+export const getId = new Map<WebSocket, number>();
 
 export async function socketHandler(fastify: FastifyInstance)
 {
 	console.log("🚀 Initialisation du WebSocket handler");
 
-	const getSocket = new Map<number, WebSocket>();
-	const getId = new Map<WebSocket, number>();
 	let matchmakingQueue: number = -1; // File d'attente pour le matchmaking
-	let matchmaking = -1;
 
 	// Route WebSocket avec Fastify
 	fastify.get('/ws', { websocket: true }, (connection, req) => {
@@ -51,17 +49,18 @@ export async function socketHandler(fastify: FastifyInstance)
 				twofa_enable: boolean;
 			};
 
-		getSocket.set(payload.id, ws);
-		getId.set(ws, payload.id);
-		console.log(`🟢 Utilisateur connecté avec succès - ID: ${payload.id}, Email: ${payload.email}`);
-		console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
+			getSocket.set(payload.id, ws);
+			getId.set(ws, payload.id);
+			console.log(`🟢 Utilisateur connecté avec succès - ID: ${payload.id}, Email: ${payload.email}`);
+			console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
 
-		// Envoyer un message de confirmation de connexion
-		ws.send(JSON.stringify({
-			type: "connection_confirmed",
-			message: "WebSocket connection established successfully",
-			userId: payload.id
-		}));		} catch (err) {
+			// Envoyer un message de confirmation de connexion
+			ws.send(JSON.stringify({
+				type: "connection_confirmed",
+				message: "WebSocket connection established successfully",
+				userId: payload.id
+			}));
+		} catch (err) {
 			console.log("JWT invalide");
 			ws.close(); // déconnecte la socket
 			return;
@@ -122,10 +121,9 @@ export async function socketHandler(fastify: FastifyInstance)
 						setRoom(idRoom, gameRoom);
 						console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
-						return; // 🔴 IMPORTANT: sortir ici pour éviter l'exécution du code online
+						return;
 					}
 
-					// Mode online (matchmaking) - ne s'exécute que si ce n'est PAS local/AI
 					console.log("🌐 Mode online");
 					const toSocket = getSocket.get(data.from);
 					const idTo = getId.get(ws);
@@ -178,15 +176,6 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
-				if (data.type === "reconnect") {
-					const gameRoom = getGameRoom(data.roomId);
-					if (!gameRoom || (gameRoom.player1.id_player !== data.fromId && gameRoom.player2.id_player !== data.fromId)) {
-						ws.send(JSON.stringify({ type: "error", message: "Error trying to reconnect to the game" }));
-					} else {
-						ws.send(JSON.stringify({type: "room_ready", roomId: data.roomId}))
-					}
-				}
-
 				if (data.type === "matchmaking") {
 					console.log("Demande de matchmaking de l'utilisateur:", data.from);
 
@@ -238,22 +227,20 @@ export async function socketHandler(fastify: FastifyInstance)
 		// Gestion de la déconnexion
 		ws.on("close", (code: number, reason: string) => {
 			const userId = getId.get(ws);
+			// Faut que je notify dans la db isConnected = 0
 			console.log(`🔌 WebSocket fermée - Code: ${code}, Raison: ${reason}, User ID: ${userId}`);
 			if (userId) {
 				getSocket.delete(userId);
 				getId.delete(ws);
-				console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
 			}
 		});
 
 		// Gestion des erreurs de socket
 		ws.on("error", (error: any) => {
 			const userId = getId.get(ws);
-			console.error("🔴 Erreur WebSocket pour l'utilisateur ID:", userId || "inconnu");
-			console.error("📝 Détails de l'erreur:", error);
+			console.error("Erreur WebSocket pour l'utilisateur ID:", userId || "inconnu");
+			console.error("Détails de l'erreur:", error);
 		});
 
 	});
-
-	console.log("✅ WebSocket handler initialisé avec succès");
 }

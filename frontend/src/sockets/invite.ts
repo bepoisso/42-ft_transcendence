@@ -1,3 +1,5 @@
+// Les deux fonctions sont pratiquement les memes, elles créent un event en bas de la page soit pour add friend soit pour join game
+
 
 export function gameInvit(socket: WebSocket, data: any)
 {

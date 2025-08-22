@@ -63,7 +63,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	const socket = await getSocket(router);
 	const idRoom = Number(id_Room);
 	console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
-	
+
 	let isLocal = false;
 	let askOnce = 0;
 	let localName;
@@ -77,10 +77,11 @@ export async function gameLoop(router: Router, id_Room: string)
 	const originalOnMessage = socket.onmessage;
 	socket.onmessage = (event) => {
 		const data = JSON.parse(event.data);
-		
+
 		// Traite d'abord les messages de jeu
 		if (data.type === "game_update") {
 			console.log("🎮 Game update reçu:", data.type, data.mode);
+			if (!data.mode || data.mode === undefined) data.mode = "online";
 			isLocal = data.mode === "local";
 			if (isLocal === true && askOnce === 0) {
 				askOnce = 1;
@@ -100,7 +101,7 @@ export async function gameLoop(router: Router, id_Room: string)
 			// Met à jour le score
 			const scoreElem = document.getElementById("score");
 			if (scoreElem) scoreElem.textContent = `${data.gameState.player1.score} : ${data.gameState.player2.score}`;
-			
+
 			// Dessine le jeu
 			drawGame(data.gameState);
 		} else if (originalOnMessage) {
