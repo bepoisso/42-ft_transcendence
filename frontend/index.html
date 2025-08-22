@@ -1,35 +1,34 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-	<meta charset="UTF-8">
-	<title>HelloWorld Mini Site</title>
+<!doctype html>
+<html lang="en">
+  <head>
+	<meta charset="UTF-8" />
+	<link rel="icon" type="image/svg" href="/assets/pong.svg" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Transcendence</title>
+  </head>
+
+  <body>
+	<canvas id="starfield"></canvas>
 	<style>
-		body {
-			font-family: Arial, sans-serif;
-			background: #f5f5f5;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			height: 100vh;
-			margin: 0;
-		}
-		.container {
-			background: #fff;
-			padding: 40px 60px;
-			border-radius: 10px;
-			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-			text-align: center;
-		}
-		h1 {
-			color: #2c3e50;
-			font-size: 2.5em;
-			margin: 0;
-		}
+	  body, html {
+		margin: 0; padding: 0; overflow: hidden;
+		background: #000;
+		width: 100vw; height: 100vh;
+	  }
+
+	  #starfield {
+		display: block;
+		position: absolute;
+		top: 0; left: 0;
+		width: 100vw; height: 100vh;
+		z-index: 0;
+		pointer-events: none;
+	  }
 	</style>
-</head>
-<body>
-	<div class="container">
-		<h1>helloworld</h1>
-	</div>
-</body>
+	<div id="app"></div>
+	  <script type="module" src="/src/main.ts"></script>
+	  <script src="assets/script.js"></script>
+	  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </body>
 </html>
+

@@ -12,6 +12,7 @@ lerna-debug.log*
 .env.local.json
 .env.development.json
 .env.test.json
+*.env
 
 node_modules
 dist
