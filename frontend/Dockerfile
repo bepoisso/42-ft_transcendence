@@ -1,21 +1,12 @@
-FROM debian:latest
+FROM node:20
 
-RUN apt-get update && \
-	apt-get install -y \
-	build-essential \
-	git \
-	curl \
-	vim && \
-	rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-RUN bash "$HOME/.nvm/nvm.sh"
-RUN nvm install 22
+COPY package*.json ./
+RUN npm install
 
+COPY . .
 
-RUN mkdir -p /bdd
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-RUN mkdir -p /etc/frontend
-COPY ../frontend /etc/frontend
-
-CMD ["tail", "-f", "/dev/null"]
+EXPOSE 5173

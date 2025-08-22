@@ -90,7 +90,7 @@ async function verify2fa(input: string): Promise <{statusCode: number, message: 
 
 
 async function checkNewUser(): Promise <{statusCode: number, message: string, value:{ twofa_enable: number}}> {
-	const response = await fetch("/back/auth/2fa/check", {
+	const response = await fetch("http://localhost:3000/back/auth/2fa/check", {
 		method: "GET",
 		credentials: 'include'
 	});

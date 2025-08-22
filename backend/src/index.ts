@@ -24,7 +24,11 @@ async function buildServer() {
 	await server.register(cors, {
 		origin: [
 			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_FRONT || '5173'}`,
-			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_BACK || '3000'}`
+			`${process.env.ADRESS || 'https://127.0.0.1'}:${process.env.PORT_BACK || '3000'}`,
+			`${process.env.ADRESS || 'http://127.0.0.1'}:${process.env.PORT_FRONT || '5173'}`,
+			`${process.env.ADRESS || 'http://127.0.0.1'}:${process.env.PORT_BACK || '3000'}`,
+			`http://localhost`,
+			`http://localhost:80`
 		],
 		credentials: true,
 		methods: ['GET', 'PUT', 'POST', 'DELETE', 'PATCH', 'OPTIONS'],
