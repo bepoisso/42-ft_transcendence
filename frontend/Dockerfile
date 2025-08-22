@@ -8,8 +8,14 @@ RUN apt-get update && \
 	vim && \
 	rm -rf /var/lib/apt/lists/*
 
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+RUN bash "$HOME/.nvm/nvm.sh"
+RUN nvm install 22
+
+
 RUN mkdir -p /bdd
 
-COPY ./index.html /bdd/index.html
+RUN mkdir -p /etc/frontend
+COPY ../frontend /etc/frontend
 
 CMD ["tail", "-f", "/dev/null"]
