@@ -207,15 +207,16 @@ export function matchmaking(socket: WebSocket, id: any)
 }
 
 
+
 export async function dashboardHandler(router: Router)
 {
 	const socket = await getSocket(router);
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
+	const { id, roomId } = userData;
 
 	// if player is still active in a room, send message to this room to kill the room
-	const { id, roomId } = userData;
 	if (roomId !== 0 || undefined) {
 		socket.send(JSON.stringify({
 			type: "player left",

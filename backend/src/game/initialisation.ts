@@ -26,49 +26,55 @@ export function initGameRoom(idRoom: number, id_player1: number, id_player2: num
 			id_player: id_player2,
 			username: username2,
 		},
-		gameState: initGame(username1, username2),
+		gameState: initGame(username1, username2, id_player1, id_player2),
+		sockets: [],
 	}
 	return gameroom;
 }
 
 
-export function initGame(namePlayer1: string, namePlayer2: string) : GameState
+export function initGame(namePlayer1: string, namePlayer2: string, id_player1: number, id_player2: number) : GameState
 {
 	const gameState: GameState =
 	{
 		player1:
 		{
-			name: namePlayer1,
+			username: namePlayer1,
+			id_player: id_player1,
 			score: 0,
 			paddle: {
 				width: 20,
 				height: 100,
 				x: 10,
 				y: 0,
-				speed: 50
-			}
+				speed: 15
+			},
+			key_pressed: ""
 		},
 		player2:
 		{
-			name: namePlayer2,
+			username: namePlayer2,
+			id_player: id_player2,
 			score: 0,
 			paddle: {
 				width: 20,
 				height: 100,
 				x: WIDTH - 30,
 				y: HEIGHT - 100,
-				speed: 50
-			}
+				speed: 15
+			},
+			key_pressed: ""
 		},
 		ball:
 		{
 			x : WIDTH / 2,
 			y : HEIGHT / 2,
 			radius: 11,
-			xDirect : 0,
+			xDirect : 5,
 			yDirect : 0,
-			speed: 1
-		}
+			speed: 50
+		},
+		is_running: false
 	}
 	return gameState;
 }

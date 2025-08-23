@@ -19,14 +19,16 @@ export interface Ball {
 }
 
 export interface Player {
-	name: string;
+	username: string;
+	id_player: number;
 	score: number;
-	paddle: Paddle
+	paddle: Paddle;
+	key_pressed: string
 }
 
 export interface GameState {
 	player1: Player;
 	player2: Player;
-	ball: Ball;
-	mode: string;
+	ball: Ball,
+	is_running: boolean
 }

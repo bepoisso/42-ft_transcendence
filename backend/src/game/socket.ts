@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import db from "../db/db";
 import { setRoom } from "./interface";
 import { initGameRoom } from "./initialisation";
+import { updateGame, gameLoop } from "./logic"
 
 
 /*
@@ -25,14 +26,14 @@ export const getId = new Map<WebSocket, number>();
 
 export async function socketHandler(fastify: FastifyInstance)
 {
-	console.log("🚀 Initialisation du WebSocket handler");
+	// console.log("🚀 Initialisation du WebSocket handler");
 
 	let matchmakingQueue: number = -1; // File d'attente pour le matchmaking
 
 	// Route WebSocket avec Fastify
 	fastify.get('/ws', { websocket: true }, (connection, req) => {
-		console.log("🔌 Nouvelle tentative de connexion WebSocket");
-		console.log("📋 Headers de la requête:", req.headers);
+		// console.log("🔌 Nouvelle tentative de connexion WebSocket");
+		// console.log("📋 Headers de la requête:", req.headers);
 
 		const ws = connection;
 
@@ -49,19 +50,18 @@ export async function socketHandler(fastify: FastifyInstance)
 				twofa_enable: boolean;
 			};
 
-			getSocket.set(payload.id, ws);
-			getId.set(ws, payload.id);
-			console.log(`🟢 Utilisateur connecté avec succès - ID: ${payload.id}, Email: ${payload.email}`);
-			console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
+		getSocket.set(payload.id, ws);
+		getId.set(ws, payload.id);
+		// console.log(`🟢 Utilisateur connecté avec succès - ID: ${payload.id}, Email: ${payload.email}`);
+		// console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
 
-			// Envoyer un message de confirmation de connexion
-			ws.send(JSON.stringify({
-				type: "connection_confirmed",
-				message: "WebSocket connection established successfully",
-				userId: payload.id
-			}));
-		} catch (err) {
-			console.log("JWT invalide");
+		// Envoyer un message de confirmation de connexion
+		ws.send(JSON.stringify({
+			type: "connection_confirmed",
+			message: "WebSocket connection established successfully",
+			userId: payload.id
+		}));		} catch (err) {
+			// console.log("JWT invalide");
 			ws.close(); // déconnecte la socket
 			return;
 		}
@@ -70,7 +70,7 @@ export async function socketHandler(fastify: FastifyInstance)
 		ws.on("message", (message: string) => {
 			try {
 				const data = JSON.parse(message);
-				console.log("📦 Message reçu du client:", data); // Debug: voir tous les messages
+				// console.log("📦 Message reçu du client:", data); // Debug: voir tous les messages
 
 				//implementer chaque logique
 				if (data.type === "game_send_invite") {
@@ -111,20 +111,21 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 				if (data.type === "game_accepted") {
-					console.log("🎮 Game accepted - Mode:", data.mode, "From:", data.from);
+					// console.log("🎮 Game accepted - Mode:", data.mode, "From:", data.from);
 					const idRoom = getNextRoomId();
 
 					if (data.mode === "local" || data.mode === "AI") {
-						console.log("🎯 Mode local/AI - création de la room:", idRoom);
+						// console.log("🎯 Mode local/AI - création de la room:", idRoom);
 						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 						setRoom(idRoom, gameRoom);
-						console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
+						// console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 						return;
 					}
 
-					console.log("🌐 Mode online");
+					// Mode online (matchmaking) - ne s'exécute que si ce n'est PAS local/AI
+					// console.log("🌐 Mode online");
 					const toSocket = getSocket.get(data.from);
 					const idTo = getId.get(ws);
 					if (!idTo) return;
@@ -133,30 +134,36 @@ export async function socketHandler(fastify: FastifyInstance)
 					db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 
 					const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode);
+					(gameRoom as any).sockets = [toSocket, ws];
 					setRoom(idRoom, gameRoom);
 
 					db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(data.from, idTo, new Date().toISOString());
 					if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
 					ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
+
+					gameRoom.gameState.is_running = true;
 				}
 
 
 
 				// Logique game
 				if (data.type === "game_info") {
-					console.log("📡 Demande game_info reçue pour room:", data.roomId);
+					// console.log("📡 Demande game_info reçue pour room:", data.roomId);
 					const gameRoom = getGameRoom(data.roomId);
 					if (!gameRoom) {
-						console.log("❌ Room non trouvée:", data.roomId);
+						// console.log("❌ Room non trouvée:", data.roomId);
 						ws.send(JSON.stringify({ type: "error", message: "Game room not found" }));
 						return;
 					}
 					const gameState = gameRoom.gameState;
-					console.log("✅ Envoi game_update pour room:", data.roomId);
+					const userId = getId.get(ws);
+					const perspective = gameRoom.player1.id_player === userId ? "player1" : "player2";
+					// console.log("✅ Envoi game_update pour room:", data.roomId);
 					ws.send(JSON.stringify({
 						type: "game_update",
 						gameState: gameState, // Correction: gameState au lieu de game
 						mode: gameRoom.mode,
+						perspective: perspective
 					}));
 				}
 
@@ -170,24 +177,22 @@ export async function socketHandler(fastify: FastifyInstance)
 					if (!gameRoom) return ;
 
 					const fromId = getId.get(ws);
-					//updateGame(gameRoom, fromId, data.direction, data.movement); // on a tout ?
-
-					// renvoyer "game_update"
+					updateGame(gameRoom, fromId, data.direction, data.movement, data.perspective);
 				}
 
 
 				if (data.type === "matchmaking") {
-					console.log("Demande de matchmaking de l'utilisateur:", data.from);
+					// console.log("Demande de matchmaking de l'utilisateur:", data.from);
 
 					if (matchmakingQueue === -1) {
 						matchmakingQueue = data.from;
-						console.log("User : ", data.from, "ajouté à la file d'attente");
+						// console.log("User : ", data.from, "ajouté à la file d'attente");
 						ws.send(JSON.stringify({
 							type: "matchmaking_waiting",
 							message: "Recherche d'un adversaire..."
 						}));
 					} else {
-						console.log("Match trouvé! Joueur 1:", matchmakingQueue, "vs Joueur 2:", data.from);
+						// console.log("Match trouvé! Joueur 1:", matchmakingQueue, "vs Joueur 2:", data.from);
 
 						const idRoom = getNextRoomId();
 						const toSocket = getSocket.get(matchmakingQueue);
@@ -213,7 +218,17 @@ export async function socketHandler(fastify: FastifyInstance)
 
 						// Reset de la queue
 						matchmakingQueue = -1;
-						console.log("Room online créée avec succès, ID:", idRoom);
+						// console.log("Room online créée avec succès, ID:", idRoom);
+
+						// assigner les deux sockets a la gameRoom
+						(gameRoom as any).sockets = [toSocket, ws];
+
+						// boucle game loop et envoi des infos auz joueurs
+						gameRoom.gameState.is_running = true;
+						(gameRoom as any).interval = setInterval(() => {
+							gameLoop(gameRoom);
+							broadcastGameUpdate(gameRoom);
+						}, 30);
 					}
 				}
 
@@ -244,4 +259,32 @@ export async function socketHandler(fastify: FastifyInstance)
 		});
 
 	});
+
+	// console.log("✅ WebSocket handler initialisé avec succès");
+}
+
+function broadcastGameUpdate(gameRoom: any) {
+	const gameState = gameRoom.gameState;
+	const mode = gameRoom.mode;
+	const sockets = gameRoom.sockets || [];
+
+	// P1
+	if (sockets[0] && sockets[0].readyState === 1) {
+		sockets[0].send(JSON.stringify({
+		type: "game_update",
+		gameState: gameState,
+		mode: mode,
+		perspective: "player1"
+		}));
+	}
+
+	// P2
+	if (sockets[1] && sockets[1].readyState === 1) {
+		sockets[1].send(JSON.stringify({
+		type: "game_update",
+		gameState: gameState,
+		mode: mode,
+		perspective: "player2"
+		}));
+	}
 }
