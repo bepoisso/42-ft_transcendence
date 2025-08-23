@@ -1,6 +1,6 @@
-import { getSocket, sendMessage } from "../../sockets/socket";
+import { getSocket } from "../../sockets/socket";
 import { Router } from "../../router";
-import type { GameState } from "./interface";
+import type { GameState, Player, Ball, Paddle } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
 
 export function renderGame() {
@@ -88,7 +88,11 @@ export async function gameLoop(router: Router, id_Room: string)
 				localName = prompt("Enter name for Player 2:") || "Player 2";
 			}
 
-			if (data.perspective) playerPerspective = data.perspective;
+			if (data.perspective) {
+				playerPerspective = data.perspective;
+				if (playerPerspective == "player2")
+					invertGameState(data.gameState);
+			}
 
 			// Met à jour les noms des joueurs
 			const player1 = document.getElementById("player1");
@@ -98,9 +102,6 @@ export async function gameLoop(router: Router, id_Room: string)
 				if (isLocal === false) player2.textContent = data.gameState.player2.username;
 				else player2.textContent = localName!;
 			}
-
-			console.log("PLAYER 1: ", data.gameState.player1.username);
-			console.log("PLAYER 2: ", data.gameState.player2.username);
 
 			// Met à jour le score
 			const scoreElem = document.getElementById("score");
@@ -169,10 +170,20 @@ export async function gameLoop(router: Router, id_Room: string)
 			}));
 		}
 	});
+}
 
+function invertGameState(gameState: GameState) : void {
+	// invert player pos
+	let playerTemp: Player = gameState.player1;
+	gameState.player1 = gameState.player2;
+	gameState.player2 = playerTemp;
 
+	// mirror paddle position
+	gameState.player1.paddle.x = WIDTH - gameState.player1.paddle.x - gameState.player1.paddle.width;
+	gameState.player2.paddle.x = WIDTH - gameState.player2.paddle.x - gameState.player2.paddle.width;
 
-
+	// ball symmetry
+	gameState.ball.x = 2 * (WIDTH / 2) - gameState.ball.x;
 }
 
 
