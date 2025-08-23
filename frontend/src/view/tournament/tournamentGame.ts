@@ -1,22 +1,22 @@
 import { getSocket, sendMessage } from "../../sockets/socket";
 import { Router } from "../../router";
-import type { GameState } from "./interface";
-import {WIDTH, HEIGHT} from "./interface"
+import type { GameState } from "../game/interface";
+import {WIDTH, HEIGHT} from "../game/interface"
 
 export function renderGame() {
   document.getElementById("app")!.innerHTML = `
-    <div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
+	<div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
 
-      <!-- Ligne du haut : noms et score -->
-      <div class="w-[800px] flex justify-between text-white mb-4">
-        <div id="player1" class="text-lg font-bold">Player 1</div>
-        <div id="score" class="text-lg font-bold">0 : 0</div>
-        <div id="player2" class="text-lg font-bold">Player 2</div>
-      </div>
+	  <!-- Ligne du haut : noms et score -->
+	  <div class="w-[800px] flex justify-between text-white mb-4">
+		<div id="player1" class="text-lg font-bold">Player 1</div>
+		<div id="score" class="text-lg font-bold">0 : 0</div>
+		<div id="player2" class="text-lg font-bold">Player 2</div>
+	  </div>
 
-      <!-- Zone de jeu -->
-      <canvas id="pong" width="${WIDTH}" height="${HEIGHT}" class="bg-black relative z-50 border border-white"></canvas>
-    </div>
+	  <!-- Zone de jeu -->
+	  <canvas id="pong" width="${WIDTH}" height="${HEIGHT}" class="bg-black relative z-50 border border-white"></canvas>
+	</div>
   `;
 }
 
@@ -59,10 +59,8 @@ export function drawGame(gameState: GameState)
 
 export async function gameLoop(router: Router, id_Room: string)
 {
-	console.log("🎯 gameLoop appelé avec id_Room:", id_Room, "type:", typeof id_Room);
 	const socket = await getSocket(router);
 	const idRoom = Number(id_Room);
-	console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
 
 	let isLocal = false;
 	let askOnce = 0;
@@ -71,7 +69,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	// appelle game_info
 	console.log("on entre dans la game");
 	console.log("📤 Envoi game_info avec roomId:", idRoom);
-	socket.send(JSON.stringify({ type: "game_info", roomId: idRoom }));
+	socket.send(JSON.stringify({ type: "tournament_info", roomId: idRoom }));
 
 	// Handler spécifique pour les messages de jeu
 	const originalOnMessage = socket.onmessage;
@@ -114,7 +112,7 @@ export async function gameLoop(router: Router, id_Room: string)
 	// On donne l'info "local" pour que le serv puisse ignorer le mouvement si le mode n'est pas local
 	window.addEventListener("keydown", (e) =>
 	{
-		if (e.key === "ArrowUp" || e.key === "w") {
+		if (e.key === "ArrowUp") {
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -123,7 +121,7 @@ export async function gameLoop(router: Router, id_Room: string)
 			movement: "start"}));
 		}
 
-		if (e.key === "ArrowDown" || e.key === "s") {
+		if (e.key === "ArrowDown") {
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -135,7 +133,7 @@ export async function gameLoop(router: Router, id_Room: string)
 
 	window.addEventListener("keyup", (e) =>
 	{
-		if (e.key === "ArrowUp" || e.key === "w") {
+		if (e.key === "ArrowUp") {
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -144,7 +142,7 @@ export async function gameLoop(router: Router, id_Room: string)
 			movement: "stop"}));
 		}
 
-		if (e.key === "ArrowDown" || e.key === "s") {
+		if (e.key === "ArrowDown") {
 			socket.send(JSON.stringify({
 			type: "move_paddle",
 			roomId: idRoom,
@@ -154,10 +152,3 @@ export async function gameLoop(router: Router, id_Room: string)
 		}
 	});
 }
-
-
-
-
-
-
-

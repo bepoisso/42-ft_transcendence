@@ -1,5 +1,7 @@
 import { getUserByToken } from "../auth/auth_token";
 import db from "../db/db";
+import { initGameRoom } from "../game/initialisation";
+import { getNextRoomId, setRoom } from "../game/interface";
 import { getSocket } from "../game/socket";
 
 export async function createTournament(tournamentName: string, playerTName: string, token: string) {
@@ -146,7 +148,10 @@ export async function Round1(tournamentId: number) {
 		}
 
 		tournament.round = 1;
-		create_game_tournament(tournament, tournament.player_1, tournament.player_2);
+		create_game_tournament(tournament, tournament.player_1, tournament.player_2, 1);
+		create_game_tournament(tournament, tournament.player_3, tournament.player_4, 2);
+		create_game_tournament(tournament, tournament.player_5, tournament.player_6, 3);
+		create_game_tournament(tournament, tournament.player_7, tournament.player_8, 4);
 
 	} catch (err) {
 		console.error("Error in Round1:", err);
@@ -154,19 +159,24 @@ export async function Round1(tournamentId: number) {
 }
 
 
-async function create_game_tournament(tournament: any, player1: number, player2: number) {
+async function create_game_tournament(tournament: any, player1: number, player2: number, poule: number) {
 
 	const stmt = db.prepare(`
-		INSERT INTO tournament_game (tournament_id, round, player1_id,player2_id, status) VALUES (?, ?, ?, ?, 'pending')
-		`).run(tournament.id, tournament.round, player1, player2);
+		INSERT INTO tournament_game (tournament_id, round, player1_id,player2_id, poule, status) VALUES (?, ?, ?, ?, ?, 'pending',)
+		`).run(tournament.id, tournament.round, player1, player2, poule);
 
 	const socket_player1 = getSocket.get(player1);
 	const socket_player2 = getSocket.get(player2);
 
+	const idRoom = getNextRoomId();
+	const gameRoom = initGameRoom(idRoom, player1, player2, "tournament");
+	setRoom(idRoom, gameRoom);
+
 	if(socket_player1) {
 		socket_player1.send(JSON.stringify({
 			type: "tournament_start",
-			id: tournament.id,
+			id: idRoom,
+
 		}));
 	}
 

@@ -73,7 +73,10 @@ export function getSocket(router: Router): Promise<WebSocket> {
 					router.navigate(`/game/${data.roomId}`);
 				}
 
-
+				if (data.type === "tournament_start") {
+					console.log("Room tournament: ", data.id);
+					router.navigate(`/tournament/${data.id}`)
+				}
 
 			}
 		} else if (socket.readyState === WebSocket.OPEN) {

@@ -219,6 +219,7 @@ export async function socketHandler(fastify: FastifyInstance)
 
 
 
+
 			} catch (err) {
 				console.error("Message invalide :", err);
 			}

@@ -72,6 +72,7 @@ CREATE TABLE tournament_games (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	tournament_id INTEGER NOT NULL,
 	round INTEGER NOT NULL,
+	poule INTEGER,
 	player1_id INTEGER,
 	player2_id INTEGER,
 	winner_id INTEGER,

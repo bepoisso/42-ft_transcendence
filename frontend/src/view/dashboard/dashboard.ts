@@ -213,16 +213,25 @@ export async function dashboardHandler(router: Router)
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
-	const { id } = userData;
 
+	// if player is still active in a room, send message to this room to kill the room
+	const { id, roomId } = userData;
+	if (roomId !== 0 || undefined) {
+		socket.send(JSON.stringify({
+			type: "player left",
+			from: id
+		}))
+	}
 
+	// go to my profile
 	myProfileClick(router);
 
+	// allow people to play directly in AI / Local mode
 	modeClick(socket, "btnLocal", "local", id);
 	modeClick(socket, "btnAI", "AI", id);
-
-	searchBar(router);
-
 	matchmaking(socket, id);
+
+	// TODO
+	searchBar(router);
 }
 

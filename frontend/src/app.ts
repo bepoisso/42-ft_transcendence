@@ -13,7 +13,7 @@ import { renderGame, gameLoop } from "./view/game/game";
 import { logic2fa, render2fa } from "./view/2fa";
 import { renderMyProfile, myProfileHandler } from "./view/myProfile";
 import { renderVisitProfile, visitProfileHandler } from "./view/visitProfile";
-import { renderTournaments, tournamentHandler} from "./view/tournament";
+import { renderTournaments, tournamentHandler} from "./view/tournament/tournament";
 
 
 export class App
