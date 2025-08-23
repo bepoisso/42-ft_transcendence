@@ -43,7 +43,7 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			id_player: id_player1,
 			score: 0,
 			paddle: {
-				width: 20,
+				width: 15,
 				height: 100,
 				x: 10,
 				y: 0,
@@ -57,7 +57,7 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			id_player: id_player2,
 			score: 0,
 			paddle: {
-				width: 20,
+				width: 15,
 				height: 100,
 				x: WIDTH - 30,
 				y: HEIGHT - 100,
@@ -72,7 +72,7 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			radius: 11,
 			xDirect : 5,
 			yDirect : 0,
-			speed: 50
+			speed: 5
 		},
 		is_running: false
 	}

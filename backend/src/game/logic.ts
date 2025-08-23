@@ -116,7 +116,7 @@ function updateBall(player1: Player, player2: Player, paddle1: Paddle, paddle2: 
 		ball.yDirect = ball.speed * Math.sin(angleRad);
 
 		// increase speed at each collision
-		ball.speed *= 0.2;
+		ball.speed *= 1.2;
 	}
 
 	// check if point scored and reset the ball
@@ -149,6 +149,6 @@ function resetBall(ball: Ball): void {
 	ball.x = WIDTH / 2;
 	ball.y = HEIGHT / 2;
 	ball.speed = 5;
-	ball.xDirect = -ball.xDirect;
+	ball.xDirect = ball.xDirect = ball.xDirect > 0 ? -ball.speed : ball.speed;
 	ball.yDirect = 0;
 }

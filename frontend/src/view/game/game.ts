@@ -1,6 +1,6 @@
 import { getSocket } from "../../sockets/socket";
 import { Router } from "../../router";
-import type { GameState, Player, Ball, Paddle } from "./interface";
+import type { GameState, Player } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
 
 export function renderGame() {
