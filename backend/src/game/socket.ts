@@ -1,10 +1,10 @@
 import { FastifyInstance } from "fastify";
-import { getGameRoom, getNextRoomId } from "./interface";
+import { GameRoom, getGameRoom, getNextRoomId } from "./interface";
 import * as cookie from "cookie";
 import { WebSocket } from "@fastify/websocket";
 import jwt from "jsonwebtoken";
 import db from "../db/db";
-import { setRoom } from "./interface";
+import { setRoom, Player } from "./interface";
 import { initGameRoom } from "./initialisation";
 import { updateGame, gameLoop } from "./logic"
 
@@ -235,6 +235,16 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
+				if (data.type === "player_left") {
+					const disconnectedPlayerId : number = data.from;
+					const gameRoom = getGameRoom(data.roomId);
+					if (!gameRoom) return ;
+					const gameState = gameRoom.gameState;
+
+					const activePlayer : Player = gameState.player1.id_player == disconnectedPlayerId ? gameState.player2 : gameState.player1;
+					activePlayer.score = 10;
+				}
+
 
 			} catch (err) {
 				console.error("Message invalide :", err);
@@ -288,4 +298,8 @@ function broadcastGameUpdate(gameRoom: any) {
 		perspective: "player2"
 		}));
 	}
+}
+
+export function game_over(gameRoom: GameRoom) : void {
+	// hduflos function (for merging accept version of game_over function implemented)
 }

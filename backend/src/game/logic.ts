@@ -1,4 +1,5 @@
 import { GameRoom, Player, Paddle, Ball, HEIGHT, WIDTH } from "./interface";
+import { game_over } from "./socket";
 
 export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direction: string, movement: string, perspective?: string) : void {
 	let currentPlayer: Player;
@@ -61,6 +62,8 @@ export function gameLoop(gameRoom: GameRoom): void {
 				sock.send(endMessage);
 			}
 		});
+
+		game_over(gameRoom);
 	}
 }
 

@@ -109,6 +109,33 @@ export async function gameLoop(router: Router, id_Room: string)
 
 			// Dessine le jeu
 			drawGame(data.gameState);
+		}
+		else if (data.type === "game_over") {
+			// gray the canevas
+			const canvas = document.getElementById("pong") as HTMLCanvasElement;
+			const ctx = canvas.getContext("2d");
+			if (ctx) {
+				ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+			}
+
+			// print end game stats infos
+			const gameContainer = document.getElementById("gameContainer");
+			if (gameContainer) {
+				const gameOverDiv = document.createElement("div");
+				gameOverDiv.className = "absolute inset-0 flex flex-col items-center justify-center text-white z-60";
+				gameOverDiv.innerHTML = `
+					<div class="bg-black bg-opacity-80 p-8 rounded-lg text-center">
+						<h2 class="text-3xl font-bold mb-4">Game Over</h2>
+						<p class="text-xl mb-2">Winner: ${data.winner}</p>
+						<p class="text-lg">Final Score: ${data.player1Score} : ${data.player2Score}</p>
+						<button onclick="window.location.href='/dashboard'" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
+							Go Back
+						</button>
+					</div>
+				`;
+				gameContainer.appendChild(gameOverDiv);
+			}
 		} else if (originalOnMessage) {
 			// Relaie les autres messages vers le handler original
 			originalOnMessage.call(socket, event);
