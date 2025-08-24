@@ -1,4 +1,5 @@
 import { GameRoom, Player, Paddle, Ball, HEIGHT, WIDTH } from "./interface";
+import { game_over } from "../socket/socket";
 
 export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direction: string, movement: string, perspective?: string) : void {
 	let currentPlayer: Player;
@@ -43,9 +44,6 @@ export function gameLoop(gameRoom: GameRoom): void {
 	// check if game end (max score)
 	const MAX_SCORE = 10;
 	if (player1.score >= MAX_SCORE || player2.score >= MAX_SCORE) {
-		gameRoom.gameState.is_running = false;
-		clearInterval((gameRoom as any).interval);
-
 		// send end msg to all players
 		const winner = player1.score >= MAX_SCORE ? player1.username : player2.username;
 		const sockets = (gameRoom as any).sockets || [];
@@ -53,7 +51,7 @@ export function gameLoop(gameRoom: GameRoom): void {
 			type: "game_over",
 			winner: winner,
 			player1Score: player1.score,
-			player2Score: player2.score
+			player2Score: player2.score,
 		});
 
 		sockets.forEach((sock: WebSocket | undefined) => {
@@ -61,6 +59,11 @@ export function gameLoop(gameRoom: GameRoom): void {
 				sock.send(endMessage);
 			}
 		});
+
+		const winnerID: number = player1.score >= MAX_SCORE ? gameRoom.player1.id_player : gameRoom.player2.id_player;
+		const looserID: number = player1.score >= MAX_SCORE ? gameRoom.player2.id_player : gameRoom.player1.id_player;
+
+		game_over(gameRoom, winnerID, looserID);
 	}
 }
 
@@ -116,7 +119,7 @@ function updateBall(player1: Player, player2: Player, paddle1: Paddle, paddle2: 
 		ball.yDirect = ball.speed * Math.sin(angleRad);
 
 		// increase speed at each collision
-		ball.speed *= 0.2;
+		ball.speed *= 1.2;
 	}
 
 	// check if point scored and reset the ball
@@ -149,6 +152,6 @@ function resetBall(ball: Ball): void {
 	ball.x = WIDTH / 2;
 	ball.y = HEIGHT / 2;
 	ball.speed = 5;
-	ball.xDirect = -ball.xDirect;
+	ball.xDirect = ball.xDirect = ball.xDirect > 0 ? -ball.speed : ball.speed;
 	ball.yDirect = 0;
 }

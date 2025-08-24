@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { getGameRoom, getNextRoomId } from "../game/interface";
+import { GameRoom, getGameRoom, getNextRoomId } from "../game/interface";
 import * as cookie from "cookie";
 import { WebSocket } from "@fastify/websocket";
 import jwt from "jsonwebtoken";
@@ -259,6 +259,20 @@ export async function socketHandler(fastify: FastifyInstance)
 						}, 30);
 					}
 				}
+
+
+				if (data.type === "player_left") {
+					const disconnectedPlayerId : number = data.from;
+					const gameRoom = getGameRoom(data.roomId);
+					if (!gameRoom) return ;
+					const gameState = gameRoom.gameState;
+					const activePlayer = gameState.player1.id_player == disconnectedPlayerId ? gameState.player2 : gameState.player1;
+
+					// set max score to remaining player to trigger end of the game in logic.ts who then call game_over
+					activePlayer.score = 10;
+				}
+
+
 			} catch (err) {
 				console.error("Message invalide :", err);
 			}
@@ -267,12 +281,23 @@ export async function socketHandler(fastify: FastifyInstance)
 		// Gestion de la déconnexion
 		ws.on("close", (code: number, reason: string) => {
 			const userId = getId.get(ws);
+			if (userId) {
+				const userRoom = (db.prepare("SELECT room_id FROM users WHERE id = ?").get(userId) as { room_id: number | null } | undefined)?.room_id;
+				if (userRoom) {
+					const foundGameRoom = getGameRoom(userRoom);
+					if (foundGameRoom) {
+						handlePlayerDisconnection(foundGameRoom, userId);
+					}
+				}
+			}
+
 			try {
 				db.prepare("UPDATE users SET is_connected = 0 WHERE id = ?").run(userId);
 			} catch (dbError) {
 				console.error("Erreur mise à jour statut connexion:", dbError);
 			}
 			console.log(`🔌 WebSocket fermée - Code: ${code}, Raison: ${reason}, User ID: ${userId}`);
+
 			if (userId) {
 				getSocket.delete(userId);
 				getId.delete(ws);
@@ -319,16 +344,47 @@ function broadcastGameUpdate(gameRoom: any) {
 	}
 }
 
+export function game_over(gameRoom: GameRoom, winnerID: number, looserID: number): void {
+	// stocker resultats de la game dans la DB
+	if (gameRoom && gameRoom.gameState.is_running) {
+		gameRoom.gameState.is_running = false;
 
+		const player1 = gameRoom.gameState.player1;
+		const player2 = gameRoom.gameState.player2;
+		const score = `${player1.score}-${player2.score}`;
+		const winnerId = player1.score > player2.score ? player1.id_player : player2.id_player;
 
+		db.prepare("UPDATE games SET player_id_won = ?, score = ? WHERE player_id_left = ? AND player_id_right = ? AND player_id_won IS NULL").run(
+			winnerId,
+			score,
+			player1.id_player,
+			player2.id_player
+		);
 
+		// clear loops
+		if ((gameRoom as any).interval)
+			clearInterval((gameRoom as any).interval);
+	}
 
+	// verifier si le user etait dans une file d'attente matchmaking
+	if (matchmakingQueue === looserID)
+		matchmakingQueue = -1;
+}
 
+function handlePlayerDisconnection(foundGameRoom: GameRoom, disconnectedId: number): void {
+	db.prepare("UPDATE users SET room_id = 0 WHERE id = ?").run(disconnectedId);
 
+	// if active game
+	if (foundGameRoom && foundGameRoom.gameState.is_running) {
+		const winnerPlayer = foundGameRoom.player1.id_player === disconnectedId ? foundGameRoom.player2 : foundGameRoom.player1;
+		// set max score to remaining player to trigger end of the game in logic.ts who then call game_over
+		foundGameRoom.gameState.player1.id_player == winnerPlayer.id_player ? foundGameRoom.gameState.player1.score = 10 : foundGameRoom.gameState.player2.score = 10;
+	}
 
-
-// export function game_over(gameRoom: any) {
-// 	if (gameRoom.mode === "tournament") {
-// 		round_over(gameRoom);
-// 	}
-// }
+	// Remove from socket maps
+	const socket = getSocket.get(disconnectedId);
+	if (socket) {
+		getId.delete(socket);
+		getSocket.delete(disconnectedId);
+	}
+}

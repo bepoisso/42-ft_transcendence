@@ -1,6 +1,6 @@
-import { getSocket, sendMessage } from "../../sockets/socket";
+import { getSocket } from "../../sockets/socket";
 import { Router } from "../../router";
-import type { GameState } from "./interface";
+import type { GameState, Player } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
 
 export function renderGame() {
@@ -88,7 +88,11 @@ export async function gameLoop(router: Router, id_Room: string)
 				localName = prompt("Enter name for Player 2:") || "Player 2";
 			}
 
-			if (data.perspective) playerPerspective = data.perspective;
+			if (data.perspective) {
+				playerPerspective = data.perspective;
+				if (playerPerspective == "player2")
+					invertGameState(data.gameState);
+			}
 
 			// Met à jour les noms des joueurs
 			const player1 = document.getElementById("player1");
@@ -99,15 +103,47 @@ export async function gameLoop(router: Router, id_Room: string)
 				else player2.textContent = localName!;
 			}
 
-			console.log("PLAYER 1: ", data.gameState.player1.username);
-			console.log("PLAYER 2: ", data.gameState.player2.username);
-
 			// Met à jour le score
 			const scoreElem = document.getElementById("score");
 			if (scoreElem) scoreElem.textContent = `${data.gameState.player1.score} : ${data.gameState.player2.score}`;
 
 			// Dessine le jeu
 			drawGame(data.gameState);
+		}
+		else if (data.type === "game_over") {
+			// gray the canevas
+			const canvas = document.getElementById("pong") as HTMLCanvasElement;
+			const ctx = canvas.getContext("2d");
+			if (ctx) {
+				ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+			}
+
+			// invert score if perspective
+			let player_left_score = data.player1Score;
+			let player_right_score = data.player2Score;
+			if (playerPerspective == "player2") {
+				player_left_score = data.player2Score;
+				player_right_score = data.player1Score;
+			}
+
+			// print end game stats infos
+			const gameContainer = document.getElementById("gameContainer");
+			if (gameContainer) {
+				const gameOverDiv = document.createElement("div");
+				gameOverDiv.className = "absolute inset-0 flex flex-col items-center justify-center text-white z-60";
+				gameOverDiv.innerHTML = `
+					<div class="bg-black bg-opacity-80 p-8 rounded-lg text-center">
+						<h2 class="text-3xl font-bold mb-4">Game Over</h2>
+						<p class="text-xl mb-2">Winner: ${data.winner}</p>
+						<p class="text-lg">Final Score: ${player_left_score} : ${player_right_score}</p>
+						<button onclick="window.location.href='/dashboard'" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
+							Go Back
+						</button>
+					</div>
+				`;
+				gameContainer.appendChild(gameOverDiv);
+			}
 		} else if (originalOnMessage) {
 			// Relaie les autres messages vers le handler original
 			originalOnMessage.call(socket, event);
@@ -169,6 +205,20 @@ export async function gameLoop(router: Router, id_Room: string)
 			}));
 		}
 	});
+}
+
+function invertGameState(gameState: GameState) : void {
+	// invert player pos
+	let playerTemp: Player = gameState.player1;
+	gameState.player1 = gameState.player2;
+	gameState.player2 = playerTemp;
+
+	// mirror paddle position
+	gameState.player1.paddle.x = WIDTH - gameState.player1.paddle.x - gameState.player1.paddle.width;
+	gameState.player2.paddle.x = WIDTH - gameState.player2.paddle.x - gameState.player2.paddle.width;
+
+	// ball symmetry
+	gameState.ball.x = 2 * (WIDTH / 2) - gameState.ball.x;
 }
 
 
