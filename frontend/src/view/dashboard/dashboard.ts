@@ -105,9 +105,6 @@ async function fetchUserData() : Promise<{
 }
 
 
-
-
-
 async function setDashboard(router: Router): Promise<{username: string, id: number, roomId: number} | undefined>
 {
 	try {
@@ -198,6 +195,9 @@ export function matchmaking(socket: WebSocket, id: any)
 	});
 }
 
+// ==================================================================================================
+// 									HISTORY + TOURNAMENT											||
+// ===================================================================================================
 
 export function goToHistoric(router: Router)
 {
@@ -220,9 +220,20 @@ export function goToTournament(router: Router)
 	});
 }
 
+
+
+
+
+
+// ==================================================================================================
+// 									FONCTION PRINCIPALE												||
+// ===================================================================================================
+
 export async function dashboardHandler(router: Router)
 {
 	const socket = await getSocket(router);
+
+
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
@@ -235,6 +246,10 @@ export async function dashboardHandler(router: Router)
 			from: id
 		}))
 	}
+	setInterval(async () => {
+		const data = await setDashboard(router);
+		if (!data) return;
+	}, 5000); // 5sec maybe mettre moins ?
 
 	// go to my profile
 	myProfileClick(router);
@@ -247,7 +262,6 @@ export async function dashboardHandler(router: Router)
 	searchBar(router);
 
 	goToTournament(router);
-	//match history
 	goToHistoric(router);
 }
 

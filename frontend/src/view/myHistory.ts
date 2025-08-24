@@ -98,7 +98,7 @@ async function setHistory() {
 				vs
 				<span class="font-semibold text-red-400">${loser}</span>
 				</p>
-				<p class="text-xs text-gray-400">${game.game_date}</p>
+				<p class="text-xs text-gray-400">${new Date(game.game_date).toLocaleString("en-EN")}</p>
 			</div>
 			<div class="text-right">
 				<p class="text-sm font-bold text-white">${game.score}</p>
@@ -107,11 +107,6 @@ async function setHistory() {
 		`;
 		historyEl.insertAdjacentHTML("beforeend", gameHTML);
 		});
-
-
-
-
-
 
 	} catch (err) {
 		console.log("Error fetching history : ", err)

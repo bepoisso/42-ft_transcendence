@@ -86,6 +86,7 @@ export async function joinTournament(tournamentName: string, playerTName: string
 	// Vérifier si le joueur est déjà inscrit
 	for (let i = 1; i <= 8; i++) {
 		if (tournament[`player_${i}`] === playerId) {
+			console.log("SHOULDNT PLAY");
 			return { statusCode: 409, message: "Player already joined this tournament" };
 		}
 	}
