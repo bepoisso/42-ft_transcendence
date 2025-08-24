@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { socketHandler } from "./game/socket";
+import { socketHandler } from "./socket/socket";
 import { ping, register, login } from "./auth/auth";
 import { googleOauth } from "./auth/auth_provider";
 import { generate2FA, verify2FA, is2faEnable } from "./auth/2fa";
@@ -14,7 +14,8 @@ import { getGamesHistory } from "./user/games"
 import dotenv from "dotenv";
 import { sign, verify } from "crypto";
 import { verifyToken } from "node-2fa";
-import { createTournament } from "./tournament/tournament";
+import { createTournament, joinTournament, round2, round3} from "./tournament/tournament";
+import { infoTournament } from "./tournament/utils";
 
 dotenv.config();
 
@@ -184,6 +185,7 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		if (reply.sent) return; // Éviter les doubles envois
 		const token = request.cookies.token;
 		const result = await getUserPrivate(token || "");
 		return reply.send(result);
@@ -193,6 +195,7 @@ export async function servRoutes(fastify: FastifyInstance)
 		const { id } = request.body as any;
 		const token = request.cookies.token;
 		const result = await getUserPublic(id || 0);
+		console.log("USER PUBLIC = ", result);
 		return reply.send(result);
 	});
 
@@ -223,12 +226,44 @@ export async function servRoutes(fastify: FastifyInstance)
 		return reply.send(result);
 	});
 
+	fastify.post("/tournament/info", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const {tournamentId} = request.body as any;
+		const result = await infoTournament(tournamentId, token || "");
+		return reply.send(result);
+	});
 
-	fastify.post("/tournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+
+	fastify.post("/createTournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const {tournamentName, playerTName } = request.body as any;
 		const result = await createTournament(tournamentName, playerTName, token || "");
+		return reply.send(result);
 	});
+
+	fastify.post("/joinTournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const {tournamentName, playerTName } = request.body as any;
+		const result = await joinTournament(tournamentName, playerTName, token || "");
+		return reply.send(result);
+	});
+
+
+	fastify.post("/tournament/semi", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const { tournamentId } = request.body as any;
+		const result = await round2(tournamentId);
+		return reply.send(result);
+	});
+
+	fastify.post("/tournament/final", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const token = request.cookies.token;
+		const { tournamentId } = request.body as any;
+		const result = await round3(tournamentId);
+		return reply.send(result);
+	});
+
+
 
 
 

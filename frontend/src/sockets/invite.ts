@@ -68,6 +68,7 @@ export function friendInvit(socket: WebSocket, data: any)
 	declineBtn.textContent = "❌";
 	declineBtn.className = "px-3 py-1 bg-red-600 rounded hover:bg-red-700";
 	declineBtn.onclick = () => {
+		socket.send(JSON.stringify({ type: "refuse_friend_invite", from: data.from }));
 		notification.remove();
 	};
 

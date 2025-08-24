@@ -58,6 +58,7 @@ CREATE TABLE tournaments (
 	player_8 INTEGER,
 	tournament_date TEXT NOT NULL DEFAULT (datetime('now')),
 	tournament_status TEXT NOT NULL DEFAULT 'pending',
+	round INTEGER,
 	FOREIGN KEY(player_1) REFERENCES users(id),
 	FOREIGN KEY(player_2) REFERENCES users(id),
 	FOREIGN KEY(player_3) REFERENCES users(id),

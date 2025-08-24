@@ -2,7 +2,8 @@ import { getUserByToken } from "../auth/auth_token";
 import db from "../db/db";
 import { initGameRoom } from "../game/initialisation";
 import { getNextRoomId, setRoom } from "../game/interface";
-import { getSocket } from "../game/socket";
+import { getSocket } from "../socket/socket";
+import { create_game_tournament } from "./utils";
 
 export async function createTournament(tournamentName: string, playerTName: string, token: string) {
 
@@ -79,6 +80,7 @@ export async function joinTournament(tournamentName: string, playerTName: string
 	if (!tournament) {
 		return { statusCode: 404, message: "Tournament not found" };
 	}
+
 	const tournamentId = tournament.id;
 
 	// Vérifier si le joueur est déjà inscrit
@@ -104,9 +106,10 @@ export async function joinTournament(tournamentName: string, playerTName: string
 		}
 
 		db.prepare(`UPDATE users SET username_tournament = ? WHERE email = ?`).run(playerTName, email);
+		db.prepare(`UPDATE tournaments SET player_${playerSlot} = ? WHERE id = ?`).run(playerId, tournamentId);
 
 		if (playerSlot === 8) {
-			Round1(tournamentId);
+			round1(tournamentId);
 		}
 		return {
 			statusCode: 200,
@@ -125,19 +128,9 @@ export async function joinTournament(tournamentName: string, playerTName: string
 
 
 
-	// ici je peux get les id des joueurs et envoyer leur id dans un WS (2id par room)
-	// Le WS va recup les socket correspondant aux id et creer les rooms.
-	// Des lors tout est gere en echange WS.
-	// A la fin de la partie mon WS envoie enregistre le score dans la db via le nom du tournois
-	// ws renvoie au front qui appelle le back pour preparer la nouvelle room
 
-	// Le back va chercher si la game suivante est egalement finie pour pouvoir lancer la prochaine game
-	// probleme : comment fait il cela ?
-	// On peut dire que le back attende que toute les games soient terminés (il regarde le pending)
-	// Une fois qu'elle le sont il lance round 2 sur le meme schema
-
-
-export async function Round1(tournamentId: number) {
+// Creation des quarts de finale (1e stade)
+export async function round1(tournamentId: number) {
 
 	try {
 		// Récupérer tous les joueurs du tournoi
@@ -147,11 +140,11 @@ export async function Round1(tournamentId: number) {
 			return;
 		}
 
-		tournament.round = 1;
-		create_game_tournament(tournament, tournament.player_1, tournament.player_2, 1);
-		create_game_tournament(tournament, tournament.player_3, tournament.player_4, 2);
-		create_game_tournament(tournament, tournament.player_5, tournament.player_6, 3);
-		create_game_tournament(tournament, tournament.player_7, tournament.player_8, 4);
+		tournament.round = 4; // ici on est bien dans tournois ? pas dans tournois_games ? il faut changer le nom
+		create_game_tournament(tournament, tournament.player_1, tournament.player_2, 1, 2);
+		create_game_tournament(tournament, tournament.player_3, tournament.player_4, 2, 2);
+		create_game_tournament(tournament, tournament.player_5, tournament.player_6, 3, 2);
+		create_game_tournament(tournament, tournament.player_7, tournament.player_8, 4, 2);
 
 	} catch (err) {
 		console.error("Error in Round1:", err);
@@ -159,25 +152,121 @@ export async function Round1(tournamentId: number) {
 }
 
 
-async function create_game_tournament(tournament: any, player1: number, player2: number, poule: number) {
+// Creation des quarts de finale (1e stade)
+export async function round2(tournamentId: number) {
+	try {
+		// Récupérer le tournoi
+		const tournament = db.prepare(`SELECT * FROM tournaments WHERE id = ?`).get(tournamentId) as any;
+		if (!tournament) {
+			console.error("Tournament not found for Round2");
+			return;
+		}
 
-	const stmt = db.prepare(`
-		INSERT INTO tournament_game (tournament_id, round, player1_id,player2_id, poule, status) VALUES (?, ?, ?, ?, ?, 'pending',)
-		`).run(tournament.id, tournament.round, player1, player2, poule);
+		// Récupérer les gagnants du round précédent (round 4)
+		const winners = db.prepare(`
+			SELECT winner_id, poule
+			FROM tournament_games
+			WHERE tournament_id = ? AND round = 4 AND status = 'finished' AND winner_id IS NOT NULL
+			ORDER BY poule
+		`).all(tournamentId) as { winner_id: number; poule: number }[];
 
-	const socket_player1 = getSocket.get(player1);
-	const socket_player2 = getSocket.get(player2);
+		if (winners.length !== 4) {
+			console.error(`Round2: Expected 4 winners, got ${winners.length}`);
+			return;
+		}
 
-	const idRoom = getNextRoomId();
-	const gameRoom = initGameRoom(idRoom, player1, player2, "tournament");
-	setRoom(idRoom, gameRoom);
+		// Créer les demi-finales
+		// Match 1: gagnant poule 1 vs gagnant poule 2
+		// Match 2: gagnant poule 3 vs gagnant poule 4
+		const player1_semifinal1 = winners.find(w => w.poule === 1)?.winner_id;
+		const player2_semifinal1 = winners.find(w => w.poule === 2)?.winner_id;
+		const player1_semifinal2 = winners.find(w => w.poule === 3)?.winner_id;
+		const player2_semifinal2 = winners.find(w => w.poule === 4)?.winner_id;
 
-	if(socket_player1) {
-		socket_player1.send(JSON.stringify({
-			type: "tournament_start",
-			id: idRoom,
+		if (!player1_semifinal1 || !player2_semifinal1 || !player1_semifinal2 || !player2_semifinal2) {
+			console.error("Round2: Missing winners from previous round");
+			return;
+		}
 
+		tournament.round = 2; // Round des demi-finales
+		create_game_tournament(tournament, player1_semifinal1, player2_semifinal1, 1, 2);
+		create_game_tournament(tournament, player1_semifinal2, player2_semifinal2, 2, 2);
+
+	} catch (err) {
+		console.error("Error in Round2:", err);
+	}
+}
+
+
+// Creation de la finale (3e stade)
+export async function round3(tournamentId: number) {
+	try {
+		// Récupérer le tournoi
+		const tournament = db.prepare(`SELECT * FROM tournaments WHERE id = ?`).get(tournamentId) as any;
+		if (!tournament) {
+			console.error("Tournament not found for Round3");
+			return;
+		}
+
+		// Récupérer les gagnants du round précédent (round 2)
+		const winners = db.prepare(`
+			SELECT winner_id, poule
+			FROM tournament_games
+			WHERE tournament_id = ? AND round = 2 AND status = 'finished' AND winner_id IS NOT NULL
+			ORDER BY poule
+		`).all(tournamentId) as { winner_id: number; poule: number }[];
+
+		if (winners.length !== 2) {
+			console.error(`Round3: Expected 2 winners, got ${winners.length}`);
+			return;
+		}
+
+		// Créer la finale
+		const player1_final = winners[0].winner_id;
+		const player2_final = winners[1].winner_id;
+
+		tournament.round = 1; // Round de la finale
+		create_game_tournament(tournament, player1_final, player2_final, 1, 1);
+
+	} catch (err) {
+		console.error("Error in Round3:", err);
+	}
+}
+
+
+
+// Ici la gestion normale d'une game s'est terminée et le jeu en back appelle cette fonction.
+// Il faut :
+//	- register les games dans la db
+//	- regarder le round
+//	- redirige vers la page du waiting avec le tournament id
+export function round_over(gameRoom: any, loserID: number, winnerID: number) {
+	const tournament_id = gameRoom.tournament_id;
+
+	//conserve le gagnant / perdant dans tournament_games dans la db
+	db.prepare(`UPDATE tournament_games SET winner_id = ?, player_loser_id = ?, status = 'finished' WHERE id = ?
+		`).run(winnerID, loserID, gameRoom.tournament_game_id);
+
+	// appelle les WS pour rediriger sur la bonne page du front
+	const socketWinner = getSocket.get(winnerID);
+	const socketLoser = getSocket.get(loserID);
+
+
+	if (socketWinner) {
+		socketWinner.send(JSON.stringify({
+			type: "tournament_round_over",
+			result: "win",
+			tournamentId: tournament_id,
+			round: gameRoom.round
 		}));
 	}
 
+	if (socketLoser) {
+		socketLoser.send(JSON.stringify({
+			type: "tournament_round_over",
+			result: "lose",
+			tournamentId: tournament_id,
+			round: gameRoom.round
+		}));
+	}
 }

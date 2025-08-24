@@ -75,7 +75,12 @@ export function getSocket(router: Router): Promise<WebSocket> {
 
 				if (data.type === "tournament_start") {
 					console.log("Room tournament: ", data.id);
-					router.navigate(`/tournament/${data.id}`)
+					router.navigate(`/tournament/${data.id}`);
+				}
+				if (data.type === "tournament_round_over") {
+					console.log("find du round pour le tournois : ", data.tournamentId);
+					localStorage.setItem("win", data.result);
+					router.navigate(`/tournamentRound/${data.tournamentId}/`);
 				}
 
 			}

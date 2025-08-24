@@ -9,8 +9,7 @@ export type Friend = {
   friend_id: number;
   username: string;
   avatar_url: string;
-  status: "pending" | "accepted";
-  isConnected : number
+  is_connected : number
 };
 
 export function renderFriendsSidebar(router: Router, friends: Friend[])
@@ -41,7 +40,11 @@ export function renderFriendsSidebar(router: Router, friends: Friend[])
 
 		// status
 		const statusDot = document.createElement("span");
-		statusDot.className = `w-3 h-3 rounded-full ${friend.isConnected ? "bg-green-500" : "bg-red-500"}`;
+		console.log("friend status : ", friend.is_connected )
+		if (friend.is_connected === 1)
+			statusDot.className = `w-3 h-3 rounded-full "bg-green-500"`;
+		else
+			statusDot.className = `w-3 h-3 rounded-full "bg-red-500"}`;
 		friendEl.appendChild(statusDot);
 
 		// username

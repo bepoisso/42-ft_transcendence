@@ -14,6 +14,7 @@ import { logic2fa, render2fa } from "./view/2fa";
 import { renderMyProfile, myProfileHandler } from "./view/myProfile";
 import { renderVisitProfile, visitProfileHandler } from "./view/visitProfile";
 import { renderTournaments, tournamentHandler} from "./view/tournament/tournament";
+import { renderTournamentTree, tournamentRound } from "./view/tournament/tournamentRound";
 
 
 export class App
@@ -37,7 +38,7 @@ export class App
 			render2fa();
 			logic2fa(self.router);
 			},
-			"/": () => {
+			"/dashboard": () => {
 				renderDashboard();
 				dashboardHandler(self.router);
 			},
@@ -56,6 +57,10 @@ export class App
 			"/tournament": async () => {
 				renderTournaments();
 				await tournamentHandler(self.router);
+			},
+			"/tournamentRound/:id": async (params: any) => {
+				renderTournamentTree();
+				await tournamentRound(self.router, params.id);
 			}
 		};
 		this.router = new Router(routes);

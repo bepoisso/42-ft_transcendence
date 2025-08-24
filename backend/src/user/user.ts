@@ -24,13 +24,25 @@ export async function getUserPrivate(token: string) {
 		}
 
 		console.log("👥 Recherche des amis pour user ID:", user.id);
-		const friends = db.prepare(`SELECT f.id, f.status,
-			u.id as friend_id, u.username, u.avatar_url, u.is_connected
+		const friends = db.prepare(`
+			SELECT DISTINCT
+				f.status,
+				u.id as friend_id,
+				u.username,
+				u.avatar_url,
+				u.is_connected,
+				MIN(f.id) as friendship_id
 			FROM friends f
-			JOIN users u ON (u.id = CASE WHEN f.user_id = ? THEN f.friend_id ELSE f.user_id END)
-			WHERE f.user_id = ? OR f.friend_id = ?`).all(user.id, user.id, user.id);
+			JOIN users u ON (
+				(f.user_id = ? AND u.id = f.friend_id) OR
+				(f.friend_id = ? AND u.id = f.user_id)
+			)
+			WHERE (f.user_id = ? OR f.friend_id = ?) AND f.status = 'accepted'
+			GROUP BY u.id, f.status
+			ORDER BY u.username
+		`).all(user.id, user.id, user.id, user.id);
 
-		console.log("✅ getUserPrivate: Retour des données utilisateur");
+		console.log("FRIENDS = ", friends);
 		return {
 			statusCode: 200,
 			message: "Success",
@@ -51,6 +63,7 @@ export async function getUserPrivate(token: string) {
 
 }
 
+// Il faut verifier le token et me renvoyer si ils sont deja amis ou pas
 export async function getUserPublic(id: number) {
 	if (!id) {
 		return { statusCode: 404, message: "User not found" };

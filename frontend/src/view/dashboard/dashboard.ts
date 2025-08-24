@@ -196,7 +196,6 @@ export function matchmaking(socket: WebSocket, id: any)
 	btnMyProfile?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
-		console
 		socket.send(JSON.stringify({
 			type: "matchmaking",
 			from: id,
@@ -219,7 +218,7 @@ export async function dashboardHandler(router: Router)
 	// if player is still active in a room, send message to this room to kill the room
 	if (roomId !== 0 || undefined) {
 		socket.send(JSON.stringify({
-			type: "player left",
+			type: "player_left",
 			from: id
 		}))
 	}
