@@ -54,12 +54,10 @@ export function renderDashboard() {
           </div>
 
 		  <!-- Partie Rooms / Parties en cours -->
-          <div class="bg-teal-950 p-4 rounded-lg flex-1 flex flex-col">
-            <h3 class="text-lg font-bold mb-2 text-left">Rooms</h3>
-            <div id="room-list" class="flex-1 overflow-y-auto space-y-3">
-              <p class="text-gray-400">Aucune room disponible...</p>
-            </div>
-          </div>
+          <button id="toggle-history" type="button"
+				class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm w-full">
+				My History
+			</button>
         </div>
 
         <!-- Colonne droite : 20% largeur -->
