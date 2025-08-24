@@ -26,7 +26,7 @@ export class App
 	constructor() {
 		const self = this;
 		const routes = {
-			"/home" : renderHome,
+			"/auth" : renderHome,
 			"/login": () => {
 				renderLogin();
 				loginHandler(self.router)
@@ -39,7 +39,7 @@ export class App
 			render2fa();
 			logic2fa(self.router);
 			},
-			"/dashboard": () => {
+			"/": () => {
 				renderDashboard();
 				dashboardHandler(self.router);
 			},

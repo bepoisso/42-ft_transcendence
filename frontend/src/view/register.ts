@@ -139,17 +139,17 @@ function formHandler(router: Router)
 				router.navigate("/2fa");
 			}
 			else {
-				console.error("Erreur lors du préRegister : " + data.message);
+				console.error("Error with your registration : " + data.message);
 				const errorMessage = document.getElementById("error-message");
 				if (errorMessage)
 					errorMessage.textContent = data.message;
 				return;
 			}
 		} catch (error) {
-			console.error("Erreur lors du préRegister : ", error);
+			console.error("Error with your registration : ", error);
 			const errorMessage = document.getElementById("error-message");
 				if (errorMessage)
-					errorMessage.textContent = "Error preRegister";
+					errorMessage.textContent = String(error);
 			return;
 		}
 

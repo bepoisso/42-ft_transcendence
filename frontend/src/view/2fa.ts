@@ -142,7 +142,7 @@ export async function logic2fa(router: Router)
 		try {
 			const verify = await verify2fa(code);
 			if (verify.statusCode === 200) {
-				router.navigate("/dashboard");
+				router.navigate("/");
 			}
 			else {
 				const errorMessage = document.getElementById("error-message");
