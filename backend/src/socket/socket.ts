@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { GameRoom, getGameRoom, getNextRoomId } from "../game/interface";
+import { GameRoom, getGameRoom, getNextRoomId, WIDTH, HEIGHT } from "../game/interface";
 import * as cookie from "cookie";
 import { WebSocket } from "@fastify/websocket";
 import jwt from "jsonwebtoken";
@@ -8,6 +8,7 @@ import { setRoom } from "../game/interface";
 import { initGameRoom } from "../game/initialisation";
 import { updateGame, gameLoop } from "../game/logic"
 import { friend_accepted, friend_send_invite, refuse_friend_invite } from "./friend";
+import { Algo, Clock } from "../game/algo";
 
 
 /*
@@ -133,12 +134,18 @@ export async function socketHandler(fastify: FastifyInstance)
 				if (data.type === "game_accepted") {
 					const idRoom = getNextRoomId();
 
-					if (data.mode === "local" || data.mode === "AI") {
+					if (data.mode === "local" || data.mode === "ai") {
 						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode, 0);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 
 						(gameRoom as any).sockets = [ws];
 						setRoom(idRoom, gameRoom);
+
+						if (data.mode == "ai") {
+							gameRoom.gameState.ia = new Algo(HEIGHT / 2, WIDTH / 2, gameRoom.gameState.player1.paddle.height, HEIGHT);
+							gameRoom.gameState.clock = new Clock();
+							gameRoom.gameState.player2.username = "AI";
+						}
 
 						gameRoom.gameState.is_running = true;
 

@@ -1,4 +1,4 @@
-import { Socket } from "socket.io";
+import { Algo, Clock } from "./algo";
 
 // ===============================================
 // 			INTERFACE GAME LOGIC				||
@@ -35,8 +35,10 @@ export interface Player {
 export interface GameState {
 	player1: Player;
 	player2: Player;
-	ball: Ball,
-	is_running: boolean
+	ball: Ball;
+	is_running: boolean;
+	ia: Algo | undefined;
+	clock: Clock | undefined;
 }
 
 

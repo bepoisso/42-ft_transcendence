@@ -212,7 +212,6 @@ export async function dashboardHandler(router: Router)
 
 	// if player is still active in a room, send message to this room to kill the room
 	if (roomId !== 0 || undefined) {
-		console.log("UERUERHGU;HOG;EJKUHGER;HOUGEROUHGE;HOUGR2;HOU;GHORU;HOUGRQO;UHGRQHOU;GRQ;HUGRQ;HIU;IUHGRHIU;QEGR");
 		socket.send(JSON.stringify({
 			type: "player_left",
 			from: id,
@@ -225,7 +224,7 @@ export async function dashboardHandler(router: Router)
 
 	// allow people to play directly in AI / Local mode
 	modeClick(socket, "btnLocal", "local", id);
-	modeClick(socket, "btnAI", "AI", id);
+	modeClick(socket, "btnAI", "ai", id);
 	matchmaking(socket, id);
 
 	// TODO

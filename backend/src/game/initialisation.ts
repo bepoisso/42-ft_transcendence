@@ -75,6 +75,8 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			yDirect : 0,
 			speed: 5
 		},
+		ia: undefined,
+		clock: undefined,
 		is_running: false
 	}
 	return gameState;

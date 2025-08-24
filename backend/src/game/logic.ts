@@ -5,7 +5,7 @@ export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direc
 	let currentPlayer: Player;
 
 	// ONLINE / LOCAL / IA (force player1)
-	if (gameRoom.mode == "online" || gameRoom.mode == "local" || gameRoom.mode == "ia") {
+	if (gameRoom.mode == "online" || gameRoom.mode == "local" || gameRoom.mode == "ai") {
 		if (perspective === "player1")
 			currentPlayer = gameRoom.gameState.player1;
 		else if (perspective === "player2")
@@ -13,7 +13,7 @@ export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direc
 		else
 			currentPlayer = gameRoom.player1.id_player == fromID ? gameRoom.gameState.player1 : gameRoom.gameState.player2;
 
-		if (gameRoom.mode == "ia")
+		if (gameRoom.mode == "ai")
 			currentPlayer = gameRoom.gameState.player1;
 
 		if (movement == "start") {
@@ -37,6 +37,23 @@ export function gameLoop(gameRoom: GameRoom): void {
 	const paddle1 = player1.paddle;
 	const paddle2 = player2.paddle;
 	const ball = gameRoom.gameState.ball;
+
+	// IA
+	if (gameRoom.mode == "ai") {
+		const gameState = gameRoom.gameState;
+		if (gameState.clock?.isTimeElapsed(1000)) {
+			gameState.ia?.newTarget(gameState.ball.x, gameState.ball.y, player2.paddle.y, gameState.player1.score + gameState.player2.score);
+			gameState.clock.resetClock();
+		} else {
+			const decision: string | undefined = gameState.ia?.makeDecision();
+			if (decision === "UP")
+				gameState.player2.key_pressed = "UP";
+			else if (decision === "DOWN")
+				gameState.player2.key_pressed = "DOWN";
+			else
+				gameState.player2.key_pressed = "";
+		}
+	}
 
 	// handle player input and move paddles
 	handleInput(player1, player2, paddle1, paddle2);
