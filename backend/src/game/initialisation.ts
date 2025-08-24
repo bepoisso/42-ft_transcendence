@@ -36,6 +36,7 @@ export function initGameRoom(idRoom: number, id_player1: number, id_player2: num
 
 export function initGame(namePlayer1: string, namePlayer2: string, id_player1: number, id_player2: number) : GameState
 {
+	const PADDLE_HEIGHT = 125;
 	const gameState: GameState =
 	{
 		player1:
@@ -45,9 +46,9 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			score: 0,
 			paddle: {
 				width: 15,
-				height: 100,
+				height: PADDLE_HEIGHT,
 				x: 10,
-				y: 0,
+				y: HEIGHT / 2 - PADDLE_HEIGHT / 2,
 				speed: 15
 			},
 			key_pressed: ""
@@ -59,9 +60,9 @@ export function initGame(namePlayer1: string, namePlayer2: string, id_player1: n
 			score: 0,
 			paddle: {
 				width: 15,
-				height: 100,
-				x: WIDTH - 30,
-				y: HEIGHT - 100,
+				height: PADDLE_HEIGHT,
+				x: WIDTH - 25,
+				y: HEIGHT / 2 - PADDLE_HEIGHT / 2,
 				speed: 15
 			},
 			key_pressed: ""

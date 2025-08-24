@@ -54,11 +54,11 @@ export class Algo {
 				// make decision and update IA pos to prevent decay
 				if (paddleCenter < upper_waiting_zone) {
 					// 8 = speed set in paddle constructor
-					this.y_algo = Math.min(this.canevas_height - this.paddle_height, this.y_algo + 8);
+					this.y_algo = Math.min(this.canevas_height - this.paddle_height, this.y_algo + 15);
 					return "DOWN";
 				} else {
 					// 8 = speed set in paddle constructor
-					this.y_algo = Math.max(0, this.y_algo - 8);
+					this.y_algo = Math.max(0, this.y_algo - 15);
 					return "UP";
 				}
 			}
@@ -70,11 +70,11 @@ export class Algo {
 				// make decision and update IA pos to prevent decay
 				if (paddleCenter < lower_waiting_zone) {
 					// 8 = speed set in paddle constructor
-					this.y_algo = Math.min(this.canevas_height - this.paddle_height, this.y_algo + 8);
+					this.y_algo = Math.min(this.canevas_height - this.paddle_height, this.y_algo + 15);
 					return "DOWN";
 				} else {
 					// 8 = speed set in paddle constructor
-					this.y_algo = Math.max(0, this.y_algo - 8);
+					this.y_algo = Math.max(0, this.y_algo - 15);
 					return "UP";
 				}
 			}
@@ -87,11 +87,10 @@ export class Algo {
 
 		// go to target
 		if (this.y_target < paddleCenter) {
-			this.y_algo = Math.max(0, this.y_algo - 8);
+			this.y_algo = Math.max(0, this.y_algo - 15);
 			return "UP";
 		} else {
-			Math.min(this.canevas_height - this.paddle_height, this.y_algo + 8);
-			this.y_algo = Math.min(this.canevas_height - this.paddle_height, this.y_algo + 8);
+			this.y_algo = Math.min(this.canevas_height - this.paddle_height, this.y_algo + 15);
 			return "DOWN";
 		}
 	}

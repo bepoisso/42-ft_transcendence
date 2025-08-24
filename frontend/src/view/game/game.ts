@@ -7,14 +7,12 @@ export function renderGame() {
 document.getElementById("app")!.innerHTML = `
 	<div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
 
-	<!-- Ligne du haut : noms et score -->
 	<div class="w-[800px] flex justify-between text-white mb-4">
 		<div id="player1" class="text-lg font-bold">Player 1</div>
-		<div id="score" class="text-lg font-bold">0 : 0</div>
+		<div id="score" class="text-lg font-bold absolute left-1/2 transform -translate-x-1/2">0 : 0</div>
 		<div id="player2" class="text-lg font-bold">Player 2</div>
 	</div>
 
-	<!-- Zone de jeu -->
 	<canvas id="pong" width="${WIDTH}" height="${HEIGHT}" class="bg-black relative z-50 border border-white"></canvas>
 	</div>
 `;
@@ -29,6 +27,16 @@ export function drawGame(gameState: GameState)
 
 	// earase canevas
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	// draw net
+	ctx.strokeStyle = "white";
+	ctx.lineWidth = 2;
+	ctx.setLineDash([10, 10]); // ligne pointillée
+	ctx.beginPath();
+	ctx.moveTo(WIDTH / 2, 0);
+	ctx.lineTo(WIDTH / 2, HEIGHT);
+	ctx.stroke();
+	ctx.setLineDash([]); // reset line dash
 
 	// draw paddles
 	ctx.fillStyle = "white";
@@ -54,6 +62,7 @@ export function drawGame(gameState: GameState)
 		0,
 		Math.PI * 2
 	);
+
 	ctx.fill();
 }
 
