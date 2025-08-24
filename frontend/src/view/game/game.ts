@@ -119,6 +119,14 @@ export async function gameLoop(router: Router, id_Room: string)
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 			}
 
+			// invert score if perspective
+			let player_left_score = data.player1Score;
+			let player_right_score = data.player2Score;
+			if (playerPerspective == "player2") {
+				player_left_score = data.player2Score;
+				player_right_score = data.player1Score;
+			}
+
 			// print end game stats infos
 			const gameContainer = document.getElementById("gameContainer");
 			if (gameContainer) {
@@ -128,7 +136,7 @@ export async function gameLoop(router: Router, id_Room: string)
 					<div class="bg-black bg-opacity-80 p-8 rounded-lg text-center">
 						<h2 class="text-3xl font-bold mb-4">Game Over</h2>
 						<p class="text-xl mb-2">Winner: ${data.winner}</p>
-						<p class="text-lg">Final Score: ${data.player1Score} : ${data.player2Score}</p>
+						<p class="text-lg">Final Score: ${player_left_score} : ${player_right_score}</p>
 						<button onclick="window.location.href='/dashboard'" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
 							Go Back
 						</button>

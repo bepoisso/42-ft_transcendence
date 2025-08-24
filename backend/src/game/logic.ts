@@ -44,9 +44,6 @@ export function gameLoop(gameRoom: GameRoom): void {
 	// check if game end (max score)
 	const MAX_SCORE = 10;
 	if (player1.score >= MAX_SCORE || player2.score >= MAX_SCORE) {
-		gameRoom.gameState.is_running = false;
-		clearInterval((gameRoom as any).interval);
-
 		// send end msg to all players
 		const winner = player1.score >= MAX_SCORE ? player1.username : player2.username;
 		const sockets = (gameRoom as any).sockets || [];
@@ -54,7 +51,7 @@ export function gameLoop(gameRoom: GameRoom): void {
 			type: "game_over",
 			winner: winner,
 			player1Score: player1.score,
-			player2Score: player2.score
+			player2Score: player2.score,
 		});
 
 		sockets.forEach((sock: WebSocket | undefined) => {
@@ -63,7 +60,10 @@ export function gameLoop(gameRoom: GameRoom): void {
 			}
 		});
 
-		game_over(gameRoom);
+		const winnerID: number = player1.score >= MAX_SCORE ? gameRoom.player1.id_player : gameRoom.player2.id_player;
+		const looserID: number = player1.score >= MAX_SCORE ? gameRoom.player2.id_player : gameRoom.player1.id_player;
+
+		game_over(gameRoom, winnerID, looserID);
 	}
 }
 
