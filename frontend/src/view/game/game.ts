@@ -4,20 +4,20 @@ import type { GameState, Player } from "./interface";
 import {WIDTH, HEIGHT} from "./interface"
 
 export function renderGame() {
-  document.getElementById("app")!.innerHTML = `
-    <div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
+document.getElementById("app")!.innerHTML = `
+	<div id="gameContainer" class="flex flex-col items-center justify-center h-screen bg-black">
 
-      <!-- Ligne du haut : noms et score -->
-      <div class="w-[800px] flex justify-between text-white mb-4">
-        <div id="player1" class="text-lg font-bold">Player 1</div>
-        <div id="score" class="text-lg font-bold">0 : 0</div>
-        <div id="player2" class="text-lg font-bold">Player 2</div>
-      </div>
+	<!-- Ligne du haut : noms et score -->
+	<div class="w-[800px] flex justify-between text-white mb-4">
+		<div id="player1" class="text-lg font-bold">Player 1</div>
+		<div id="score" class="text-lg font-bold">0 : 0</div>
+		<div id="player2" class="text-lg font-bold">Player 2</div>
+	</div>
 
-      <!-- Zone de jeu -->
-      <canvas id="pong" width="${WIDTH}" height="${HEIGHT}" class="bg-black relative z-50 border border-white"></canvas>
-    </div>
-  `;
+	<!-- Zone de jeu -->
+	<canvas id="pong" width="${WIDTH}" height="${HEIGHT}" class="bg-black relative z-50 border border-white"></canvas>
+	</div>
+`;
 }
 
 
@@ -27,10 +27,10 @@ export function drawGame(gameState: GameState)
 	const ctx = canvas.getContext("2d");
 	if (!ctx) return;
 
-	// Efface l'écran
+	// earase canevas
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	// Dessine les paddles
+	// draw paddles
 	ctx.fillStyle = "white";
 	ctx.fillRect(
 		gameState.player1.paddle.x,
@@ -45,7 +45,7 @@ export function drawGame(gameState: GameState)
 		gameState.player2.paddle.height
 	);
 
-	// Dessine la balle
+	// draw ball
 	ctx.beginPath();
 	ctx.arc(
 		gameState.ball.x,
@@ -59,42 +59,221 @@ export function drawGame(gameState: GameState)
 
 export async function gameLoop(router: Router, id_Room: string)
 {
-	// console.log("🎯 gameLoop appelé avec id_Room:", id_Room, "type:", typeof id_Room);
 	const socket = await getSocket(router);
 	const idRoom = Number(id_Room);
-	// console.log("🔢 Conversion Number(id_Room):", idRoom, "type:", typeof idRoom);
 
 	let isLocal = false;
 	let askOnce = 0;
-	let localName = "Player 2"; // Default value
+	let localName = "Player 2"; // default pseudo value
 	let playerPerspective = "player1";
 
-	// appelle game_info
-	// console.log("on entre dans la game");
-	// console.log("📤 Envoi game_info avec roomId:", idRoom);
+	// call game_info
 	socket.send(JSON.stringify({ type: "game_info", roomId: idRoom }));
 
-	// Handler spécifique pour les messages de jeu
+	// USER INPUTS
+	let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+	let keyupHandler: ((e: KeyboardEvent) => void) | null = null;
+
+	// config key listeners
+	function setupEventListeners(local: boolean) {
+		// clean old listeners
+		if (keydownHandler) {
+			window.removeEventListener("keydown", keydownHandler);
+			keydownHandler = null;
+		}
+		if (keyupHandler) {
+			window.removeEventListener("keyup", keyupHandler);
+			keyupHandler = null;
+		}
+
+		if (local === false) {
+			// ONLINE mode
+			keydownHandler = (e) => {
+				if (e.key === "ArrowUp" || e.key === "w") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "up",
+						local: isLocal,
+						movement: "start",
+						perspective: playerPerspective
+					}));
+				}
+
+				if (e.key === "ArrowDown" || e.key === "s") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "down",
+						local: isLocal,
+						movement: "start",
+						perspective: playerPerspective
+					}));
+				}
+			};
+
+			keyupHandler = (e) => {
+				if (e.key === "ArrowUp" || e.key === "w") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "up",
+						local: isLocal,
+						movement: "stop",
+						perspective: playerPerspective
+					}));
+				}
+
+				if (e.key === "ArrowDown" || e.key === "s") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "down",
+						local: isLocal,
+						movement: "stop",
+						perspective: playerPerspective
+					}));
+				}
+			};
+		} else {
+			// LOCAL Mode
+			keydownHandler = (e) => {
+				// P1 (W/S)
+				if (e.key === "w" || e.key === "W") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "up",
+						local: isLocal,
+						movement: "start",
+						perspective: "player1"
+					}));
+				}
+
+				if (e.key === "s" || e.key === "S") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "down",
+						local: isLocal,
+						movement: "start",
+						perspective: "player1"
+					}));
+				}
+
+				// P2 (Arrow keys)
+				if (e.key === "ArrowUp") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "up",
+						local: isLocal,
+						movement: "start",
+						perspective: "player2"
+					}));
+				}
+
+				if (e.key === "ArrowDown") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "down",
+						local: isLocal,
+						movement: "start",
+						perspective: "player2"
+					}));
+				}
+			};
+
+			keyupHandler = (e) => {
+				// P1 (W/S)
+				if (e.key === "w" || e.key === "W") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "up",
+						local: isLocal,
+						movement: "stop",
+						perspective: "player1"
+					}));
+				}
+
+				if (e.key === "s" || e.key === "S") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "down",
+						local: isLocal,
+						movement: "stop",
+						perspective: "player1"
+					}));
+				}
+
+				// P2 (Arrow keys)
+				if (e.key === "ArrowUp") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "up",
+						local: isLocal,
+						movement: "stop",
+						perspective: "player2"
+					}));
+				}
+
+				if (e.key === "ArrowDown") {
+					e.preventDefault();
+					socket.send(JSON.stringify({
+						type: "move_paddle",
+						roomId: idRoom,
+						direction: "down",
+						local: isLocal,
+						movement: "stop",
+						perspective: "player2"
+					}));
+				}
+			};
+		}
+
+		// Start key listeners
+		if (keydownHandler) window.addEventListener("keydown", keydownHandler);
+		if (keyupHandler) window.addEventListener("keyup", keyupHandler);
+	}
+
+	// GAME MESSAGE HANDLER
 	const originalOnMessage = socket.onmessage;
 	socket.onmessage = (event) => {
 		const data = JSON.parse(event.data);
 
-		// Traite d'abord les messages de jeu
+		// ========== game_update ==========
 		if (data.type === "game_update") {
-			// console.log("🎮 Game update reçu:", data.type, data.mode);
-			isLocal = data.mode === "local";
+			// setup for local mode
+			isLocal = data.mode == "local";
 			if (isLocal === true && askOnce === 0) {
 				askOnce = 1;
-				localName = prompt("Enter name for Player 2:") || "Player 2";
+				localName = prompt("Enter name for Player 2:") || localName;
+				setupEventListeners(isLocal);
 			}
 
+			// invert game if player perspective (right player to left side)
 			if (data.perspective) {
 				playerPerspective = data.perspective;
 				if (playerPerspective == "player2")
 					invertGameState(data.gameState);
 			}
 
-			// Met à jour les noms des joueurs
+			// update html username
 			const player1 = document.getElementById("player1");
 			const player2 = document.getElementById("player2");
 			if (player1) player1.textContent = data.gameState.player1.username;
@@ -103,13 +282,14 @@ export async function gameLoop(router: Router, id_Room: string)
 				else player2.textContent = localName!;
 			}
 
-			// Met à jour le score
+			// update html score
 			const scoreElem = document.getElementById("score");
 			if (scoreElem) scoreElem.textContent = `${data.gameState.player1.score} : ${data.gameState.player2.score}`;
 
-			// Dessine le jeu
+			// draw game
 			drawGame(data.gameState);
 		}
+		// ========== game_over ==========
 		else if (data.type === "game_over") {
 			// gray the canevas
 			const canvas = document.getElementById("pong") as HTMLCanvasElement;
@@ -127,6 +307,17 @@ export async function gameLoop(router: Router, id_Room: string)
 				player_right_score = data.player1Score;
 			}
 
+			// determine winner if local mode
+			let winnerName = data.winner;
+			if (isLocal) {
+				const player1Name = document.getElementById("player1")?.textContent || "Player 1";
+				const player2Name = document.getElementById("player2")?.textContent || "Player 2";
+				if (data.player1Score > data.player2Score)
+					winnerName = player1Name;
+				else if (data.player2Score > data.player1Score)
+					winnerName = player2Name;
+			}
+
 			// print end game stats infos
 			const gameContainer = document.getElementById("gameContainer");
 			if (gameContainer) {
@@ -135,7 +326,7 @@ export async function gameLoop(router: Router, id_Room: string)
 				gameOverDiv.innerHTML = `
 					<div class="bg-black bg-opacity-80 p-8 rounded-lg text-center">
 						<h2 class="text-3xl font-bold mb-4">Game Over</h2>
-						<p class="text-xl mb-2">Winner: ${data.winner}</p>
+						<p class="text-xl mb-2">Winner: ${winnerName}</p>
 						<p class="text-lg">Final Score: ${player_left_score} : ${player_right_score}</p>
 						<button onclick="window.location.href='/dashboard'" class="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
 							Go Back
@@ -145,66 +336,13 @@ export async function gameLoop(router: Router, id_Room: string)
 				gameContainer.appendChild(gameOverDiv);
 			}
 		} else if (originalOnMessage) {
-			// Relaie les autres messages vers le handler original
+			// relay msg to original handler
 			originalOnMessage.call(socket, event);
 		}
 	};
 
-	// On gere deux evenements, la touche enfoncée et la touche relevée.
-	// On donne l'info "local" pour que le serv puisse ignorer le mouvement si le mode n'est pas local
-	window.addEventListener("keydown", (e) =>
-	{
-		if (e.key === "ArrowUp" || e.key === "w") {
-			e.preventDefault();
-			socket.send(JSON.stringify({
-				type: "move_paddle",
-				roomId: idRoom,
-				direction: "up",
-				local: isLocal,
-				movement: "start",
-				perspective: playerPerspective
-			}));
-		}
-
-		if (e.key === "ArrowDown" || e.key === "s") {
-			e.preventDefault();
-			socket.send(JSON.stringify({
-				type: "move_paddle",
-				roomId: idRoom,
-				direction: "down",
-				local: isLocal,
-				movement: "start",
-				perspective: playerPerspective
-			}));
-		}
-	});
-
-	window.addEventListener("keyup", (e) =>
-	{
-		if (e.key === "ArrowUp" || e.key === "w") {
-			e.preventDefault();
-			socket.send(JSON.stringify({
-				type: "move_paddle",
-				roomId: idRoom,
-				direction: "up",
-				local: isLocal,
-				movement: "stop",
-				perspective: playerPerspective
-			}));
-		}
-
-		if (e.key === "ArrowDown" || e.key === "s") {
-			e.preventDefault();
-			socket.send(JSON.stringify({
-				type: "move_paddle",
-				roomId: idRoom,
-				direction: "down",
-				local: isLocal,
-				movement: "stop",
-				perspective: playerPerspective
-			}));
-		}
-	});
+	// config listeners
+	setupEventListeners(isLocal);
 }
 
 function invertGameState(gameState: GameState) : void {

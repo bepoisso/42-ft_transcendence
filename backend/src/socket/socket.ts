@@ -130,25 +130,36 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
-
-
-
 				if (data.type === "game_accepted") {
-					// console.log("🎮 Game accepted - Mode:", data.mode, "From:", data.from);
 					const idRoom = getNextRoomId();
 
 					if (data.mode === "local" || data.mode === "AI") {
-						// console.log("🎯 Mode local/AI - création de la room:", idRoom);
 						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode, 0);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
+
+						(gameRoom as any).sockets = [ws];
 						setRoom(idRoom, gameRoom);
-						// console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
+
+						gameRoom.gameState.is_running = true;
+
+						(gameRoom as any).interval = setInterval(() => {
+							gameLoop(gameRoom);
+
+							if (ws.readyState === 1) {
+								ws.send(JSON.stringify({
+									type: "game_update",
+									gameState: gameRoom.gameState,
+									mode: gameRoom.mode,
+									perspective: "player1"
+								}));
+							}
+						}, 30);
+
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 						return;
 					}
 
 					// Mode online (matchmaking) - ne s'exécute que si ce n'est PAS local/AI
-					// console.log("🌐 Mode online");
 					const toSocket = getSocket.get(data.from);
 					const idTo = getId.get(ws);
 					if (!idTo) return;
