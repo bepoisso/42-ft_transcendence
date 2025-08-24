@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { GameRoom, getGameRoom, getNextRoomId } from "../game/interface";
+import { GameRoom, getGameRoom, getNextRoomId, WIDTH, HEIGHT } from "../game/interface";
 import * as cookie from "cookie";
 import { WebSocket } from "@fastify/websocket";
 import jwt from "jsonwebtoken";
@@ -8,6 +8,7 @@ import { setRoom } from "../game/interface";
 import { initGameRoom } from "../game/initialisation";
 import { updateGame, gameLoop } from "../game/logic"
 import { friend_accepted, friend_send_invite, refuse_friend_invite } from "./friend";
+import { Algo, Clock } from "../game/algo";
 
 
 /*
@@ -130,25 +131,42 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
-
-
-
 				if (data.type === "game_accepted") {
-					// console.log("🎮 Game accepted - Mode:", data.mode, "From:", data.from);
 					const idRoom = getNextRoomId();
 
-					if (data.mode === "local" || data.mode === "AI") {
-						// console.log("🎯 Mode local/AI - création de la room:", idRoom);
+					if (data.mode === "local" || data.mode === "ai") {
 						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode, 0);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
+
+						(gameRoom as any).sockets = [ws];
 						setRoom(idRoom, gameRoom);
-						// console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
+
+						if (data.mode == "ai") {
+							gameRoom.gameState.ia = new Algo(HEIGHT / 2, WIDTH / 2, gameRoom.gameState.player1.paddle.height, HEIGHT);
+							gameRoom.gameState.clock = new Clock();
+							gameRoom.gameState.player2.username = "AI";
+						}
+
+						gameRoom.gameState.is_running = true;
+
+						(gameRoom as any).interval = setInterval(() => {
+							gameLoop(gameRoom);
+
+							if (ws.readyState === 1) {
+								ws.send(JSON.stringify({
+									type: "game_update",
+									gameState: gameRoom.gameState,
+									mode: gameRoom.mode,
+									perspective: "player1"
+								}));
+							}
+						}, 30);
+
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 						return;
 					}
 
 					// Mode online (matchmaking) - ne s'exécute que si ce n'est PAS local/AI
-					// console.log("🌐 Mode online");
 					const toSocket = getSocket.get(data.from);
 					const idTo = getId.get(ws);
 					if (!idTo) return;

@@ -3,23 +3,32 @@ import { game_over } from "../socket/socket";
 
 export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direction: string, movement: string, perspective?: string) : void {
 	let currentPlayer: Player;
-	if (perspective === "player1") {
-		currentPlayer = gameRoom.gameState.player1;
-	} else if (perspective === "player2") {
-		currentPlayer = gameRoom.gameState.player2;
-	} else {
-		// Fallback to old method
-		currentPlayer = gameRoom.player1.id_player == fromID ? gameRoom.gameState.player1 : gameRoom.gameState.player2;
-	}
 
-	if (movement == "start") {
-		if (direction == "up" || direction == "UP")
-			currentPlayer.key_pressed = "UP";
-		else if (direction == "down" || direction == "DOWN")
-			currentPlayer.key_pressed = "DOWN";
+	// ONLINE / LOCAL / IA (force player1)
+	if (gameRoom.mode == "online" || gameRoom.mode == "local" || gameRoom.mode == "ai") {
+		if (perspective === "player1")
+			currentPlayer = gameRoom.gameState.player1;
+		else if (perspective === "player2")
+			currentPlayer = gameRoom.gameState.player2;
+		else
+			currentPlayer = gameRoom.player1.id_player == fromID ? gameRoom.gameState.player1 : gameRoom.gameState.player2;
+
+		if (gameRoom.mode == "ai")
+			currentPlayer = gameRoom.gameState.player1;
+
+		if (movement == "start") {
+			if (direction == "up" || direction == "UP")
+				currentPlayer.key_pressed = "UP";
+			else if (direction == "down" || direction == "DOWN")
+				currentPlayer.key_pressed = "DOWN";
+		}
+		else if (movement == "stop") {
+			if ((direction == "up" || direction == "UP") && currentPlayer.key_pressed == "UP")
+				currentPlayer.key_pressed = "";
+			else if ((direction == "down" || direction == "DOWN") && currentPlayer.key_pressed == "DOWN")
+				currentPlayer.key_pressed = "";
+		}
 	}
-	else if (movement == "stop")
-		currentPlayer.key_pressed = "";
 }
 
 export function gameLoop(gameRoom: GameRoom): void {
@@ -28,6 +37,23 @@ export function gameLoop(gameRoom: GameRoom): void {
 	const paddle1 = player1.paddle;
 	const paddle2 = player2.paddle;
 	const ball = gameRoom.gameState.ball;
+
+	// IA
+	if (gameRoom.mode == "ai") {
+		const gameState = gameRoom.gameState;
+		if (gameState.clock?.isTimeElapsed(1000)) {
+			gameState.ia?.newTarget(gameState.ball.x, gameState.ball.y, player2.paddle.y, gameState.player1.score + gameState.player2.score);
+			gameState.clock.resetClock();
+		} else {
+			const decision: string | undefined = gameState.ia?.makeDecision();
+			if (decision === "UP")
+				gameState.player2.key_pressed = "UP";
+			else if (decision === "DOWN")
+				gameState.player2.key_pressed = "DOWN";
+			else
+				gameState.player2.key_pressed = "";
+		}
+	}
 
 	// handle player input and move paddles
 	handleInput(player1, player2, paddle1, paddle2);
@@ -60,10 +86,16 @@ export function gameLoop(gameRoom: GameRoom): void {
 			}
 		});
 
-		const winnerID: number = player1.score >= MAX_SCORE ? gameRoom.player1.id_player : gameRoom.player2.id_player;
-		const looserID: number = player1.score >= MAX_SCORE ? gameRoom.player2.id_player : gameRoom.player1.id_player;
-
-		game_over(gameRoom, winnerID, looserID);
+		if (gameRoom.mode == "online") {
+			const winnerID: number = player1.score >= MAX_SCORE ? gameRoom.player1.id_player : gameRoom.player2.id_player;
+			const looserID: number = player1.score >= MAX_SCORE ? gameRoom.player2.id_player : gameRoom.player1.id_player;
+			game_over(gameRoom, winnerID, looserID);
+		}
+		else {
+			gameRoom.gameState.is_running = false;
+			if ((gameRoom as any).interval)
+				clearInterval((gameRoom as any).interval);
+		}
 	}
 }
 
@@ -119,7 +151,7 @@ function updateBall(player1: Player, player2: Player, paddle1: Paddle, paddle2: 
 		ball.yDirect = ball.speed * Math.sin(angleRad);
 
 		// increase speed at each collision
-		ball.speed *= 1.2;
+		ball.speed *= 1.1;
 	}
 
 	// check if point scored and reset the ball

@@ -1,4 +1,4 @@
-import { Socket } from "socket.io";
+import { Algo, Clock } from "./algo";
 
 // ===============================================
 // 			INTERFACE GAME LOGIC				||
@@ -35,8 +35,10 @@ export interface Player {
 export interface GameState {
 	player1: Player;
 	player2: Player;
-	ball: Ball,
-	is_running: boolean
+	ball: Ball;
+	is_running: boolean;
+	ia: Algo | undefined;
+	clock: Clock | undefined;
 }
 
 
@@ -66,7 +68,8 @@ let idRoom = 0;
 
 
 export function getNextRoomId(): number {
-	return ++idRoom; // Pre-increment: d'abord incrémente, puis retourne
+	++idRoom // Pre-increment: d'abord incrémente, puis retourne
+	return Math.floor(Math.random() * 90000000) + 10000000;
 }
 
 export function setRoom(id: number, gameRoom: GameRoom) {

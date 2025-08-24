@@ -256,7 +256,7 @@ export async function dashboardHandler(router: Router)
 
 	// allow people to play directly in AI / Local mode
 	modeClick(socket, "btnLocal", "local", id);
-	modeClick(socket, "btnAI", "AI", id);
+	modeClick(socket, "btnAI", "ai", id);
 	matchmaking(socket, id);
 
 	searchBar(router);
