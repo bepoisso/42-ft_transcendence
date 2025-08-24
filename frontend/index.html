@@ -9,11 +9,15 @@
 
   <body>
 	<canvas id="starfield"></canvas>
-	<style>
+	<div id="blackhole"></div>
+	<div id="app"></div>
+	  <script type="module" src="/src/main.ts"></script>
+	  <script src="assets/script.js"></script>
+	  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </body>
+  <style>
 	  body, html {
 		margin: 0; padding: 0; overflow: hidden;
-		background: #000;
-		width: 100vw; height: 100vh;
 	  }
 
 	  #starfield {
@@ -21,14 +25,34 @@
 		position: absolute;
 		top: 0; left: 0;
 		width: 100vw; height: 100vh;
-		z-index: 0;
+		z-index: -2;
 		pointer-events: none;
+		background: #000;
+		width: 100vw; height: 100vh;
 	  }
+
+	  #blackhole {
+		position: absolute;
+		top: 0; left: 0;
+		width: 100vw; height: 100vh;
+		z-index: -1;
+		pointer-events: none;
+		background: radial-gradient(
+		circle at center,
+		rgba(0, 0, 0, 1) 0%,
+		rgba(0, 0, 0, 0.9) 15%,
+		rgba(0, 0, 0, 0.7) 25%,
+		rgba(0, 0, 0, 0.4) 35%,
+		rgba(0, 0, 0, 0.2) 45%,
+		rgba(0, 0, 0, 0.1) 55%,
+		rgba(0, 0, 0, 0) 70%
+		);
+	  }
+
+	#app {
+		z-index: 1;
+	}
+
 	</style>
-	<div id="app"></div>
-	  <script type="module" src="/src/main.ts"></script>
-	  <script src="assets/script.js"></script>
-	  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  </body>
 </html>
 
