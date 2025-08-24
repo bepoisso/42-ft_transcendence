@@ -97,14 +97,14 @@ export async function socketHandler(fastify: FastifyInstance)
 				if (data.type === "game_send_invite") {
 					const fromId = getId.get(ws);
 					const toSocket = getSocket.get(data.to);
-					const fromUser = db.prepare("SELECT username FROM users WHERE id = ?").get(fromId);
+					const fromUser = db.prepare("SELECT username FROM users WHERE id = ?").get(fromId) as any;
 
 					if (toSocket && fromId !== undefined) {
 					// Envoie un message JSON au destinataire
 						toSocket.send(JSON.stringify({
 							type: "game_receive_invite",
 							from: fromId,
-							from_name: fromUser
+							from_name: fromUser.username
 						}));
 					}
 				}
@@ -116,7 +116,7 @@ export async function socketHandler(fastify: FastifyInstance)
 					friend_send_invite(socket!, data);
 				}
 
-				if (data.type === "friend_accepted") {
+				if (data.type === "accept_friend_invite") {
 					const fromId = getId.get(ws);
 					const socket = getSocket.get(fromId!);
 					friend_accepted(socket!, data);
@@ -160,7 +160,14 @@ export async function socketHandler(fastify: FastifyInstance)
 					(gameRoom as any).sockets = [toSocket, ws];
 					setRoom(idRoom, gameRoom);
 
-					db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(data.from, idTo, new Date().toISOString());
+					// recuperer directement le nom des joueurs pour tout envoyer à la db
+					const left_username_data = db.prepare("SELECT username FROM users WHERE id = ?").get(data.from) as { username?: string } | undefined;
+					const right_username_data = db.prepare("SELECT username FROM users WHERE id = ?").get(idTo) as { username?: string } | undefined;
+					const left_username = left_username_data?.username;
+					const right_username = right_username_data?.username;
+					db.prepare(`INSERT INTO games
+						(player_id_left, username_left, player_id_right, username_right, game_date)
+						VALUES (?, ?, ?, ?, ?)`).run(data.from, left_username, idTo, right_username, new Date().toISOString());
 					if (toSocket) {toSocket.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));}
 					ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
 
@@ -236,7 +243,14 @@ export async function socketHandler(fastify: FastifyInstance)
 						setRoom(idRoom, gameRoom);
 
 						// Insertion en DB
-						db.prepare(`INSERT INTO games (player_id_left, player_id_right, game_date) VALUES (?, ?, ?)`).run(player1Id, player2Id, new Date().toISOString());
+						// Je vais chercher les username pour tout rentrer d'un coup
+						const username_ll = db.prepare("SELECT username FROM users WHERE id = ?").get(player1Id) as { username?: string } | undefined;
+						const username_rr = db.prepare("SELECT username FROM users WHERE id = ?").get(player2Id) as { username?: string } | undefined;
+						const username_l = username_ll?.username;
+						const username_r = username_rr?.username;
+						db.prepare(`INSERT INTO games
+							(player_id_left, username_left, player_id_right, username_right, game_date)
+							VALUES (?, ?, ?, ?, ?)`).run(player1Id, username_l, player2Id, username_r, new Date().toISOString());
 
 						// Notification aux deux joueurs
 						if (toSocket) {

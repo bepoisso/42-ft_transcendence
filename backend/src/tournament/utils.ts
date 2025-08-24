@@ -5,6 +5,15 @@ import { getNextRoomId, setRoom } from "../game/interface";
 import { getSocket } from "../socket/socket";
 
 
+export async function getPendingTournament() {
+	try {
+		const tournaments = db.prepare(`SELECT * FROM tournaments WHERE tournament_status = 'pending'`).all();
+		return { statusCode: 200, message: "Success", tournaments };
+	} catch (err) {
+		return { statusCode: 500, message: "Internal server error" };
+	}
+}
+
 export function getPlayerGame(tournamentId: number, playerId: number) {
 	const stmt = db.prepare(`
 		SELECT id, round, poule, player1_id, player2_id, winner_id, status

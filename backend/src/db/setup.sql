@@ -33,7 +33,9 @@ DROP TABLE IF EXISTS games;
 CREATE TABLE games (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	player_id_left NUMBER NOT NULL,
+	username_left TEXT,
 	player_id_right NUMBER,
+	username_right TEXT,
 	player_id_won NUMBER,
 	game_date TEXT NOT NULL,
 	score TEXT,

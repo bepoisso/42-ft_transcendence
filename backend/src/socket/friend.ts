@@ -10,7 +10,8 @@ import type { WebSocket } from "ws";
 export function friend_send_invite(ws: WebSocket, data: any) {
 	const fromId = getId.get(ws);
 	const toSocket = getSocket.get(data.to);
-	const fromUser = db.prepare("SELECT username FROM users WHERE id = ?").get(fromId);
+	const fromUserDB = db.prepare("SELECT username FROM users WHERE id = ?").get(fromId) as { username?: string } | undefined;
+	const fromUser = fromUserDB?.username;
 
 	const relation = db.prepare(`
 		SELECT * FROM friends

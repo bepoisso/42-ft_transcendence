@@ -43,6 +43,7 @@ export function gameInvit(socket: WebSocket, data: any)
 
 export function friendInvit(socket: WebSocket, data: any)
 {
+	console.log("DATA ======== ", data);
 	const notification = document.createElement("div");
 	notification.className = `
 		fixed bottom-4 left-4 bg-gray-800 text-white px-4 py-3 rounded shadow-lg flex flex-col space-y-2

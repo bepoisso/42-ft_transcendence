@@ -14,6 +14,7 @@ export async function getGamesHistory(token: string) {
 		return { statusCode: 404, message: "User not found" };
 	}
 	const games = db.prepare(`SELECT * FROM games WHERE player_id_left = ? OR player_id_right = ?`).all(user.id, user.id) as Games[];
+	console.log("GAMES = ", games);
 
 	return { statusCode: 200, message: "Success", games };
 }

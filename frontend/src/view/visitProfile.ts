@@ -37,7 +37,7 @@ export function renderVisitProfile() {
           <!-- Boutons -->
           <div class="flex space-x-6">
             <button id="add-friend"
-              class="px-6 py-2 bg-blue-600 rounded-xl hover:bg-blue-700 font-semibold shadow hidden">
+              class="px-6 py-2 bg-blue-600 rounded-xl hover:bg-blue-700 font-semibold shadow">
               Add Friend
             </button>
             <button id="invite-play"

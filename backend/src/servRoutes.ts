@@ -15,7 +15,7 @@ import dotenv from "dotenv";
 import { sign, verify } from "crypto";
 import { verifyToken } from "node-2fa";
 import { createTournament, joinTournament, round2, round3} from "./tournament/tournament";
-import { infoTournament } from "./tournament/utils";
+import { getPendingTournament, infoTournament } from "./tournament/utils";
 
 dotenv.config();
 
@@ -225,6 +225,11 @@ export async function servRoutes(fastify: FastifyInstance)
 		return reply.send(result);
 	});
 
+	fastify.get("/api/get/tournament/pending", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+		const result = await getPendingTournament();
+		return reply.send(result);
+	});
+
 	fastify.post("/tournament/info", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const {tournamentId} = request.body as any;
@@ -233,14 +238,14 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 
-	fastify.post("/createTournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+	fastify.post("/api/createTournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const {tournamentName, playerTName } = request.body as any;
 		const result = await createTournament(tournamentName, playerTName, token || "");
 		return reply.send(result);
 	});
 
-	fastify.post("/joinTournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
+	fastify.post("/api/joinTournament", {preHandler: [verifyAuthToken]}, async (request, reply) => {
 		const token = request.cookies.token;
 		const {tournamentName, playerTName } = request.body as any;
 		const result = await joinTournament(tournamentName, playerTName, token || "");

@@ -54,8 +54,8 @@ export function renderDashboard() {
           </div>
 
 		  <!-- Partie Rooms / Parties en cours -->
-          <button id="toggle-history" type="button"
-				class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm w-full">
+          <button id="history" type="button"
+				class= "px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm w-full">
 				My History
 			</button>
         </div>
@@ -108,7 +108,7 @@ async function fetchUserData() : Promise<{
 
 
 
-async function setDashboard(router: Router): Promise<{id: number, roomId: number} | undefined>
+async function setDashboard(router: Router): Promise<{username: string, id: number, roomId: number} | undefined>
 {
 	try {
 			const data = await fetchUserData();
@@ -134,7 +134,7 @@ async function setDashboard(router: Router): Promise<{id: number, roomId: number
 
 			renderFriendsSidebar(router, data.friends!);
 
-			return {id: data.id!, roomId: data.room_id || 0};
+			return {username: data.username!, id: data.id!, roomId: data.room_id || 0};
 	} catch (err) {
 		console.error("Error fetching user data:", err);
 		router.navigate("/login");
@@ -199,6 +199,26 @@ export function matchmaking(socket: WebSocket, id: any)
 }
 
 
+export function goToHistoric(router: Router)
+{
+	const btn = document.getElementById("history");
+	btn?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		router.navigate(`/myHistory`);
+	});
+}
+
+
+export function goToTournament(router: Router)
+{
+	const btn = document.getElementById("btnTournament");
+	btn?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		router.navigate("/tournament");
+	});
+}
 
 export async function dashboardHandler(router: Router)
 {
@@ -206,15 +226,13 @@ export async function dashboardHandler(router: Router)
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
-	const { id, roomId } = userData;
+	const { username, id, roomId } = userData;
 
 	// if player is still active in a room, send message to this room to kill the room
 	if (roomId !== 0 || undefined) {
-		console.log("UERUERHGU;HOG;EJKUHGER;HOUGEROUHGE;HOUGR2;HOU;GHORU;HOUGRQO;UHGRQHOU;GRQ;HUGRQ;HIU;IUHGRHIU;QEGR");
 		socket.send(JSON.stringify({
 			type: "player_left",
-			from: id,
-			roomId: roomId,
+			from: id
 		}))
 	}
 
@@ -226,7 +244,10 @@ export async function dashboardHandler(router: Router)
 	modeClick(socket, "btnAI", "AI", id);
 	matchmaking(socket, id);
 
-	// TODO
 	searchBar(router);
+
+	goToTournament(router);
+	//match history
+	goToHistoric(router);
 }
 
