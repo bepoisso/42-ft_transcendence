@@ -1,5 +1,5 @@
 import { GameRoom, Player, Paddle, Ball, HEIGHT, WIDTH } from "./interface";
-import { game_over } from "./socket";
+import { game_over } from "../socket/socket";
 
 export function updateGame(gameRoom: GameRoom, fromID: number | undefined, direction: string, movement: string, perspective?: string) : void {
 	let currentPlayer: Player;

@@ -212,9 +212,11 @@ export async function dashboardHandler(router: Router)
 
 	// if player is still active in a room, send message to this room to kill the room
 	if (roomId !== 0 || undefined) {
+		console.log("UERUERHGU;HOG;EJKUHGER;HOUGEROUHGE;HOUGR2;HOU;GHORU;HOUGRQO;UHGRQHOU;GRQ;HUGRQ;HIU;IUHGRHIU;QEGR");
 		socket.send(JSON.stringify({
 			type: "player_left",
-			from: id
+			from: id,
+			roomId: roomId,
 		}))
 	}
 
