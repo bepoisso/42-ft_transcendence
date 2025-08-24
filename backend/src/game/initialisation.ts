@@ -4,7 +4,7 @@ import { GameState } from "./interface";
 import { WIDTH, HEIGHT } from "./interface";
 
 
-export function initGameRoom(idRoom: number, id_player1: number, id_player2: number, mode: string) : GameRoom
+export function initGameRoom(idRoom: number, id_player1: number, id_player2: number, mode: string, tournament_id: number) : GameRoom
 {
 	const username1Result = db.prepare("SELECT username FROM users WHERE id = ?").get(id_player1);
 	const username2Result = db.prepare("SELECT username FROM users WHERE id = ?").get(id_player2);
@@ -16,6 +16,7 @@ export function initGameRoom(idRoom: number, id_player1: number, id_player2: num
 	{
 		id: idRoom,
 		mode: mode,
+		tournament_id: tournament_id,
 		player1:
 		{
 			id_player: id_player1,

@@ -52,15 +52,16 @@ export function renderVisitProfile() {
   `;
 }
 
-async function fetchUserData(id: number): Promise<{
+// Il faut changer ça, on va visiter non pas avec l'id mais avec le username
+async function fetchUserData(username: string): Promise<{
 	statusCode: number,
 	message?: string,
-	userId: string,
+	id: string,
 	username: string,
+	is_connected: number,
 	avatarURL?: string,
-	gamesPlayed: string,
-	gamesWon: string,
-	friend: boolean
+	games_played: string,
+	games_won: string,
 	}> {
 	const response = await fetch("/back/api/get/user/public", {
 		method: "POST",
@@ -68,16 +69,16 @@ async function fetchUserData(id: number): Promise<{
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({id: id}),
+		body: JSON.stringify({username: username}),
 	});
 	return await response.json();
 }
 
 
-async function setVisitProfile(id: number)
+async function setVisitProfile(username: string)
 {
 	try {
-		const data = await fetchUserData(id);
+		const data = await fetchUserData(username);
 
 		if (data.statusCode !== 200) {
 			console.error("Error with visitProfile : " + data.message);
@@ -85,7 +86,8 @@ async function setVisitProfile(id: number)
 		}
 
 		//donne egalement le userID que je vais stocker pour la requete
-		localStorage.setItem("userId", data.userId);
+		console.log("L'ID du friend est : ", data.id);
+		localStorage.setItem("userId", data.id);
 
 		// username
 		const userName = document.getElementById("user-name");
@@ -102,22 +104,12 @@ async function setVisitProfile(id: number)
 		// stats
 		const userGames = document.getElementById("played");
 		if (userGames) {
-			userGames.textContent = data.gamesPlayed;
+			userGames.textContent = data.games_played;
 		}
 
 		const userWins = document.getElementById("wins");
 		if (userWins) {
-			userWins.textContent = data.gamesWon;
-		}
-
-		// bouton "Add Friend" seulement si pas encore amis
-		const addFriendBtn = document.getElementById("add-friend");
-		if (addFriendBtn) {
-			if (!data.friend) {
-				addFriendBtn.classList.remove("hidden");
-			} else {
-			addFriendBtn.classList.add("hidden");
-			}
+			userWins.textContent = data.games_won;
 		}
 
 	} catch (err) {
@@ -127,20 +119,39 @@ async function setVisitProfile(id: number)
 
 
 
-function inviteGame(socket: WebSocket) {
+function invite(socket: WebSocket, friend_id: number) {
 	const btn = document.getElementById("invite-play");
 	btn?.addEventListener("click", async (e) => {
 		e.preventDefault(); // Empêche le rechargement
 
-		const userId = localStorage.getItem("userId"); // id de l'ami que j'invite
-		//socket.emit("send_invite", {to: userId });
+		console.log("Game invitation sent to : ", friend_id);
+		socket.send(JSON.stringify({
+			type: "game_send_invite",
+			to: friend_id,
+		}));
+	});
+
+
+	const btnFriend = document.getElementById("add-friend");
+	btnFriend?.addEventListener("click", async (e) => {
+		e.preventDefault(); // Empêche le rechargement
+
+		console.log("Friend invitation sent to : ", friend_id);
+		socket.send(JSON.stringify({
+			type: "friend_send_invite",
+			to: friend_id,
+		}));
 	});
 }
 
 
-export async function visitProfileHandler(router: Router, id: number)
+export async function visitProfileHandler(router: Router, username: string)
 {
 	const socket = await getSocket(router);
-	setVisitProfile(id);
-	inviteGame(socket);
+	setVisitProfile(username);
+
+	const friend_id = localStorage.getItem("userId");
+	console.log("L'id reçu correspond a : ", friend_id);
+	if (friend_id)
+		invite(socket, Number(friend_id));
 }

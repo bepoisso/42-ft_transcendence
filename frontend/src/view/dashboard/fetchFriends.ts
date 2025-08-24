@@ -9,8 +9,7 @@ export type Friend = {
   friend_id: number;
   username: string;
   avatar_url: string;
-  status: "pending" | "accepted";
-  isConnected : number
+  is_connected : number
 };
 
 export function renderFriendsSidebar(router: Router, friends: Friend[])
@@ -41,7 +40,11 @@ export function renderFriendsSidebar(router: Router, friends: Friend[])
 
 		// status
 		const statusDot = document.createElement("span");
-		statusDot.className = `w-3 h-3 rounded-full ${friend.isConnected ? "bg-green-500" : "bg-red-500"}`;
+		console.log("friend status : ", friend.is_connected )
+		if (friend.is_connected === 1)
+			statusDot.className = "w-3 h-3 rounded-full bg-green-500";
+		else
+			statusDot.className = "w-3 h-3 rounded-full bg-red-500";
 		friendEl.appendChild(statusDot);
 
 		// username
@@ -51,9 +54,67 @@ export function renderFriendsSidebar(router: Router, friends: Friend[])
 
 		// friend_id
 		friendEl.addEventListener("click", () => {
-			router.navigate(`/visitProfile/${friend.friend_id}`);
+			console.log(`le username = ${friend.username}`);
+			router.navigate(`/visitProfile/${friend.username}`);
 		});
 
 		sidebar.appendChild(friendEl);
+	});
+}
+
+
+
+async function checkProfile(username: string) : Promise<{
+  statusCode: number;
+  message: string;
+  id?: number;
+  username?: string;
+  avatar_url?: string;
+  games_played?: number;
+  games_won?: number;
+}> {
+	const response = await fetch("/back/api/get/user/public", {
+		method: "POST",
+		credentials: 'include',
+		headers: {
+		"Content-Type": "application/json",
+		},
+		body: JSON.stringify({username: username}),
+	});
+
+	if (!response.ok) {
+		console.error(`HTTP error! status: ${response.status}`);
+		const text = await response.text();
+		console.error('Response:', text);
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+
+	const data = await response.json();
+	return data;
+}
+
+export function searchBar(router: Router)
+{
+	const searchInput = document.getElementById("search");
+
+	searchInput?.addEventListener('keydown', async (e) => {
+	if (e.key === "Enter") {
+		const query = (searchInput as HTMLInputElement).value;
+		try {
+			const data = await checkProfile(query);
+			console.log("LA QUERY EST ", data);
+			if (data.statusCode === 404) {
+				console.log("ON ENTRE ICI ?");
+				const errorMessage = document.getElementById("error-message");
+				if (errorMessage)
+					errorMessage.textContent = "There is no users with this name";
+				return ;
+			}
+			router.navigate(`/visitProfile/${data.username}`);
+		} catch (err){
+			console.log("Error trying to check for user ", err);
+			return;
+		}
+	};
 	});
 }

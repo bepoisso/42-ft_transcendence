@@ -1,12 +1,13 @@
 import { FastifyInstance } from "fastify";
-import { GameRoom, getGameRoom, getNextRoomId } from "./interface";
+import { GameRoom, getGameRoom, getNextRoomId } from "../game/interface";
 import * as cookie from "cookie";
 import { WebSocket } from "@fastify/websocket";
 import jwt from "jsonwebtoken";
 import db from "../db/db";
-import { setRoom, Player } from "./interface";
-import { initGameRoom } from "./initialisation";
-import { updateGame, gameLoop } from "./logic"
+import { setRoom } from "../game/interface";
+import { initGameRoom } from "../game/initialisation";
+import { updateGame, gameLoop } from "../game/logic"
+import { friend_accepted, friend_send_invite, refuse_friend_invite } from "./friend";
 
 
 /*
@@ -21,20 +22,15 @@ import { updateGame, gameLoop } from "./logic"
 	io.emit = envoie a tout le monde
 
 */
-
-const getSocket = new Map<number, WebSocket>();
-const getId = new Map<WebSocket, number>();
-let matchmakingQueue: number = -1; // File d'attente pour le matchmaking
-
+export const getSocket = new Map<number, WebSocket>();
+export const getId = new Map<WebSocket, number>();
+let matchmakingQueue: number = -1;
 
 export async function socketHandler(fastify: FastifyInstance)
 {
-	// console.log("🚀 Initialisation du WebSocket handler");
 
 	// Route WebSocket avec Fastify
 	fastify.get('/ws', { websocket: true }, (connection, req) => {
-		// console.log("🔌 Nouvelle tentative de connexion WebSocket");
-		// console.log("📋 Headers de la requête:", req.headers);
 
 		const ws = connection;
 
@@ -51,19 +47,42 @@ export async function socketHandler(fastify: FastifyInstance)
 				twofa_enable: boolean;
 			};
 
-		getSocket.set(payload.id, ws);
-		getId.set(ws, payload.id);
-		// console.log(`🟢 Utilisateur connecté avec succès - ID: ${payload.id}, Email: ${payload.email}`);
-		// console.log(`📊 Nombre total de connexions actives: ${getSocket.size}`);
+			getSocket.set(payload.id, ws);
+			getId.set(ws, payload.id);
 
-		// Envoyer un message de confirmation de connexion
-		ws.send(JSON.stringify({
-			type: "connection_confirmed",
-			message: "WebSocket connection established successfully",
-			userId: payload.id
-		}));		} catch (err) {
-			// console.log("JWT invalide");
-			ws.close(); // déconnecte la socket
+			// Il faut update le statut isConnected a 1
+			try {
+				db.prepare("UPDATE users SET is_connected = 1 WHERE id = ?").run(payload.id);
+			} catch (dbError) {
+				console.error("Erreur mise à jour statut connexion:", dbError);
+			}
+
+			//Ici on va gérer les demandes d'amis en attente
+			const pendingRequests = db.prepare(`
+				SELECT f.*, u.username, u.avatar_url
+				FROM friends f
+				JOIN users u ON f.user_id = u.id
+				WHERE f.friend_id = ? AND f.status = 'pending'
+			`).all(payload.id);
+
+			if (pendingRequests.length > 0) {
+				pendingRequests.forEach((request: any) => {
+					ws.send(JSON.stringify({
+						type: "friend_receive_invite",
+						from: request.user_id,
+					}));
+				});
+			}
+
+			// Envoyer un message de confirmation de connexion
+			ws.send(JSON.stringify({
+				type: "connection_confirmed",
+				message: "WebSocket connection established successfully",
+				userId: payload.id
+			}));
+
+		} catch (err) {
+			ws.close();
 			return;
 		}
 
@@ -71,9 +90,10 @@ export async function socketHandler(fastify: FastifyInstance)
 		ws.on("message", (message: string) => {
 			try {
 				const data = JSON.parse(message);
-				// console.log("📦 Message reçu du client:", data); // Debug: voir tous les messages
 
-				//implementer chaque logique
+
+				//Ici, implementer de chaque logique
+
 				if (data.type === "game_send_invite") {
 					const fromId = getId.get(ws);
 					const toSocket = getSocket.get(data.to);
@@ -89,27 +109,29 @@ export async function socketHandler(fastify: FastifyInstance)
 					}
 				}
 
+		// ---------------- FRIENDS LOGIC -------------------
 				if (data.type === "friend_send_invite") {
 					const fromId = getId.get(ws);
-					const toSocket = getSocket.get(data.to);
-					const fromUser = db.prepare("SELECT username FROM users WHERE id = ?").get(fromId);
-
-					if (toSocket && fromId !== undefined) {
-					// Envoie un message JSON au destinataire
-						toSocket.send(JSON.stringify({
-							type: "friend_receive_invite",
-							from: fromId,
-							from_name: fromUser
-						}));
-					}
+					const socket = getSocket.get(fromId!);
+					friend_send_invite(socket!, data);
 				}
 
 				if (data.type === "friend_accepted") {
-					const idFrom = data.from;
-					const idTo = getId.get(ws);
-					// utiliser la fonction de benj qui va recupérer les données d'un utilisateur selon son id
-					// ajouter chaque utilisateur a sa table correspondante avec les infos fetch
+					const fromId = getId.get(ws);
+					const socket = getSocket.get(fromId!);
+					friend_accepted(socket!, data);
 				}
+
+
+				if (data.type === "refuse_friend_invite") {
+					const fromId = getId.get(ws);
+					const socket = getSocket.get(fromId!);
+					refuse_friend_invite(socket!, data);
+				}
+
+
+
+
 
 				if (data.type === "game_accepted") {
 					// console.log("🎮 Game accepted - Mode:", data.mode, "From:", data.from);
@@ -117,12 +139,12 @@ export async function socketHandler(fastify: FastifyInstance)
 
 					if (data.mode === "local" || data.mode === "AI") {
 						// console.log("🎯 Mode local/AI - création de la room:", idRoom);
-						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode);
+						const gameRoom = initGameRoom(idRoom, data.from, data.from, data.mode, 0);
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 						setRoom(idRoom, gameRoom);
 						// console.log("✅ Room locale créée avec succès, envoi roomId:", idRoom);
 						ws.send(JSON.stringify({ type: "room_ready", roomId: idRoom }));
-						return; // 🔴 IMPORTANT: sortir ici pour éviter l'exécution du code online
+						return;
 					}
 
 					// Mode online (matchmaking) - ne s'exécute que si ce n'est PAS local/AI
@@ -134,7 +156,7 @@ export async function socketHandler(fastify: FastifyInstance)
 					db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, idTo);
 					db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, data.from);
 
-					const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode);
+					const gameRoom = initGameRoom(idRoom, data.from, idTo, data.mode, 0);
 					(gameRoom as any).sockets = [toSocket, ws];
 					setRoom(idRoom, gameRoom);
 
@@ -182,7 +204,6 @@ export async function socketHandler(fastify: FastifyInstance)
 				}
 
 
-
 				if (data.type === "matchmaking") {
 					// console.log("Demande de matchmaking de l'utilisateur:", data.from);
 
@@ -196,6 +217,11 @@ export async function socketHandler(fastify: FastifyInstance)
 					} else {
 						// console.log("Match trouvé! Joueur 1:", matchmakingQueue, "vs Joueur 2:", data.from);
 
+						// Si la personne rappuie sur online rien ne se passe
+						if (matchmakingQueue === data.from) {
+							return;
+						}
+
 						const idRoom = getNextRoomId();
 						const toSocket = getSocket.get(matchmakingQueue);
 						const player1Id = matchmakingQueue;
@@ -206,7 +232,7 @@ export async function socketHandler(fastify: FastifyInstance)
 						db.prepare("UPDATE users SET room_id = ? WHERE id = ?").run(idRoom, player2Id);
 
 						// Création de la room
-						const gameRoom = initGameRoom(idRoom, player1Id, player2Id, "online");
+						const gameRoom = initGameRoom(idRoom, player1Id, player2Id, "online", 0);
 						setRoom(idRoom, gameRoom);
 
 						// Insertion en DB
@@ -240,7 +266,7 @@ export async function socketHandler(fastify: FastifyInstance)
 					const gameRoom = getGameRoom(data.roomId);
 					if (!gameRoom) return ;
 					const gameState = gameRoom.gameState;
-					const activePlayer : Player = gameState.player1.id_player == disconnectedPlayerId ? gameState.player2 : gameState.player1;
+					const activePlayer = gameState.player1.id_player == disconnectedPlayerId ? gameState.player2 : gameState.player1;
 
 					// set max score to remaining player to trigger end of the game in logic.ts who then call game_over
 					activePlayer.score = 10;
@@ -264,19 +290,33 @@ export async function socketHandler(fastify: FastifyInstance)
 					}
 				}
 			}
+
+			try {
+				db.prepare("UPDATE users SET is_connected = 0 WHERE id = ?").run(userId);
+			} catch (dbError) {
+				console.error("Erreur mise à jour statut connexion:", dbError);
+			}
+			console.log(`🔌 WebSocket fermée - Code: ${code}, Raison: ${reason}, User ID: ${userId}`);
+
+			if (userId) {
+				getSocket.delete(userId);
+				getId.delete(ws);
+			}
 		});
 
 		// Gestion des erreurs de socket
 		ws.on("error", (error: any) => {
 			const userId = getId.get(ws);
-			console.error("🔴 Erreur WebSocket pour l'utilisateur ID:", userId || "inconnu");
-			console.error("📝 Détails de l'erreur:", error);
+			console.error("Erreur WebSocket pour l'utilisateur ID:", userId || "inconnu");
+			console.error("Détails de l'erreur:", error);
 		});
 
 	});
 
 	// console.log("✅ WebSocket handler initialisé avec succès");
 }
+
+
 
 function broadcastGameUpdate(gameRoom: any) {
 	const gameState = gameRoom.gameState;

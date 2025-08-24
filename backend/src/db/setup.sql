@@ -40,13 +40,46 @@ CREATE TABLE games (
 	tournament_id NUMBER DEFAULT 0
 );
 
-DROP TABLE IF EXISTS tournament;
 
-CREATE TABLE tournament (
+
+
+DROP TABLE IF EXISTS tournamentz;
+
+CREATE TABLE tournaments (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	tournament_name TEXT NOT NULL,
-	nbr_player NUMBER NOT NULL,
-	player_list TEXT,
-	player_won NUMBER,
-	tournament_date TEXT NOT NULL
+	tournament_name TEXT NOT NULL UNIQUE,
+	player_1 INTEGER NOT NULL,
+	player_2 INTEGER,
+	player_3 INTEGER,
+	player_4 INTEGER,
+	player_5 INTEGER,
+	player_6 INTEGER,
+	player_7 INTEGER,
+	player_8 INTEGER,
+	tournament_date TEXT NOT NULL DEFAULT (datetime('now')),
+	tournament_status TEXT NOT NULL DEFAULT 'pending',
+	round INTEGER,
+	FOREIGN KEY(player_1) REFERENCES users(id),
+	FOREIGN KEY(player_2) REFERENCES users(id),
+	FOREIGN KEY(player_3) REFERENCES users(id),
+	FOREIGN KEY(player_4) REFERENCES users(id),
+	FOREIGN KEY(player_5) REFERENCES users(id),
+	FOREIGN KEY(player_6) REFERENCES users(id),
+	FOREIGN KEY(player_7) REFERENCES users(id),
+	FOREIGN KEY(player_8) REFERENCES users(id)
+);
+
+CREATE TABLE tournament_games (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	tournament_id INTEGER NOT NULL,
+	round INTEGER NOT NULL,
+	poule INTEGER,
+	player1_id INTEGER,
+	player2_id INTEGER,
+	winner_id INTEGER,
+	status TEXT NOT NULL DEFAULT 'pending',
+	FOREIGN KEY(tournament_id) REFERENCES tournaments(id),
+	FOREIGN KEY(player1_id) REFERENCES users(id),
+	FOREIGN KEY(player2_id) REFERENCES users(id),
+	FOREIGN KEY(winner_id) REFERENCES users(id)
 );

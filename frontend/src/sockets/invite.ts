@@ -1,3 +1,5 @@
+// Les deux fonctions sont pratiquement les memes, elles créent un event en bas de la page soit pour add friend soit pour join game
+
 
 export function gameInvit(socket: WebSocket, data: any)
 {
@@ -66,6 +68,7 @@ export function friendInvit(socket: WebSocket, data: any)
 	declineBtn.textContent = "❌";
 	declineBtn.className = "px-3 py-1 bg-red-600 rounded hover:bg-red-700";
 	declineBtn.onclick = () => {
+		socket.send(JSON.stringify({ type: "refuse_friend_invite", from: data.from }));
 		notification.remove();
 	};
 

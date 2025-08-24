@@ -53,6 +53,7 @@ interface PlayerConnection {
 export interface GameRoom {
 	id: number;
 	mode: string;
+	tournament_id: number;
 	player1: PlayerConnection;
 	player2: PlayerConnection;
 	gameState: GameState;
