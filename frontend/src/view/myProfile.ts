@@ -13,26 +13,35 @@ export function renderMyProfile() {
       <div class="flex flex-1 w-full p-6 bg-gray-900">
 
         <!-- Colonne gauche : Avatar -->
-        <form id="avatar-form" class="w-1/4 flex flex-col items-center space-y-4 border-r border-gray-700 pr-6">
-          <!-- Avatar affiché -->
-          <img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar"
-            class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
+		<form id="avatar-form" class="w-1/4 flex flex-col items-center space-y-6 border-r border-gray-700 pr-6">
 
-          <!-- Boutons -->
-          <div class="flex flex-col space-y-3 w-full">
-            <!-- Champ URL -->
-            <input type="url" id="avatar-url" placeholder="https://example.com/image.png"
-              class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none">
-            <div class="flex space-x-4">
-              <input type="file" id="avatar-file" accept="image/*" class="hidden" />
+		<!-- Avatar affiché -->
+		<img id="user-avatar" src="../assets/basic_avatar.png" alt="Avatar"
+			class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
 
-              <button type="button" id="change-avatar"
-                class="px-4 py-2 bg-green-600 rounded hover:bg-green-700 text-sm">
-                Save
-              </button>
-            </div>
-          </div>
-        </form>
+		<!-- Boutons -->
+		<div class="flex flex-col space-y-3 w-full">
+			<!-- Champ URL -->
+			<input type="url" id="avatar-url" placeholder="https://example.com/image.png"
+			class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-600 text-white focus:outline-none">
+			<div class="flex space-x-4">
+			<input type="file" id="avatar-file" accept="image/*" class="hidden" />
+
+			<button type="button" id="change-avatar"
+				class="px-4 py-2 bg-green-600 rounded hover:bg-green-700 text-sm">
+				Save
+			</button>
+			</div>
+		</div>
+
+		<!-- Historique des parties déplacé ici -->
+		<button id="toggle-history" type="button"
+			class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 text-sm w-full">
+			My History
+		</button>
+
+		</form>
+
 
         <!-- Colonne droite : Infos utilisateur -->
         <div class="w-3/4 pl-6 space-y-8">
@@ -103,14 +112,6 @@ export function renderMyProfile() {
               </button>
             </div>
             <p id="error-password" class="text-red-500 mt-2"></p>
-          </div>
-
-          <!-- Historique des parties -->
-          <div class="rounded-lg space-y-4">
-            <h2 class="text-lg font-bold border-b border-gray-700 pb-2 text-left">Historique des parties</h2>
-            <div id="game-history" class="space-y-2 max-h-64 overflow-y-auto">
-              <p class="text-gray-400">Chargement de l’historique...</p>
-            </div>
           </div>
 
         </div>

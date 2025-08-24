@@ -185,16 +185,15 @@ export async function servRoutes(fastify: FastifyInstance)
 	});
 
 	fastify.get("/api/get/user/private", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		if (reply.sent) return; // Éviter les doubles envois
 		const token = request.cookies.token;
 		const result = await getUserPrivate(token || "");
 		return reply.send(result);
 	});
 
 	fastify.post("/api/get/user/public", {preHandler: [verifyAuthToken]}, async (request, reply) => {
-		const { id } = request.body as any;
+		const { username } = request.body as any;
 		const token = request.cookies.token;
-		const result = await getUserPublic(id || 0);
+		const result = await getUserPublic(username || 0);
 		console.log("USER PUBLIC = ", result);
 		return reply.send(result);
 	});

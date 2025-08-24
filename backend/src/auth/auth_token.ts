@@ -20,7 +20,7 @@ export function signToken(user: { id: number; email: string; twofa_enable: boole
 	}
 };
 
-export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply, done: Function) {
+export async function verifyAuthToken(request: FastifyRequest, reply: FastifyReply) {
 	try {
 		const token = request.cookies.token;
 		if (!token) {
@@ -40,7 +40,7 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 				return reply.status(403).send({ statusCode:403, error: 'Two-Factor Authentication required' });
 			}
 		}
-		done();
+		// Pas de done() - middleware async pur
 	} catch (err) {
 		return reply.status(401).send({statusCode: 401 ,error: 'Invalid or expired token'});
 	}

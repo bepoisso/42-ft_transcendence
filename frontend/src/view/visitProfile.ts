@@ -53,7 +53,7 @@ export function renderVisitProfile() {
 }
 
 // Il faut changer ça, on va visiter non pas avec l'id mais avec le username
-async function fetchUserData(id: number): Promise<{
+async function fetchUserData(username: string): Promise<{
 	statusCode: number,
 	message?: string,
 	id: string,
@@ -69,16 +69,16 @@ async function fetchUserData(id: number): Promise<{
 		headers: {
 		"Content-Type": "application/json",
 		},
-		body: JSON.stringify({id: id}),
+		body: JSON.stringify({username: username}),
 	});
 	return await response.json();
 }
 
 
-async function setVisitProfile(id: number)
+async function setVisitProfile(username: string)
 {
 	try {
-		const data = await fetchUserData(id);
+		const data = await fetchUserData(username);
 
 		if (data.statusCode !== 200) {
 			console.error("Error with visitProfile : " + data.message);
@@ -145,10 +145,10 @@ function invite(socket: WebSocket, friend_id: number) {
 }
 
 
-export async function visitProfileHandler(router: Router, id: number)
+export async function visitProfileHandler(router: Router, username: string)
 {
 	const socket = await getSocket(router);
-	setVisitProfile(id);
+	setVisitProfile(username);
 
 	const friend_id = localStorage.getItem("userId");
 	console.log("L'id reçu correspond a : ", friend_id);

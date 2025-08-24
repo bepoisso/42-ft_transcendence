@@ -1,6 +1,5 @@
 import { Router } from "../../router";
-import { searchBar } from "./toolbar";
-import { renderFriendsSidebar } from "./fetchFriends";
+import { renderFriendsSidebar, searchBar } from "./fetchFriends";
 import { getSocket } from "../../sockets/socket";
 import type { Friend } from "./fetchFriends";
 
@@ -18,9 +17,7 @@ export function renderDashboard() {
 			placeholder="Search friends..."
 			class="px-3 py-2 w-full rounded bg-gray-800 border border-gray-600 text-white focus:outline-none"
 		  />
-			<div id="search-results"
-				class="absolute top-full left-0 mt-1 w-full bg-gray-800 rounded shadow-lg z-50 hidden">
-			</div>
+			<p id="error-message" class="text-red-500 text-sm"></p>
 		</div>
 
 
@@ -87,9 +84,7 @@ async function fetchUserData() : Promise<{
   message: string;
   id?: number;
   username?: string;
-  username_tournament?: string;
   avatar_url?: string;
-  email?: string;
   games_played?: number;
   games_won?: number;
   room_id?: number;

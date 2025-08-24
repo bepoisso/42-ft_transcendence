@@ -64,14 +64,14 @@ export async function getUserPrivate(token: string) {
 }
 
 // Il faut verifier le token et me renvoyer si ils sont deja amis ou pas
-export async function getUserPublic(id: number) {
-	if (!id) {
+export async function getUserPublic(username: number) {
+	if (!username) {
 		return { statusCode: 404, message: "User not found" };
 	}
 
-	const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(id) as User;
+	const user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username) as User;
 	if (!user) {
-		return { StatusCode: 404, message: "User not found" };
+		return { statusCode: 404, message: "User not found" };
 	}
 
 	return {	statusCode: 200,
