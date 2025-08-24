@@ -15,6 +15,7 @@ import { renderMyProfile, myProfileHandler } from "./view/myProfile";
 import { renderVisitProfile, visitProfileHandler } from "./view/visitProfile";
 import { renderTournaments, tournamentHandler} from "./view/tournament/tournament";
 import { renderTournamentTree, tournamentRound } from "./view/tournament/tournamentRound";
+import { renderHistoric } from "./view/myHistoric";
 
 
 export class App
@@ -61,6 +62,9 @@ export class App
 			"/tournamentRound/:id": async (params: any) => {
 				renderTournamentTree();
 				await tournamentRound(self.router, params.id);
+			},
+			"/myHistoric/:id": async (params: any) => {
+				renderHistoric();
 			}
 		};
 		this.router = new Router(routes);
