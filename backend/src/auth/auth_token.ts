@@ -4,6 +4,7 @@ import db from "../db/db"
 import { FastifyRequest, FastifyReply } from 'fastify';
 import type { User } from "../types/db";
 import cookies from "@fastify/cookie"
+import { logToELK } from '../elk';
 
 export function signToken(user: { id: number; email: string; twofa_enable: boolean }): string {
 	const jwtsecret = process.env.JWT_SECRET;
@@ -24,11 +25,13 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 	try {
 		const token = request.cookies.token;
 		if (!token) {
+			await logToELK('error', 'token missing', { function: 'verifyAuthToken', reason: 'invalid_credential'});
 			return reply.status(401).send({statusCode: 401, error: 'Token is missing' });
 		}
 
 		const jwtsecret = process.env.JWT_SECRET;
 		if (!jwtsecret) {
+			await logToELK('error', 'server error', { function: 'verifyAuthToken', reason: 'invalid_credential'});
 			return reply.status(500).send({statusCode: 500, error: 'Server configuration error' });
 		}
 
@@ -42,6 +45,7 @@ export async function verifyAuthToken(request: FastifyRequest, reply: FastifyRep
 		}
 		// Pas de done() - middleware async pur
 	} catch (err) {
+		await logToELK('error', 'Invalid Token', { function: 'verifyAuthToken', reason: err});
 		return reply.status(401).send({statusCode: 401 ,error: 'Invalid or expired token'});
 	}
 };
@@ -60,7 +64,7 @@ export async function getUserByToken(token: string) {
 		const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(decoded.id) as User;
 		return user.email;
 	} catch (err) {
-		console.log("ERROR: ", err);
+		await logToELK('error', 'User not found or token invalid', { function: 'getUserToken', reason: err});
 		return { statusCode: 404, message: "User not found or token invalid"};
 	}
 };

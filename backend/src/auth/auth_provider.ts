@@ -2,6 +2,8 @@ import {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import dotenv from "dotenv";
 import OAuth2, {OAuth2Namespace} from "@fastify/oauth2";
 import { loginOrCreateGoogleUser } from "./auth";
+import { logToELK } from "../elk";
+
 
 dotenv.config();
 
@@ -68,6 +70,7 @@ export async function googleOauth(request: FastifyRequest, reply: FastifyReply, 
 		return result;
 	} catch (err) {
 		console.error('Google OAuth error:', err);
+		await logToELK('error', 'google auth failed', { function: 'registerGoogle', reason: err});
 		return { statusCode: 500, message: 'G_oAuth Authentication failed' };
 	}
 }

@@ -1,0 +1,146 @@
+services:
+  elasticsearch:
+    env_file: ".env"
+    build:
+      context: ./ELK
+      dockerfile: Elasticsearch/Dockerfile
+    container_name: elasticsearch
+    hostname: elasticsearch
+    environment:
+      - node.name=${NODE_NAME}
+      - cluster.name=${CLUSTER_NAME}
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=/usr/share/elasticsearch/config/certs/elasticsearch-key.pem
+      - xpack.security.http.ssl.certificate=/usr/share/elasticsearch/config/certs/elasticsearch-cert.pem
+      - xpack.security.http.ssl.certificate_authorities=/usr/share/elasticsearch/config/certs/ca-cert.pem
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=/usr/share/elasticsearch/config/certs/elasticsearch-key.pem
+      - xpack.security.transport.ssl.certificate=/usr/share/elasticsearch/config/certs/elasticsearch-cert.pem
+      - xpack.security.transport.ssl.certificate_authorities=/usr/share/elasticsearch/config/certs/ca-cert.pem
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - ES_JAVA_OPTS=${ES_JAVA_OPTS}
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - elk
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./ELK/certs:/usr/share/elasticsearch/config/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -u elastic:${ELASTIC_PASSWORD} -s -f https://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    env_file: ".env"
+    build:
+      context: ./ELK
+      dockerfile: Kibana/Dockerfile
+    container_name: kibana
+    hostname: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME_KIBANA}
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/ca-cert.pem
+      - ELASTICSEARCH_SSL_VERIFICATIONMODE=certificate
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_CERTIFICATE=/usr/share/kibana/config/certs/kibana-cert.pem
+      - SERVER_SSL_KEY=/usr/share/kibana/config/certs/kibana-key.pem
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./ELK/certs:/usr/share/kibana/config/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -s -f https://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  logstash:
+    env_file: ".env"
+    build:
+      context: ./ELK
+      dockerfile: Logstash/Dockerfile
+    container_name: logstash
+    hostname: logstash
+    environment:
+      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME_LOGSTASH}
+      - ELASTICSEARCH_PASSWORD=${LOGSTASH_PASSWORD}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/logstash/config/certs/ca-cert.pem
+      - ELASTICSEARCH_SSL_VERIFICATIONMODE=certificate
+    ports:
+      - "5044:5044"
+      - "5002:5000"
+      - "5001:5001"
+      - "9600:9600"
+    networks:
+      - elk
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./ELK/Logstash/pipeline:/usr/share/logstash/pipeline
+      - ./ELK/certs:/usr/share/logstash/config/certs:ro
+
+
+  # filebeat:
+  #   build:
+  #     context: ./ELK
+  #     dockerfile: Filebeat/Dockerfile
+  #   container_name: filebeat
+  #   depends_on:
+  #     - logstash
+  #   volumes:
+  #     - ./ELK/certs:/usr/share/filebeat/config/certs:ro
+  #     - ./log:/log:ro
+  #   networks:
+  #     - elk
+
+  # auth-service:
+  #     build:
+  #       context: ./auth
+  #       dockerfile: Dockerfile
+  #     container_name: auth-service
+  #     hostname: auth-service
+  #     environment:
+  #       - NODE_ENV=production
+  #       - JWT_SECRET=${JWT_SECRET}
+  #       - COOKIE_SECRET=${COOKIE_SECRET}
+  #       - LOGSTASH_HOST=logstash
+  #       - LOGSTASH_PORT=5001
+  #       - LOG_LEVEL=info
+  #     ports:
+  #       - "3000:3000"
+  #     networks:
+  #       - elk
+  #     depends_on:
+  #       logstash:
+  #         condition: service_started
+  #     logging:
+  #       driver: "json-file"
+  #       options:
+  #         max-size: "10m"
+  #         max-file: "3"
+  #         labels: "service=auth"
+
+networks:
+  elk:
+    driver: bridge
+
+volumes:
+  elasticsearch_data:
+    driver: local
