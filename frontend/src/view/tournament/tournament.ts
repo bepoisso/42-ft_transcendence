@@ -1,5 +1,3 @@
-import { Router } from "../../router";
-
 export function renderTournaments() {
   document.getElementById("app")!.innerHTML = `
     <div class="min-h-screen w-full bg-gray-900 text-white flex flex-col">

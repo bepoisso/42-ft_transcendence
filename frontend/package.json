@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "tsc && tailwindcss -i ./src/style.css -o ./dist/style.css --minify",
+    "start": "npm run build && node dist/main.js",
+    "build": "tsc && tailwindcss -i ./src/style.css -o ./dist/style.css --minify && cp -r index.html assets ./dist/",
     "build:css": "tailwindcss -i ./src/style.css -o ./dist/style.css --watch",
     "build:ts": "tsc --watch"
   },

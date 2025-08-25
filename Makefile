@@ -14,7 +14,6 @@ clean: down
 
 fclean: clean
 	docker system prune -a -f --volumes
-	rm -rf ./backend/app
 
 logs:
 	docker compose logs -f
