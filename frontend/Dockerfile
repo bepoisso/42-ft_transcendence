@@ -5,6 +5,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+# Installer http-server globalement pour servir les fichiers statiques
+RUN npm install -g http-server
+
 # Copier les fichiers source
 COPY . .
 
@@ -20,5 +23,5 @@ RUN cp -r assets dist/
 
 EXPOSE 5173
 
-
-CMD ["node", "dist/index.js"]
+# Servir les fichiers statiques avec http-server
+CMD ["http-server", "dist", "-p", "5173", "-c-1"]
