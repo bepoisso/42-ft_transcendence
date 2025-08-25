@@ -1,3 +1,5 @@
+all: build up
+
 build:
 	docker compose build
 
@@ -8,9 +10,17 @@ down:
 	docker compose down
 
 clean: down
-	docker rmi $(docker images -q)
-
-fclean: clean
 	docker system prune -f
 
-.PHONY: build up down clean fclean
+fclean: clean
+	docker system prune -a -f --volumes
+	rm -rf ./backend/app
+
+logs:
+	docker compose logs -f
+
+restart: down build up
+
+re: down build up
+
+.PHONY: build up down clean fclean logs

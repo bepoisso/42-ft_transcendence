@@ -6,7 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 # Installer http-server globalement pour servir les fichiers statiques
-RUN npm install -g http-server
+RUN npm install
 
 # Copier les fichiers source
 COPY . .
@@ -24,4 +24,4 @@ RUN cp -r assets dist/
 EXPOSE 5173
 
 # Servir les fichiers statiques avec http-server
-CMD ["http-server", "dist", "-p", "5173", "-c-1"]
+CMD ["npm", "start", "--", "--host", "0.0.0.0"]
