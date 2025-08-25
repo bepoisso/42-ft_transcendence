@@ -55,7 +55,7 @@ export async function register(username:string, email:string, password:string) {
 		const token = signToken({ id: user.id, email: user.email ?? '', twofa_enable: user.twofa_enable ?? false });
 		return { statusCode: 200, message: "User Succefully register", token};
 	} catch (err) {
-		await logToELK('error', 'Missing required fields from Google', { function: 'login', username: username, email: email});
+		await logToELK('error', 'Missing required fields from Google', { function: 'login', username: username, email: email, err});
 		return { statusCode: 400, message: err };
 	}
 };

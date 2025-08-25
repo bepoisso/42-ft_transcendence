@@ -100,7 +100,7 @@ function countPlayers(tournament: Tournament): number {
   return players.filter(p => p !== null && p !== undefined).length;
 }
 
-export async function setTournament(router: Router) {
+export async function setTournament() {
 	try {
 		const data = await fetchTournament();
 		const container = document.getElementById("pending-tournaments")!;
@@ -270,12 +270,12 @@ async function joinTournament() {
 
 
 
-export async function tournamentHandler(router: Router) {
+export async function tournamentHandler() {
 
-	await setTournament(router);
+	await setTournament();
 
 	setInterval(async () => {
-		await setTournament(router);
+		await setTournament();
 	}, 5000);
 
 	await createTournament();

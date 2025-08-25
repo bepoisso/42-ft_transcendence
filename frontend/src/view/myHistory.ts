@@ -1,4 +1,4 @@
-import { Router } from "../router";
+// import { Router } from "../router"; // Import non utilisé
 
 export function renderHistoric() {
   document.getElementById("app")!.innerHTML = `

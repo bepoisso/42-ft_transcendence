@@ -57,13 +57,13 @@ export class App
 			},
 			"/tournament": async () => {
 				renderTournaments();
-				await tournamentHandler(self.router);
+				await tournamentHandler();
 			},
 			"/tournamentRound/:id": async (params: any) => {
 				renderTournamentTree();
 				await tournamentRound(self.router, params.id);
 			},
-			"/myHistory": async (params: any) => {
+			"/myHistory": async () => {
 				renderHistoric();
 				await historyHandler();
 			}

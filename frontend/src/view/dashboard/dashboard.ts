@@ -237,7 +237,7 @@ export async function dashboardHandler(router: Router)
 	const userData = await setDashboard(router);
 	if (!userData) return;
 
-	const { username, id, roomId } = userData;
+	const { username: _username, id, roomId } = userData;
 
 	// if player is still active in a room, send message to this room to kill the room
 	if (roomId !== 0 || undefined) {

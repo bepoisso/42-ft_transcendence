@@ -1,4 +1,4 @@
-import "./style.css"
+// import "./style.css" // CSS géré par Tailwind build
 import { App } from "./app"
 
 const app = new App;
