@@ -5,6 +5,8 @@ import { servRoutes } from "./servRoutes";
 import { registerGoogleOAuth2Provider } from "./auth/auth_provider";
 import cookie from '@fastify/cookie';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -18,7 +20,16 @@ const gPortBack = process.env.PORT_BACK || 3000;
 
 async function buildServer() {
 
-	const server = Fastify({ logger: true });
+	// Configuration HTTPS
+	const httpsOptions = {
+		key: fs.readFileSync(path.join(__dirname, '../certs/server-key.pem')),
+		cert: fs.readFileSync(path.join(__dirname, '../certs/server-cert.pem'))
+	};
+
+	const server = Fastify({
+		logger: true,
+		https: httpsOptions
+	});
 
 
 	await server.register(cors, {
@@ -51,12 +62,13 @@ async function buildServer() {
 // =============================================================================
 
 buildServer().then((server) => {
-  server.listen({ port: Number(gPortBack) }, (err, address) => {
+  server.listen({ port: Number(gPortBack), host: '0.0.0.0' }, (err, address) => {
     if (err) {
       server.log.error(err);
       process.exit(1);
     }
-    console.log(`Server is running at ${address}`);
+    console.log(`🚀 HTTPS Server is running at ${address}`);
+    console.log(`📁 Serving on https://localhost:${gPortBack}`);
   });
 });
 

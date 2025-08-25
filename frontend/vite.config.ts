@@ -1,16 +1,22 @@
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
+import fs from 'fs'
+import path from 'path'
 
 export default defineConfig({
   plugins: [tailwindcss()],
   server: {
-    host: 'localhost', // Force l'utilisation de localhost au lieu de 127.0.0.1
+    host: 'localhost',
     port: 5173,
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, '../backend/certs/server-key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, '../backend/certs/server-cert.pem')),
+    },
   proxy: {
     '/back': {
-      target: 'http://localhost:3000',
+      target: 'https://localhost:3000',
       changeOrigin: true,
-      secure: false,
+      secure: false, // Accepter les certificats auto-signés
       configure: (proxy, _options) => {
         proxy.on('error', (err, _req, _res) => {
           console.log('proxy error', err);
@@ -25,9 +31,9 @@ export default defineConfig({
       rewrite: (path) => path.replace(/^\/back/, ''),
     },
     '/auth': {
-      target: 'http://localhost:3000',
+      target: 'https://localhost:3000',
       changeOrigin: true,
-      secure: false,
+      secure: false, // Accepter les certificats auto-signés
       configure: (proxy, _options) => {
         proxy.on('error', (err, _req, _res) => {
           console.log('proxy error', err);
