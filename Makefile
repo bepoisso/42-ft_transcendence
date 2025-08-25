@@ -21,6 +21,6 @@ logs:
 
 restart: down build up
 
-re: down clean build up
+re: down build up
 
 .PHONY: build up down clean fclean logs
